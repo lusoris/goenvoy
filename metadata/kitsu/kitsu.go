@@ -1,0 +1,256 @@
+package kitsu
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strconv"
+	"time"
+)
+
+const (
+	defaultBaseURL   = "https://kitsu.io/api/edge"
+	defaultTimeout   = 30 * time.Second
+	defaultUserAgent = "goenvoy/0.0.1"
+	jsonAPIMediaType = "application/vnd.api+json"
+)
+
+// Option configures a [Client].
+type Option func(*Client)
+
+// WithHTTPClient sets a custom [http.Client].
+func WithHTTPClient(c *http.Client) Option {
+	return func(cl *Client) { cl.httpClient = c }
+}
+
+// WithTimeout overrides the default HTTP request timeout.
+func WithTimeout(d time.Duration) Option {
+	return func(cl *Client) { cl.httpClient.Timeout = d }
+}
+
+// WithUserAgent sets the User-Agent header for all requests.
+func WithUserAgent(ua string) Option {
+	return func(cl *Client) { cl.userAgent = ua }
+}
+
+// WithBaseURL overrides the default Kitsu API base URL.
+func WithBaseURL(u string) Option {
+	return func(cl *Client) { cl.rawBaseURL = u }
+}
+
+// Client is a Kitsu API client. Authentication is not required for public reads.
+type Client struct {
+	rawBaseURL string
+	httpClient *http.Client
+	userAgent  string
+}
+
+// New creates a Kitsu [Client].
+func New(opts ...Option) *Client {
+	c := &Client{
+		rawBaseURL: defaultBaseURL,
+		httpClient: &http.Client{Timeout: defaultTimeout},
+		userAgent:  defaultUserAgent,
+	}
+	for _, o := range opts {
+		o(c)
+	}
+	return c
+}
+
+// APIError is returned when the Kitsu API responds with a non-2xx status code.
+type APIError struct {
+	StatusCode int
+	Status     string
+	Body       string
+}
+
+func (e *APIError) Error() string {
+	return "kitsu: HTTP " + e.Status
+}
+
+// jsonAPIResource is the JSON:API single-resource envelope.
+type jsonAPIResource[T any] struct {
+	Data struct {
+		ID         string `json:"id"`
+		Type       string `json:"type"`
+		Attributes T      `json:"attributes"`
+	} `json:"data"`
+}
+
+// jsonAPICollection is the JSON:API collection envelope.
+type jsonAPICollection[T any] struct {
+	Data []struct {
+		ID         string `json:"id"`
+		Type       string `json:"type"`
+		Attributes T      `json:"attributes"`
+	} `json:"data"`
+	Links PageLinks `json:"links"`
+}
+
+func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
+	u := c.rawBaseURL + path
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
+	if err != nil {
+		return nil, fmt.Errorf("kitsu: create request: %w", err)
+	}
+
+	req.Header.Set("Accept", jsonAPIMediaType)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("kitsu: request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("kitsu: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, &APIError{StatusCode: resp.StatusCode, Status: resp.Status, Body: string(body)}
+	}
+
+	return body, nil
+}
+
+func getResource[T any](c *Client, ctx context.Context, path string) (*T, error) {
+	body, err := c.get(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var envelope jsonAPIResource[T]
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, fmt.Errorf("kitsu: decode response: %w", err)
+	}
+
+	result := envelope.Data.Attributes
+	setID(&result, envelope.Data.ID)
+
+	return &result, nil
+}
+
+func getCollection[T any](c *Client, ctx context.Context, path string) ([]T, error) {
+	body, err := c.get(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var envelope jsonAPICollection[T]
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, fmt.Errorf("kitsu: decode response: %w", err)
+	}
+
+	items := make([]T, len(envelope.Data))
+	for i, d := range envelope.Data {
+		items[i] = d.Attributes
+		setID(&items[i], d.ID)
+	}
+
+	return items, nil
+}
+
+// setID sets the ID field on types that embed it via the json:"id" tag.
+// This is necessary because JSON:API places id outside attributes.
+func setID(v any, id string) {
+	type idSetter interface{ setID(string) }
+	if s, ok := v.(idSetter); ok {
+		s.setID(id)
+	}
+}
+
+func (a *Anime) setID(id string)      { a.ID = id }
+func (m *Manga) setID(id string)      { m.ID = id }
+func (e *Episode) setID(id string)    { e.ID = id }
+func (ch *Character) setID(id string) { ch.ID = id }
+func (ca *Category) setID(id string)  { ca.ID = id }
+func (u *User) setID(id string)       { u.ID = id }
+
+// GetAnime fetches a single anime by its Kitsu ID.
+func (c *Client) GetAnime(ctx context.Context, id int64) (*Anime, error) {
+	return getResource[Anime](c, ctx, "/anime/"+strconv.FormatInt(id, 10))
+}
+
+// SearchAnime searches for anime by text query.
+func (c *Client) SearchAnime(ctx context.Context, query string, limit, offset int) ([]Anime, error) {
+	path := "/anime?filter%5Btext%5D=" + url.QueryEscape(query) +
+		"&page%5Blimit%5D=" + strconv.Itoa(limit) +
+		"&page%5Boffset%5D=" + strconv.Itoa(offset)
+	return getCollection[Anime](c, ctx, path)
+}
+
+// TrendingAnime returns the currently trending anime.
+func (c *Client) TrendingAnime(ctx context.Context) ([]Anime, error) {
+	return getCollection[Anime](c, ctx, "/trending/anime")
+}
+
+// GetAnimeEpisodes returns episodes for the given anime ID.
+func (c *Client) GetAnimeEpisodes(ctx context.Context, animeID int64, limit, offset int) ([]Episode, error) {
+	path := "/anime/" + strconv.FormatInt(animeID, 10) + "/episodes" +
+		"?page%5Blimit%5D=" + strconv.Itoa(limit) +
+		"&page%5Boffset%5D=" + strconv.Itoa(offset)
+	return getCollection[Episode](c, ctx, path)
+}
+
+// GetManga fetches a single manga by its Kitsu ID.
+func (c *Client) GetManga(ctx context.Context, id int64) (*Manga, error) {
+	return getResource[Manga](c, ctx, "/manga/"+strconv.FormatInt(id, 10))
+}
+
+// SearchManga searches for manga by text query.
+func (c *Client) SearchManga(ctx context.Context, query string, limit, offset int) ([]Manga, error) {
+	path := "/manga?filter%5Btext%5D=" + url.QueryEscape(query) +
+		"&page%5Blimit%5D=" + strconv.Itoa(limit) +
+		"&page%5Boffset%5D=" + strconv.Itoa(offset)
+	return getCollection[Manga](c, ctx, path)
+}
+
+// TrendingManga returns the currently trending manga.
+func (c *Client) TrendingManga(ctx context.Context) ([]Manga, error) {
+	return getCollection[Manga](c, ctx, "/trending/manga")
+}
+
+// GetCharacter fetches a single character by its Kitsu ID.
+func (c *Client) GetCharacter(ctx context.Context, id int64) (*Character, error) {
+	return getResource[Character](c, ctx, "/characters/"+strconv.FormatInt(id, 10))
+}
+
+// SearchCharacters searches for characters by name.
+func (c *Client) SearchCharacters(ctx context.Context, name string, limit, offset int) ([]Character, error) {
+	path := "/characters?filter%5Bname%5D=" + url.QueryEscape(name) +
+		"&page%5Blimit%5D=" + strconv.Itoa(limit) +
+		"&page%5Boffset%5D=" + strconv.Itoa(offset)
+	return getCollection[Character](c, ctx, path)
+}
+
+// GetCategory fetches a single category by its Kitsu ID.
+func (c *Client) GetCategory(ctx context.Context, id int64) (*Category, error) {
+	return getResource[Category](c, ctx, "/categories/"+strconv.FormatInt(id, 10))
+}
+
+// GetCategories returns categories, optionally filtered by slug.
+func (c *Client) GetCategories(ctx context.Context, limit, offset int) ([]Category, error) {
+	path := "/categories?page%5Blimit%5D=" + strconv.Itoa(limit) +
+		"&page%5Boffset%5D=" + strconv.Itoa(offset)
+	return getCollection[Category](c, ctx, path)
+}
+
+// GetUser fetches a single user by their Kitsu ID.
+func (c *Client) GetUser(ctx context.Context, id int64) (*User, error) {
+	return getResource[User](c, ctx, "/users/"+strconv.FormatInt(id, 10))
+}
+
+// SearchUsers searches for users by name.
+func (c *Client) SearchUsers(ctx context.Context, query string, limit, offset int) ([]User, error) {
+	path := "/users?filter%5Bquery%5D=" + url.QueryEscape(query) +
+		"&page%5Blimit%5D=" + strconv.Itoa(limit) +
+		"&page%5Boffset%5D=" + strconv.Itoa(offset)
+	return getCollection[User](c, ctx, path)
+}
