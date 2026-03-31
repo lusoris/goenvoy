@@ -8,6 +8,14 @@ Each module is versioned independently following [Semantic Versioning](https://s
 ## [Unreleased]
 
 ### Added
+- **Tautulli** (`mediaserver/tautulli`): Plex monitoring client — activity, history, libraries, users, notifications, geo lookup.
+- **Autobrr** (`arr/autobrr`): Automation client — filters, indexers, IRC networks, feeds, releases, logs, config.
+- **Audiobookshelf** (`mediaserver/audiobookshelf`): Audiobook/podcast server client — libraries, items, users, sessions, search, collections.
+- **Komga** (`mediaserver/komga`): Comic/manga server client with Basic Auth — libraries, series, books, collections, read lists, users.
+- **Navidrome** (`mediaserver/navidrome`): Music server client using Subsonic/OpenSubsonic API — artists, albums, songs, playlists, search, scrobbling, starring.
+- **OpenSubtitles** (`metadata/movie/opensubtitles`): Subtitle search and download — search, features, languages, formats, user info, popular, latest.
+- **Last.fm** (`metadata/music/lastfm`): Music metadata — artist/album/track info, similar artists, charts, tags, search.
+- **Discogs** (`metadata/music/discogs`): Music database — releases, artists, labels, master releases, search.
 - OAuth2 support for Trakt (device code, auth code, refresh, revoke).
 - OAuth2 support for Simkl (device PIN, auth code exchange).
 - OAuth2/PKCE support for MAL (authorization URL, code exchange, refresh).
