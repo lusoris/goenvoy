@@ -8,6 +8,17 @@ Each module is versioned independently following [Semantic Versioning](https://s
 ## [Unreleased]
 
 ### Added
+- **Jackett** (`arr/jackett`): Torznab/Newznab proxy client — search all/specific indexers, TV/movie/music/book search, capabilities, indexer management, server config.
+- **NZBHydra2** (`arr/nzbhydra`): Meta NZB indexer client — Newznab search, TV/movie/book search, capabilities, statistics, search/download history, indexer statuses.
+- **Spotify** (`metadata/music/spotify`): Music metadata via OAuth2 Bearer — search, artists, albums, tracks, audio features, new releases, categories, recommendations.
+- **Deezer** (`metadata/music/deezer`): Music metadata (no auth) — search tracks/albums/artists, artist top tracks/albums/related, album tracks, genres, charts.
+- **ListenBrainz** (`metadata/music/listenbrainz`): Listening data and statistics — submit listens, user listens/history, top artists/releases/recordings, listening activity, similar users.
+- **IGDB** (`metadata/game/igdb`): Game metadata via Twitch OAuth2 — search games/companies, game details, platforms, genres, covers, screenshots, popular games.
+- **RAWG** (`metadata/game/rawg`): Video game database — search games, game details/screenshots/trailers/DLC/series, platforms, genres, publishers, developers, tags, stores.
+- **Steam** (`metadata/game/steam`): Steam Store and Web API — app details, featured games, app list, current players, app news, global achievements.
+- New `metadata/game` parent module with shared game metadata types.
+
+### Added
 - **Tautulli** (`mediaserver/tautulli`): Plex monitoring client — activity, history, libraries, users, notifications, geo lookup.
 - **Autobrr** (`arr/autobrr`): Automation client — filters, indexers, IRC networks, feeds, releases, logs, config.
 - **Audiobookshelf** (`mediaserver/audiobookshelf`): Audiobook/podcast server client — libraries, items, users, sessions, search, collections.
