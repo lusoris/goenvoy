@@ -690,3 +690,340 @@ func TestErrorResponse(t *testing.T) {
 		t.Errorf("StatusCode = %d, want %d", apiErr.StatusCode, http.StatusUnauthorized)
 	}
 }
+
+func TestUpdateArtist(t *testing.T) {
+	t.Parallel()
+
+	want := lidarr.Artist{ID: 1, ArtistName: "Updated"}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		if r.URL.RequestURI() != "/api/v1/artist/1?moveFiles=true" {
+			t.Errorf("path = %q", r.URL.RequestURI())
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(want)
+	}))
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.UpdateArtist(context.Background(), &lidarr.Artist{ID: 1, ArtistName: "Updated"}, true)
+	if err != nil {
+		t.Fatalf("UpdateArtist: %v", err)
+	}
+	if got.ArtistName != "Updated" {
+		t.Errorf("ArtistName = %q", got.ArtistName)
+	}
+}
+
+func TestAddAlbum(t *testing.T) {
+	t.Parallel()
+
+	want := lidarr.Album{ID: 20, Title: "New Album"}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(want)
+	}))
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.AddAlbum(context.Background(), &lidarr.Album{Title: "New Album"})
+	if err != nil {
+		t.Fatalf("AddAlbum: %v", err)
+	}
+	if got.ID != 20 {
+		t.Errorf("ID = %d", got.ID)
+	}
+}
+
+func TestUpdateAlbum(t *testing.T) {
+	t.Parallel()
+
+	want := lidarr.Album{ID: 10, Title: "Updated Album"}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(want)
+	}))
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.UpdateAlbum(context.Background(), &lidarr.Album{ID: 10, Title: "Updated Album"})
+	if err != nil {
+		t.Fatalf("UpdateAlbum: %v", err)
+	}
+	if got.Title != "Updated Album" {
+		t.Errorf("Title = %q", got.Title)
+	}
+}
+
+func TestMonitorAlbums(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	if err := c.MonitorAlbums(context.Background(), &lidarr.AlbumsMonitoredResource{
+		AlbumIDs:  []int{10, 11},
+		Monitored: true,
+	}); err != nil {
+		t.Fatalf("MonitorAlbums: %v", err)
+	}
+}
+
+func TestGetTrack(t *testing.T) {
+	t.Parallel()
+
+	want := lidarr.Track{ID: 100, Title: "Airbag"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/track/100", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetTrack(context.Background(), 100)
+	if err != nil {
+		t.Fatalf("GetTrack: %v", err)
+	}
+	if got.Title != "Airbag" {
+		t.Errorf("Title = %q", got.Title)
+	}
+}
+
+func TestGetTrackFile(t *testing.T) {
+	t.Parallel()
+
+	want := lidarr.TrackFile{ID: 200, Size: 40000000}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/trackfile/200", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetTrackFile(context.Background(), 200)
+	if err != nil {
+		t.Fatalf("GetTrackFile: %v", err)
+	}
+	if got.Size != 40000000 {
+		t.Errorf("Size = %d", got.Size)
+	}
+}
+
+func TestDeleteTrackFiles(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v1/trackfile/bulk", nil)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	if err := c.DeleteTrackFiles(context.Background(), []int{1, 2, 3}); err != nil {
+		t.Fatalf("DeleteTrackFiles: %v", err)
+	}
+}
+
+func TestGetCalendar(t *testing.T) {
+	t.Parallel()
+
+	want := []lidarr.Album{{ID: 10, Title: "Upcoming"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/calendar?start=2026-01-01&end=2026-01-31&unmonitored=false", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetCalendar(context.Background(), "2026-01-01", "2026-01-31", false)
+	if err != nil {
+		t.Fatalf("GetCalendar: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetCommands(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.CommandResponse{{ID: 1, Name: "RefreshArtist"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/command", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetCommands(context.Background())
+	if err != nil {
+		t.Fatalf("GetCommands: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetCommand(t *testing.T) {
+	t.Parallel()
+
+	want := arr.CommandResponse{ID: 42, Name: "RefreshArtist"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/command/42", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetCommand(context.Background(), 42)
+	if err != nil {
+		t.Fatalf("GetCommand: %v", err)
+	}
+	if got.Name != "RefreshArtist" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetHealth(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.HealthCheck{{Type: "warning", Message: "test"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/health", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetHealth(context.Background())
+	if err != nil {
+		t.Fatalf("GetHealth: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetDiskSpace(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.DiskSpace{{Path: "/data", FreeSpace: 1000}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/diskspace", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetDiskSpace(context.Background())
+	if err != nil {
+		t.Fatalf("GetDiskSpace: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetQualityProfiles(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.QualityProfile{{ID: 1, Name: "Any"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/qualityprofile", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetQualityProfiles(context.Background())
+	if err != nil {
+		t.Fatalf("GetQualityProfiles: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetRootFolders(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.RootFolder{{ID: 1, Path: "/music"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/rootfolder", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetRootFolders(context.Background())
+	if err != nil {
+		t.Fatalf("GetRootFolders: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetWantedCutoff(t *testing.T) {
+	t.Parallel()
+
+	want := arr.PagingResource[lidarr.Album]{
+		Page: 1, PageSize: 10, TotalRecords: 1,
+		Records: []lidarr.Album{{ID: 10, Title: "OK Computer"}},
+	}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/wanted/cutoff?page=1&pageSize=10", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetWantedCutoff(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("GetWantedCutoff: %v", err)
+	}
+	if got.TotalRecords != 1 {
+		t.Errorf("TotalRecords = %d", got.TotalRecords)
+	}
+}
+
+func TestGetImportListExclusions(t *testing.T) {
+	t.Parallel()
+
+	want := []lidarr.ImportListExclusion{{ID: 1, ForeignID: "abc-123", ArtistName: "Test"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/importlistexclusion", want)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListExclusions(context.Background())
+	if err != nil {
+		t.Fatalf("GetImportListExclusions: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestEditArtists(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	if err := c.EditArtists(context.Background(), &lidarr.ArtistEditorResource{ArtistIDs: []int{1, 2}}); err != nil {
+		t.Fatalf("EditArtists: %v", err)
+	}
+}
+
+func TestDeleteArtists(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v1/artist/editor", nil)
+	defer srv.Close()
+
+	c, _ := lidarr.New(srv.URL, "test-key")
+	if err := c.DeleteArtists(context.Background(), &lidarr.ArtistEditorResource{ArtistIDs: []int{1}}); err != nil {
+		t.Fatalf("DeleteArtists: %v", err)
+	}
+}

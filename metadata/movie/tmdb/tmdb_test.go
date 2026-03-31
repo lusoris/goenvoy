@@ -413,3 +413,332 @@ func TestAPIError(t *testing.T) {
 		t.Errorf("StatusMessage = %q, want %q", apiErr.StatusMessage, "Invalid API key")
 	}
 }
+
+func TestSearchPeople(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.PersonResult]{
+		Page: 1, TotalPages: 1, TotalResults: 1,
+		Results: []tmdb.PersonResult{{ID: 2, Name: "Mark Hamill"}},
+	}
+
+	srv := newTestServer(t, "/search/person?query=Mark+Hamill&language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.SearchPeople(context.Background(), "Mark Hamill", "en-US", 1)
+	if err != nil {
+		t.Fatalf("SearchPeople: %v", err)
+	}
+	if got.Results[0].Name != "Mark Hamill" {
+		t.Errorf("Name = %q", got.Results[0].Name)
+	}
+}
+
+func TestGetMovieRecommendations(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.MovieResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.MovieResult{{ID: 12, Title: "Recommended"}},
+	}
+
+	srv := newTestServer(t, "/movie/11/recommendations?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetMovieRecommendations(context.Background(), 11, "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetMovieRecommendations: %v", err)
+	}
+	if got.Results[0].Title != "Recommended" {
+		t.Errorf("Title = %q", got.Results[0].Title)
+	}
+}
+
+func TestGetMovieSimilar(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.MovieResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.MovieResult{{ID: 13, Title: "Similar"}},
+	}
+
+	srv := newTestServer(t, "/movie/11/similar?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetMovieSimilar(context.Background(), 11, "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetMovieSimilar: %v", err)
+	}
+	if got.Results[0].Title != "Similar" {
+		t.Errorf("Title = %q", got.Results[0].Title)
+	}
+}
+
+func TestGetTVCredits(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.Credits{
+		ID:   1396,
+		Cast: []tmdb.CastMember{{ID: 17419, Name: "Bryan Cranston", Character: "Walter White"}},
+	}
+
+	srv := newTestServer(t, "/tv/1396/credits?language=en-US", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetTVCredits(context.Background(), 1396, "en-US")
+	if err != nil {
+		t.Fatalf("GetTVCredits: %v", err)
+	}
+	if got.Cast[0].Name != "Bryan Cranston" {
+		t.Errorf("Name = %q", got.Cast[0].Name)
+	}
+}
+
+func TestGetTVImages(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.Images{
+		ID:      1396,
+		Posters: []tmdb.ImageItem{{FilePath: "/poster.jpg", Width: 500, Height: 750}},
+	}
+
+	srv := newTestServer(t, "/tv/1396/images", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetTVImages(context.Background(), 1396)
+	if err != nil {
+		t.Fatalf("GetTVImages: %v", err)
+	}
+	if len(got.Posters) != 1 {
+		t.Errorf("Posters len = %d", len(got.Posters))
+	}
+}
+
+func TestGetTVExternalIDs(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.ExternalIDs{ID: 1396, IMDbID: "tt0903747", TVDbID: 81189}
+
+	srv := newTestServer(t, "/tv/1396/external_ids", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetTVExternalIDs(context.Background(), 1396)
+	if err != nil {
+		t.Fatalf("GetTVExternalIDs: %v", err)
+	}
+	if got.IMDbID != "tt0903747" {
+		t.Errorf("IMDbID = %q", got.IMDbID)
+	}
+}
+
+func TestGetTVRecommendations(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.TVResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.TVResult{{ID: 1, Name: "Recommended Show"}},
+	}
+
+	srv := newTestServer(t, "/tv/1396/recommendations?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetTVRecommendations(context.Background(), 1396, "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetTVRecommendations: %v", err)
+	}
+	if got.Results[0].Name != "Recommended Show" {
+		t.Errorf("Name = %q", got.Results[0].Name)
+	}
+}
+
+func TestGetTVSimilar(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.TVResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.TVResult{{ID: 2, Name: "Similar Show"}},
+	}
+
+	srv := newTestServer(t, "/tv/1396/similar?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetTVSimilar(context.Background(), 1396, "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetTVSimilar: %v", err)
+	}
+	if got.Results[0].Name != "Similar Show" {
+		t.Errorf("Name = %q", got.Results[0].Name)
+	}
+}
+
+func TestGetPersonExternalIDs(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.ExternalIDs{ID: 2, IMDbID: "nm0372176"}
+
+	srv := newTestServer(t, "/person/2/external_ids", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetPersonExternalIDs(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("GetPersonExternalIDs: %v", err)
+	}
+	if got.IMDbID != "nm0372176" {
+		t.Errorf("IMDbID = %q", got.IMDbID)
+	}
+}
+
+func TestDiscoverTV(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.TVResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.TVResult{{ID: 100, Name: "Disco Show"}},
+	}
+
+	srv := newTestServer(t, "/discover/tv?language=en-US&page=1&sort_by=popularity.desc", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.DiscoverTV(context.Background(), "en-US", 1, "&sort_by=popularity.desc")
+	if err != nil {
+		t.Fatalf("DiscoverTV: %v", err)
+	}
+	if got.Results[0].Name != "Disco Show" {
+		t.Errorf("Name = %q", got.Results[0].Name)
+	}
+}
+
+func TestGetGenresTV(t *testing.T) {
+	t.Parallel()
+
+	want := struct {
+		Genres []tmdb.Genre `json:"genres"`
+	}{Genres: []tmdb.Genre{{ID: 18, Name: "Drama"}, {ID: 80, Name: "Crime"}}}
+
+	srv := newTestServer(t, "/genre/tv/list?language=en-US", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetGenresTV(context.Background(), "en-US")
+	if err != nil {
+		t.Fatalf("GetGenresTV: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len = %d, want 2", len(got))
+	}
+}
+
+func TestGetTopRatedMovies(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.MovieResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.MovieResult{{ID: 278, Title: "The Shawshank Redemption"}},
+	}
+
+	srv := newTestServer(t, "/movie/top_rated?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetTopRatedMovies(context.Background(), "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetTopRatedMovies: %v", err)
+	}
+	if got.Results[0].Title != "The Shawshank Redemption" {
+		t.Errorf("Title = %q", got.Results[0].Title)
+	}
+}
+
+func TestGetNowPlayingMovies(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.MovieResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.MovieResult{{ID: 500, Title: "In Theaters Now"}},
+	}
+
+	srv := newTestServer(t, "/movie/now_playing?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetNowPlayingMovies(context.Background(), "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetNowPlayingMovies: %v", err)
+	}
+	if got.Results[0].Title != "In Theaters Now" {
+		t.Errorf("Title = %q", got.Results[0].Title)
+	}
+}
+
+func TestGetUpcomingMovies(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.MovieResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.MovieResult{{ID: 600, Title: "Coming Soon"}},
+	}
+
+	srv := newTestServer(t, "/movie/upcoming?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetUpcomingMovies(context.Background(), "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetUpcomingMovies: %v", err)
+	}
+	if got.Results[0].Title != "Coming Soon" {
+		t.Errorf("Title = %q", got.Results[0].Title)
+	}
+}
+
+func TestGetPopularTV(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.TVResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.TVResult{{ID: 700, Name: "Popular Show"}},
+	}
+
+	srv := newTestServer(t, "/tv/popular?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetPopularTV(context.Background(), "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetPopularTV: %v", err)
+	}
+	if got.Results[0].Name != "Popular Show" {
+		t.Errorf("Name = %q", got.Results[0].Name)
+	}
+}
+
+func TestGetTopRatedTV(t *testing.T) {
+	t.Parallel()
+
+	want := tmdb.PaginatedResult[tmdb.TVResult]{
+		Page: 1, TotalResults: 1,
+		Results: []tmdb.TVResult{{ID: 800, Name: "Top Show"}},
+	}
+
+	srv := newTestServer(t, "/tv/top_rated?language=en-US&page=1", want)
+	defer srv.Close()
+
+	c := newClient(t, srv)
+	got, err := c.GetTopRatedTV(context.Background(), "en-US", 1)
+	if err != nil {
+		t.Fatalf("GetTopRatedTV: %v", err)
+	}
+	if got.Results[0].Name != "Top Show" {
+		t.Errorf("Name = %q", got.Results[0].Name)
+	}
+}

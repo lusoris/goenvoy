@@ -494,3 +494,474 @@ func TestErosErrorResponse(t *testing.T) {
 		t.Fatal("expected error for 401 response")
 	}
 }
+
+// V2 untested methods.
+
+func TestUpdateSeries(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		var s whisparr.Series
+		json.NewDecoder(r.Body).Decode(&s)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(s)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	out, err := c.UpdateSeries(context.Background(), &whisparr.Series{ID: 1, Title: "Updated"}, true)
+	if err != nil {
+		t.Fatalf("UpdateSeries() error = %v", err)
+	}
+	if out.Title != "Updated" {
+		t.Errorf("title = %s", out.Title)
+	}
+}
+
+func TestGetEpisode(t *testing.T) {
+	ts := newV2TestServer(t, "/api/v3/episode/5", `{"id":5,"title":"Scene 5"}`)
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	ep, err := c.GetEpisode(context.Background(), 5)
+	if err != nil {
+		t.Fatalf("GetEpisode() error = %v", err)
+	}
+	if ep.ID != 5 {
+		t.Errorf("id = %d, want 5", ep.ID)
+	}
+}
+
+func TestDeleteEpisodeFile(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("method = %s, want DELETE", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	if err := c.DeleteEpisodeFile(context.Background(), 1); err != nil {
+		t.Fatalf("DeleteEpisodeFile() error = %v", err)
+	}
+}
+
+func TestV2GetCalendar(t *testing.T) {
+	ts := newV2TestServer(t, "/api/v3/calendar?start=2026-01-01&end=2026-01-31&unmonitored=false", `[{"id":1,"title":"Upcoming"}]`)
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	eps, err := c.GetCalendar(context.Background(), "2026-01-01", "2026-01-31", false)
+	if err != nil {
+		t.Fatalf("GetCalendar() error = %v", err)
+	}
+	if len(eps) != 1 {
+		t.Errorf("got %d episodes", len(eps))
+	}
+}
+
+func TestV2Parse(t *testing.T) {
+	ts := newV2TestServer(t, "/api/v3/parse?title=test+scene", `{"title":"test scene"}`)
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	result, err := c.Parse(context.Background(), "test scene")
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+}
+
+func TestV2GetDiskSpace(t *testing.T) {
+	ts := newV2TestServer(t, "/api/v3/diskspace", `[{"path":"/data","freeSpace":1000}]`)
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	ds, err := c.GetDiskSpace(context.Background())
+	if err != nil {
+		t.Fatalf("GetDiskSpace() error = %v", err)
+	}
+	if len(ds) != 1 {
+		t.Errorf("got %d disk spaces", len(ds))
+	}
+}
+
+func TestV2GetQueue(t *testing.T) {
+	ts := newV2TestServer(t, "/api/v3/queue?page=1&pageSize=10", `{"page":1,"pageSize":10,"totalRecords":0,"records":[]}`)
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	q, err := c.GetQueue(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("GetQueue() error = %v", err)
+	}
+	if q.Page != 1 {
+		t.Errorf("page = %d", q.Page)
+	}
+}
+
+func TestV2CreateTag(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"id":1,"label":"new-tag"}`))
+	}))
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	tag, err := c.CreateTag(context.Background(), "new-tag")
+	if err != nil {
+		t.Fatalf("CreateTag() error = %v", err)
+	}
+	if tag.Label != "new-tag" {
+		t.Errorf("label = %s", tag.Label)
+	}
+}
+
+func TestV2GetHistory(t *testing.T) {
+	ts := newV2TestServer(t, "/api/v3/history?page=1&pageSize=10", `{"page":1,"pageSize":10,"totalRecords":0,"records":[]}`)
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	h, err := c.GetHistory(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("GetHistory() error = %v", err)
+	}
+	if h.Page != 1 {
+		t.Errorf("page = %d", h.Page)
+	}
+}
+
+func TestV2UpdateSeasonPass(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.New(ts.URL, "test-key")
+	err := c.UpdateSeasonPass(context.Background(), whisparr.SeasonPassResource{})
+	if err != nil {
+		t.Fatalf("UpdateSeasonPass() error = %v", err)
+	}
+}
+
+// Eros untested methods.
+
+func TestErosUpdateMovie(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		var m whisparr.Movie
+		json.NewDecoder(r.Body).Decode(&m)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(m)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	out, err := c.UpdateMovie(context.Background(), &whisparr.Movie{ID: 1, Title: "Updated"}, true)
+	if err != nil {
+		t.Fatalf("UpdateMovie() error = %v", err)
+	}
+	if out.Title != "Updated" {
+		t.Errorf("title = %s", out.Title)
+	}
+}
+
+func TestErosLookupMovie(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/lookup/movie?term=test", `[{"id":1,"title":"Found"}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	res, err := c.LookupMovie(context.Background(), "test")
+	if err != nil {
+		t.Fatalf("LookupMovie() error = %v", err)
+	}
+	if len(res) != 1 {
+		t.Errorf("got %d results", len(res))
+	}
+}
+
+func TestErosGetMoviesByStudio(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/movie/listbystudioforeignid?studioForeignId=s1", `[{"id":1,"title":"Scene 1"}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	movies, err := c.GetMoviesByStudio(context.Background(), "s1")
+	if err != nil {
+		t.Fatalf("GetMoviesByStudio() error = %v", err)
+	}
+	if len(movies) != 1 {
+		t.Errorf("got %d movies", len(movies))
+	}
+}
+
+func TestErosGetMovieFile(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/moviefile/1", `{"id":1,"size":2048}`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	f, err := c.GetMovieFile(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetMovieFile() error = %v", err)
+	}
+	if f.ID != 1 {
+		t.Errorf("id = %d", f.ID)
+	}
+}
+
+func TestErosDeleteMovieFile(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("method = %s, want DELETE", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	if err := c.DeleteMovieFile(context.Background(), 1); err != nil {
+		t.Fatalf("DeleteMovieFile() error = %v", err)
+	}
+}
+
+func TestErosEditMovies(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	err := c.EditMovies(context.Background(), &whisparr.MovieEditorResource{MovieIDs: []int{1, 2}})
+	if err != nil {
+		t.Fatalf("EditMovies() error = %v", err)
+	}
+}
+
+func TestErosDeleteMovies(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("method = %s, want DELETE", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	err := c.DeleteMovies(context.Background(), &whisparr.MovieEditorResource{MovieIDs: []int{1}})
+	if err != nil {
+		t.Fatalf("DeleteMovies() error = %v", err)
+	}
+}
+
+func TestErosGetPerformer(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/performer/1", `{"id":1,"name":"Jane"}`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	p, err := c.GetPerformer(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetPerformer() error = %v", err)
+	}
+	if p.Name != "Jane" {
+		t.Errorf("name = %s", p.Name)
+	}
+}
+
+func TestErosUpdatePerformer(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		var p whisparr.Performer
+		json.NewDecoder(r.Body).Decode(&p)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(p)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	out, err := c.UpdatePerformer(context.Background(), &whisparr.Performer{ID: 1, Name: "Updated"})
+	if err != nil {
+		t.Fatalf("UpdatePerformer() error = %v", err)
+	}
+	if out.Name != "Updated" {
+		t.Errorf("name = %s", out.Name)
+	}
+}
+
+func TestErosGetStudio(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/studio/1", `{"id":1,"title":"Studio A"}`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	s, err := c.GetStudio(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetStudio() error = %v", err)
+	}
+	if s.Title != "Studio A" {
+		t.Errorf("title = %s", s.Title)
+	}
+}
+
+func TestErosUpdateStudio(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		var s whisparr.Studio
+		json.NewDecoder(r.Body).Decode(&s)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(s)
+	}))
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	out, err := c.UpdateStudio(context.Background(), &whisparr.Studio{ID: 1, Title: "Updated"})
+	if err != nil {
+		t.Fatalf("UpdateStudio() error = %v", err)
+	}
+	if out.Title != "Updated" {
+		t.Errorf("title = %s", out.Title)
+	}
+}
+
+func TestErosGetCalendar(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/calendar?start=2026-01-01&end=2026-01-31&unmonitored=false", `[{"id":1,"title":"Upcoming"}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	movies, err := c.GetCalendar(context.Background(), "2026-01-01", "2026-01-31", false)
+	if err != nil {
+		t.Fatalf("GetCalendar() error = %v", err)
+	}
+	if len(movies) != 1 {
+		t.Errorf("got %d movies", len(movies))
+	}
+}
+
+func TestErosSendCommand(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/command", `{"id":1,"name":"RefreshMovie","status":"queued"}`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	_, err := c.SendCommand(context.Background(), struct {
+		Name string `json:"name"`
+	}{Name: "RefreshMovie"})
+	if err != nil {
+		t.Fatalf("SendCommand() error = %v", err)
+	}
+}
+
+func TestErosParse(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/parse?title=test+movie", `{"title":"test movie"}`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	result, err := c.Parse(context.Background(), "test movie")
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+}
+
+func TestErosGetHealth(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/health", `[{"type":"warning","message":"test"}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	health, err := c.GetHealth(context.Background())
+	if err != nil {
+		t.Fatalf("GetHealth() error = %v", err)
+	}
+	if len(health) != 1 {
+		t.Errorf("got %d health checks", len(health))
+	}
+}
+
+func TestErosGetDiskSpace(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/diskspace", `[{"path":"/data","freeSpace":1000}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	ds, err := c.GetDiskSpace(context.Background())
+	if err != nil {
+		t.Fatalf("GetDiskSpace() error = %v", err)
+	}
+	if len(ds) != 1 {
+		t.Errorf("got %d disk spaces", len(ds))
+	}
+}
+
+func TestErosGetQueue(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/queue?page=1&pageSize=10", `{"page":1,"pageSize":10,"totalRecords":0,"records":[]}`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	q, err := c.GetQueue(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("GetQueue() error = %v", err)
+	}
+	if q.Page != 1 {
+		t.Errorf("page = %d", q.Page)
+	}
+}
+
+func TestErosGetQualityProfiles(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/qualityprofile", `[{"id":1,"name":"Any"}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	profiles, err := c.GetQualityProfiles(context.Background())
+	if err != nil {
+		t.Fatalf("GetQualityProfiles() error = %v", err)
+	}
+	if len(profiles) != 1 {
+		t.Errorf("got %d profiles", len(profiles))
+	}
+}
+
+func TestErosGetTags(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/tag", `[{"id":1,"label":"hd"}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	tags, err := c.GetTags(context.Background())
+	if err != nil {
+		t.Fatalf("GetTags() error = %v", err)
+	}
+	if len(tags) != 1 {
+		t.Errorf("got %d tags", len(tags))
+	}
+}
+
+func TestErosCreateTag(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"id":1,"label":"new-tag"}`))
+	}))
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	tag, err := c.CreateTag(context.Background(), "new-tag")
+	if err != nil {
+		t.Fatalf("CreateTag() error = %v", err)
+	}
+	if tag.Label != "new-tag" {
+		t.Errorf("label = %s", tag.Label)
+	}
+}
+
+func TestErosGetRootFolders(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/rootfolder", `[{"id":1,"path":"/data"}]`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	folders, err := c.GetRootFolders(context.Background())
+	if err != nil {
+		t.Fatalf("GetRootFolders() error = %v", err)
+	}
+	if len(folders) != 1 {
+		t.Errorf("got %d folders", len(folders))
+	}
+}
+
+func TestErosGetHistory(t *testing.T) {
+	ts := newErosTestServer(t, "/api/v3/history?page=1&pageSize=10", `{"page":1,"pageSize":10,"totalRecords":0,"records":[]}`)
+	defer ts.Close()
+	c, _ := whisparr.NewEros(ts.URL, "test-key")
+	h, err := c.GetHistory(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("GetHistory() error = %v", err)
+	}
+	if h.Page != 1 {
+		t.Errorf("page = %d", h.Page)
+	}
+}

@@ -545,3 +545,279 @@ func TestErrorResponse(t *testing.T) {
 		t.Errorf("StatusCode = %d, want %d", apiErr.StatusCode, http.StatusUnauthorized)
 	}
 }
+
+func TestDiscoverTV(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.SearchResults{Page: 1, TotalPages: 10, TotalResults: 200}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/discover/tv?page=1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.DiscoverTV(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("DiscoverTV: %v", err)
+	}
+	if got.TotalResults != 200 {
+		t.Errorf("TotalResults = %d, want 200", got.TotalResults)
+	}
+}
+
+func TestDiscoverUpcomingMovies(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.SearchResults{Page: 1, TotalResults: 50}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/discover/movies/upcoming?page=1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.DiscoverUpcomingMovies(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("DiscoverUpcomingMovies: %v", err)
+	}
+	if got.TotalResults != 50 {
+		t.Errorf("TotalResults = %d", got.TotalResults)
+	}
+}
+
+func TestDiscoverUpcomingTV(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.SearchResults{Page: 1, TotalResults: 30}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/discover/tv/upcoming?page=1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.DiscoverUpcomingTV(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("DiscoverUpcomingTV: %v", err)
+	}
+	if got.TotalResults != 30 {
+		t.Errorf("TotalResults = %d", got.TotalResults)
+	}
+}
+
+func TestGetRequest(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.MediaRequest{ID: 1, Status: 2}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/request/1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.GetRequest(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetRequest: %v", err)
+	}
+	if got.Status != 2 {
+		t.Errorf("Status = %d", got.Status)
+	}
+}
+
+func TestRetryRequest(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.MediaRequest{ID: 1, Status: 1}
+
+	srv := newTestServer(t, http.MethodPost, "/api/v1/request/1/retry", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.RetryRequest(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("RetryRequest: %v", err)
+	}
+	if got.Status != 1 {
+		t.Errorf("Status = %d", got.Status)
+	}
+}
+
+func TestGetMovieRecommendations(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.SearchResults{Page: 1, TotalResults: 10}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/movie/337401/recommendations?page=1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.GetMovieRecommendations(context.Background(), 337401, 1)
+	if err != nil {
+		t.Fatalf("GetMovieRecommendations: %v", err)
+	}
+	if got.TotalResults != 10 {
+		t.Errorf("TotalResults = %d", got.TotalResults)
+	}
+}
+
+func TestGetMovieSimilar(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.SearchResults{Page: 1, TotalResults: 15}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/movie/337401/similar?page=1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.GetMovieSimilar(context.Background(), 337401, 1)
+	if err != nil {
+		t.Fatalf("GetMovieSimilar: %v", err)
+	}
+	if got.TotalResults != 15 {
+		t.Errorf("TotalResults = %d", got.TotalResults)
+	}
+}
+
+func TestGetTVRecommendations(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.SearchResults{Page: 1, TotalResults: 8}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/tv/76479/recommendations?page=1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.GetTVRecommendations(context.Background(), 76479, 1)
+	if err != nil {
+		t.Fatalf("GetTVRecommendations: %v", err)
+	}
+	if got.TotalResults != 8 {
+		t.Errorf("TotalResults = %d", got.TotalResults)
+	}
+}
+
+func TestGetTVSimilar(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.SearchResults{Page: 1, TotalResults: 12}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/tv/76479/similar?page=1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.GetTVSimilar(context.Background(), 76479, 1)
+	if err != nil {
+		t.Fatalf("GetTVSimilar: %v", err)
+	}
+	if got.TotalResults != 12 {
+		t.Errorf("TotalResults = %d", got.TotalResults)
+	}
+}
+
+func TestUpdateMediaStatus(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.MediaInfo{ID: 1, Status: 5}
+
+	srv := newTestServer(t, http.MethodPost, "/api/v1/media/1/available", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.UpdateMediaStatus(context.Background(), 1, "available", false)
+	if err != nil {
+		t.Fatalf("UpdateMediaStatus: %v", err)
+	}
+	if got.Status != 5 {
+		t.Errorf("Status = %d", got.Status)
+	}
+}
+
+func TestGetUser(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.User{ID: 1, Email: "admin@example.com"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/user/1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.GetUser(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetUser: %v", err)
+	}
+	if got.Email != "admin@example.com" {
+		t.Errorf("Email = %q", got.Email)
+	}
+}
+
+func TestDeleteUser(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v1/user/1", nil)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	if err := c.DeleteUser(context.Background(), 1); err != nil {
+		t.Fatalf("DeleteUser: %v", err)
+	}
+}
+
+func TestGetIssue(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.Issue{ID: 1, IssueType: 1}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v1/issue/1", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.GetIssue(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetIssue: %v", err)
+	}
+	if got.IssueType != 1 {
+		t.Errorf("IssueType = %d", got.IssueType)
+	}
+}
+
+func TestDeleteIssue(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v1/issue/1", nil)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	if err := c.DeleteIssue(context.Background(), 1); err != nil {
+		t.Fatalf("DeleteIssue: %v", err)
+	}
+}
+
+func TestResolveIssue(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.Issue{ID: 1, IssueType: 1}
+
+	srv := newTestServer(t, http.MethodPost, "/api/v1/issue/1/resolved", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.ResolveIssue(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("ResolveIssue: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d", got.ID)
+	}
+}
+
+func TestReopenIssue(t *testing.T) {
+	t.Parallel()
+
+	want := seerr.Issue{ID: 1, IssueType: 1}
+
+	srv := newTestServer(t, http.MethodPost, "/api/v1/issue/1/open", want)
+	defer srv.Close()
+
+	c, _ := seerr.New(srv.URL, "test-key")
+	got, err := c.ReopenIssue(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("ReopenIssue: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d", got.ID)
+	}
+}
