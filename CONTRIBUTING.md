@@ -13,7 +13,7 @@ Thank you for considering a contribution! Here's how to get started.
 
 2. **Use Go 1.26+** — all modules target `go 1.26.1`.
 
-3. **Workspace mode** — the `go.work` file links all 38 modules for local development:
+3. **Workspace mode** — the `go.work` file links all 62 modules for local development:
 
    ```bash
    go work sync
