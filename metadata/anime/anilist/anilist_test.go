@@ -387,3 +387,48 @@ func TestHTTPError(t *testing.T) {
 		t.Fatalf("got status %d", httpErr.StatusCode)
 	}
 }
+
+func TestWithAccessToken(t *testing.T) {
+	var gotAuth string
+	c := setup(t, func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		respondGraphQL(t, w, map[string]any{
+			"Media": map[string]any{"id": float64(1)},
+		})
+	})
+	// The setup function doesn't pass WithAccessToken, so we need to create a new client.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		respondGraphQL(t, w, map[string]any{
+			"Media": map[string]any{"id": float64(1)},
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	_ = c // suppress unused
+
+	cl := anilist.New(anilist.WithBaseURL(srv.URL), anilist.WithAccessToken("my-tok"))
+	_, err := cl.GetMedia(context.Background(), 1)
+	assertNoError(t, err)
+	if gotAuth != "Bearer my-tok" {
+		t.Errorf("Authorization = %q, want %q", gotAuth, "Bearer my-tok")
+	}
+}
+
+func TestNoAccessTokenHeader(t *testing.T) {
+	var gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		respondGraphQL(t, w, map[string]any{
+			"Media": map[string]any{"id": float64(1)},
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	cl := anilist.New(anilist.WithBaseURL(srv.URL))
+	_, err := cl.GetMedia(context.Background(), 1)
+	assertNoError(t, err)
+	if gotAuth != "" {
+		t.Errorf("Authorization = %q, want empty", gotAuth)
+	}
+}

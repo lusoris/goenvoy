@@ -27,7 +27,7 @@ func Example() {
 	fmt.Printf("Deluge version: %s\n", version)
 
 	// Get torrent status
-	torrents, err := client.GetTorrentsStatus(ctx, nil, nil)
+	torrents, err := client.GetTorrentsStatus(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

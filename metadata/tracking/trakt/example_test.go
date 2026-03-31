@@ -15,7 +15,7 @@ func Example() {
 	ctx := context.Background()
 
 	// Search for shows
-	results, err := client.Search(ctx, "game of thrones", "show")
+	results, _, err := client.SearchText(ctx, "game of thrones", "show", 1, 10)
 	if err != nil {
 		log.Fatal(err)
 	}

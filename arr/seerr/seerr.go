@@ -3,6 +3,7 @@ package seerr
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/lusoris/goenvoy/arr"
 )
@@ -42,7 +43,7 @@ func (c *Client) GetMe(ctx context.Context) (*User, error) {
 // Search performs a multi-search for movies, TV shows, and people.
 func (c *Client) Search(ctx context.Context, query string, page int) (*SearchResults, error) {
 	var out SearchResults
-	path := fmt.Sprintf("/api/v1/search?query=%s&page=%d", query, page)
+	path := fmt.Sprintf("/api/v1/search?query=%s&page=%d", url.QueryEscape(query), page)
 	if err := c.base.Get(ctx, path, &out); err != nil {
 		return nil, err
 	}

@@ -550,6 +550,215 @@ func TestMostPlayedMovies(t *testing.T) {
 	}
 }
 
+// OAuth2 tests.
+
+func newOAuthServer(t *testing.T, handler http.HandlerFunc) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(handler)
+}
+
+func TestGetDeviceCode(t *testing.T) {
+	t.Parallel()
+	ts := newOAuthServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		if r.URL.Path != "/oauth/device/code" {
+			t.Errorf("path = %q, want /oauth/device/code", r.URL.Path)
+		}
+		if got := r.Header.Get("trakt-api-key"); got != "cid" {
+			t.Errorf("trakt-api-key = %q, want %q", got, "cid")
+		}
+		var body map[string]string
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["client_id"] != "cid" {
+			t.Errorf("client_id = %q, want %q", body["client_id"], "cid")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(trakt.DeviceCode{
+			DeviceCode:      "dev-123",
+			UserCode:        "A1B2C3",
+			VerificationURL: "https://trakt.tv/activate",
+			ExpiresIn:       600,
+			Interval:        5,
+		})
+	})
+	defer ts.Close()
+
+	c := trakt.New("cid", trakt.WithBaseURL(ts.URL))
+	dc, err := c.GetDeviceCode(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dc.DeviceCode != "dev-123" {
+		t.Errorf("DeviceCode = %q, want %q", dc.DeviceCode, "dev-123")
+	}
+	if dc.UserCode != "A1B2C3" {
+		t.Errorf("UserCode = %q, want %q", dc.UserCode, "A1B2C3")
+	}
+	if dc.ExpiresIn != 600 {
+		t.Errorf("ExpiresIn = %d, want 600", dc.ExpiresIn)
+	}
+}
+
+func TestExchangeCode(t *testing.T) {
+	t.Parallel()
+	ts := newOAuthServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/oauth/token" {
+			t.Errorf("path = %q, want /oauth/token", r.URL.Path)
+		}
+		var body map[string]string
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["grant_type"] != "authorization_code" {
+			t.Errorf("grant_type = %q, want authorization_code", body["grant_type"])
+		}
+		if body["code"] != "auth-code-123" {
+			t.Errorf("code = %q, want auth-code-123", body["code"])
+		}
+		if body["client_id"] != "cid" {
+			t.Errorf("client_id = %q, want cid", body["client_id"])
+		}
+		if body["client_secret"] != "secret" {
+			t.Errorf("client_secret = %q, want secret", body["client_secret"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(trakt.Token{
+			AccessToken:  "access-tok",
+			TokenType:    "Bearer",
+			ExpiresIn:    7776000,
+			RefreshToken: "refresh-tok",
+			Scope:        "public",
+			CreatedAt:    1609459200,
+		})
+	})
+	defer ts.Close()
+
+	var callbackToken trakt.Token
+	c := trakt.New("cid",
+		trakt.WithBaseURL(ts.URL),
+		trakt.WithClientSecret("secret"),
+		trakt.WithTokenCallback(func(t trakt.Token) { callbackToken = t }),
+	)
+	tok, err := c.ExchangeCode(context.Background(), "auth-code-123", "urn:ietf:wg:oauth:2.0:oob")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok.AccessToken != "access-tok" {
+		t.Errorf("AccessToken = %q, want %q", tok.AccessToken, "access-tok")
+	}
+	if tok.RefreshToken != "refresh-tok" {
+		t.Errorf("RefreshToken = %q, want %q", tok.RefreshToken, "refresh-tok")
+	}
+	if callbackToken.AccessToken != "access-tok" {
+		t.Errorf("callback AccessToken = %q, want %q", callbackToken.AccessToken, "access-tok")
+	}
+}
+
+func TestRefreshToken(t *testing.T) {
+	t.Parallel()
+	ts := newOAuthServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]string
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["grant_type"] != "refresh_token" {
+			t.Errorf("grant_type = %q, want refresh_token", body["grant_type"])
+		}
+		if body["refresh_token"] != "old-refresh" {
+			t.Errorf("refresh_token = %q, want old-refresh", body["refresh_token"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(trakt.Token{
+			AccessToken:  "new-access",
+			RefreshToken: "new-refresh",
+		})
+	})
+	defer ts.Close()
+
+	c := trakt.New("cid",
+		trakt.WithBaseURL(ts.URL),
+		trakt.WithClientSecret("secret"),
+		trakt.WithRefreshToken("old-refresh"),
+	)
+	tok, err := c.RefreshToken(context.Background(), "urn:ietf:wg:oauth:2.0:oob")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok.AccessToken != "new-access" {
+		t.Errorf("AccessToken = %q, want %q", tok.AccessToken, "new-access")
+	}
+}
+
+func TestRefreshTokenMissing(t *testing.T) {
+	t.Parallel()
+	c := trakt.New("cid")
+	_, err := c.RefreshToken(context.Background(), "")
+	if err == nil {
+		t.Fatal("expected error when no refresh token set")
+	}
+}
+
+func TestRevokeToken(t *testing.T) {
+	t.Parallel()
+	ts := newOAuthServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/oauth/revoke" {
+			t.Errorf("path = %q, want /oauth/revoke", r.URL.Path)
+		}
+		var body map[string]string
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["token"] != "my-token" {
+			t.Errorf("token = %q, want my-token", body["token"])
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	defer ts.Close()
+
+	c := trakt.New("cid",
+		trakt.WithBaseURL(ts.URL),
+		trakt.WithClientSecret("secret"),
+		trakt.WithAccessToken("my-token"),
+	)
+	if err := c.RevokeToken(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestBearerTokenInHeader(t *testing.T) {
+	t.Parallel()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer user-tok" {
+			t.Errorf("Authorization = %q, want %q", auth, "Bearer user-tok")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]trakt.Genre{{Name: "action", Slug: "action"}})
+	}))
+	defer ts.Close()
+
+	c := trakt.New("cid", trakt.WithBaseURL(ts.URL), trakt.WithAccessToken("user-tok"))
+	_, err := c.Genres(context.Background(), "movies")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNoBearerTokenWhenEmpty(t *testing.T) {
+	t.Parallel()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "" {
+			t.Errorf("Authorization = %q, want empty", auth)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]trakt.Genre{{Name: "action", Slug: "action"}})
+	}))
+	defer ts.Close()
+
+	c := trakt.New("cid", trakt.WithBaseURL(ts.URL))
+	_, err := c.Genres(context.Background(), "movies")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestGetEpisodeRatings(t *testing.T) {
 	ts := newTestServer(t, "/shows/breaking-bad/seasons/5/episodes/16/ratings", "erat-key", trakt.Ratings{
 		Rating: 9.9, Votes: 30000,

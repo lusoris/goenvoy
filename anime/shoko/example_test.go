@@ -27,9 +27,9 @@ func Example() {
 	fmt.Printf("Total series: %d\n", stats.SeriesCount)
 
 	// List all series
-	series, err := client.ListSeries(ctx, nil)
+	series, err := client.ListSeries(ctx, 1, 25)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Series count: %d\n", series.Total)
+	fmt.Printf("Series count: %d\n", len(series))
 }

@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Prowlarr client
-	client := prowlarr.New("http://localhost:9696", "your-api-key")
+	client, err := prowlarr.New("http://localhost:9696", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 
@@ -22,7 +25,7 @@ func Example() {
 	fmt.Printf("%s version %s\n", status.AppName, status.Version)
 
 	// Get all indexers
-	indexers, err := client.GetAllIndexers(ctx)
+	indexers, err := client.GetIndexers(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

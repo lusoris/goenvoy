@@ -2,18 +2,24 @@ package mal
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 const (
 	defaultBaseURL   = "https://api.myanimelist.net/v2"
+	defaultAuthURL   = "https://myanimelist.net/v1/oauth2"
 	defaultTimeout   = 30 * time.Second
 	defaultUserAgent = "goenvoy/0.0.1"
 )
@@ -41,12 +47,55 @@ func WithBaseURL(u string) Option {
 	return func(cl *Client) { cl.rawBaseURL = u }
 }
 
+// WithAuthURL overrides the default OAuth2 authorization URL.
+func WithAuthURL(u string) Option {
+	return func(cl *Client) { cl.authURL = u }
+}
+
+// WithClientSecret sets the client secret (required for confidential clients using auth code flow).
+func WithClientSecret(secret string) Option {
+	return func(cl *Client) { cl.clientSecret = secret }
+}
+
+// WithAccessToken sets a pre-existing OAuth2 access token for user-authenticated requests.
+func WithAccessToken(token string) Option {
+	return func(cl *Client) {
+		cl.mu.Lock()
+		cl.accessToken = token
+		cl.mu.Unlock()
+	}
+}
+
+// WithRefreshToken sets a pre-existing OAuth2 refresh token.
+func WithRefreshToken(token string) Option {
+	return func(cl *Client) {
+		cl.mu.Lock()
+		cl.refreshToken = token
+		cl.mu.Unlock()
+	}
+}
+
+// TokenCallback is called whenever a new token pair is obtained.
+type TokenCallback func(token Token)
+
+// WithTokenCallback sets a callback invoked when tokens change.
+func WithTokenCallback(cb TokenCallback) Option {
+	return func(cl *Client) { cl.onToken = cb }
+}
+
 // Client is a MyAnimeList API v2 client.
 type Client struct {
-	clientID   string
-	rawBaseURL string
-	httpClient *http.Client
-	userAgent  string
+	clientID     string
+	clientSecret string
+	rawBaseURL   string
+	authURL      string
+	httpClient   *http.Client
+	userAgent    string
+	onToken      TokenCallback
+
+	mu           sync.RWMutex
+	accessToken  string
+	refreshToken string
 }
 
 // New creates a [Client] using the given MAL API client ID.
@@ -54,6 +103,7 @@ func New(clientID string, opts ...Option) *Client {
 	c := &Client{
 		clientID:   clientID,
 		rawBaseURL: defaultBaseURL,
+		authURL:    defaultAuthURL,
 		httpClient: &http.Client{Timeout: defaultTimeout},
 		userAgent:  defaultUserAgent,
 	}
@@ -100,9 +150,17 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, dst an
 		return fmt.Errorf("mal: create request: %w", err)
 	}
 
-	req.Header.Set("X-MAL-CLIENT-ID", c.clientID)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	} else {
+		req.Header.Set("X-MAL-CLIENT-ID", c.clientID)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -311,4 +369,121 @@ func (c *Client) ForumTopics(ctx context.Context, query string, boardID, subboar
 		return nil, nil, err
 	}
 	return out.Data, &out.Paging, nil
+}
+
+// OAuth2 with PKCE.
+
+// PKCEChallenge holds a code verifier and its S256 challenge for the PKCE flow.
+type PKCEChallenge struct {
+	CodeVerifier  string
+	CodeChallenge string
+}
+
+// GeneratePKCE creates a random PKCE code verifier and its S256 challenge.
+func GeneratePKCE() (*PKCEChallenge, error) {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		return nil, fmt.Errorf("mal: generate random bytes: %w", err)
+	}
+	verifier := base64.RawURLEncoding.EncodeToString(b)
+	hash := sha256.Sum256([]byte(verifier))
+	challenge := base64.RawURLEncoding.EncodeToString(hash[:])
+	return &PKCEChallenge{
+		CodeVerifier:  verifier,
+		CodeChallenge: challenge,
+	}, nil
+}
+
+// AuthorizationURL constructs the URL the user should visit to authorize the app.
+func (c *Client) AuthorizationURL(state string, pkce *PKCEChallenge) string {
+	v := url.Values{
+		"response_type":         {"code"},
+		"client_id":             {c.clientID},
+		"code_challenge":        {pkce.CodeChallenge},
+		"code_challenge_method": {"S256"},
+	}
+	if state != "" {
+		v.Set("state", state)
+	}
+	return c.authURL + "/authorize?" + v.Encode()
+}
+
+// ExchangeCode exchanges an authorization code for access and refresh tokens.
+func (c *Client) ExchangeCode(ctx context.Context, code string, pkce *PKCEChallenge, redirectURI string) (*Token, error) {
+	data := url.Values{
+		"client_id":     {c.clientID},
+		"grant_type":    {"authorization_code"},
+		"code":          {code},
+		"code_verifier": {pkce.CodeVerifier},
+	}
+	if c.clientSecret != "" {
+		data.Set("client_secret", c.clientSecret)
+	}
+	if redirectURI != "" {
+		data.Set("redirect_uri", redirectURI)
+	}
+	return c.tokenRequest(ctx, data)
+}
+
+// RefreshToken uses the stored refresh token to obtain a new access token.
+func (c *Client) RefreshToken(ctx context.Context) (*Token, error) {
+	c.mu.RLock()
+	rt := c.refreshToken
+	c.mu.RUnlock()
+	if rt == "" {
+		return nil, errors.New("mal: no refresh token available")
+	}
+	data := url.Values{
+		"client_id":     {c.clientID},
+		"grant_type":    {"refresh_token"},
+		"refresh_token": {rt},
+	}
+	if c.clientSecret != "" {
+		data.Set("client_secret", c.clientSecret)
+	}
+	return c.tokenRequest(ctx, data)
+}
+
+func (c *Client) tokenRequest(ctx context.Context, data url.Values) (*Token, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.authURL+"/token",
+		strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("mal: create token request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("mal: token request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("mal: read token response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(body, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(body)
+		}
+		return nil, apiErr
+	}
+
+	var token Token
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("mal: decode token response: %w", err)
+	}
+
+	c.mu.Lock()
+	c.accessToken = token.AccessToken
+	c.refreshToken = token.RefreshToken
+	c.mu.Unlock()
+	if c.onToken != nil {
+		c.onToken(token)
+	}
+	return &token, nil
 }

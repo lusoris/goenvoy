@@ -396,3 +396,138 @@ func TestWithUserAgent(t *testing.T) {
 		t.Errorf("User-Agent = %q, want %q", gotUA, "test-agent/1.0")
 	}
 }
+
+// OAuth2 tests.
+
+func TestAuthenticate(t *testing.T) {
+	authSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		ct := r.Header.Get("Content-Type")
+		if ct != "application/x-www-form-urlencoded" {
+			t.Errorf("Content-Type = %q, want application/x-www-form-urlencoded", ct)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		if r.PostForm.Get("grant_type") != "password" {
+			t.Errorf("grant_type = %q, want password", r.PostForm.Get("grant_type"))
+		}
+		if r.PostForm.Get("username") != "user@example.com" {
+			t.Errorf("username = %q", r.PostForm.Get("username"))
+		}
+		if r.PostForm.Get("password") != "s3cret" {
+			t.Errorf("password = %q", r.PostForm.Get("password"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Token{
+			AccessToken:  "kitsu-access",
+			TokenType:    "Bearer",
+			ExpiresIn:    2592000,
+			RefreshToken: "kitsu-refresh",
+			Scope:        "public",
+			CreatedAt:    1609459200,
+		})
+	}))
+	t.Cleanup(authSrv.Close)
+
+	var callbackToken Token
+	c := New(WithTokenCallback(func(tok Token) { callbackToken = tok }))
+	c.authURL = authSrv.URL
+
+	tok, err := c.Authenticate(context.Background(), "user@example.com", "s3cret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok.AccessToken != "kitsu-access" {
+		t.Errorf("AccessToken = %q, want %q", tok.AccessToken, "kitsu-access")
+	}
+	if tok.RefreshToken != "kitsu-refresh" {
+		t.Errorf("RefreshToken = %q, want %q", tok.RefreshToken, "kitsu-refresh")
+	}
+	if callbackToken.AccessToken != "kitsu-access" {
+		t.Errorf("callback AccessToken = %q, want %q", callbackToken.AccessToken, "kitsu-access")
+	}
+}
+
+func TestRefreshToken(t *testing.T) {
+	authSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		if r.PostForm.Get("grant_type") != "refresh_token" {
+			t.Errorf("grant_type = %q, want refresh_token", r.PostForm.Get("grant_type"))
+		}
+		if r.PostForm.Get("refresh_token") != "old-rt" {
+			t.Errorf("refresh_token = %q, want old-rt", r.PostForm.Get("refresh_token"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Token{
+			AccessToken:  "new-access",
+			RefreshToken: "new-refresh",
+		})
+	}))
+	t.Cleanup(authSrv.Close)
+
+	c := New(WithRefreshToken("old-rt"))
+	c.authURL = authSrv.URL
+
+	tok, err := c.RefreshToken(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok.AccessToken != "new-access" {
+		t.Errorf("AccessToken = %q, want %q", tok.AccessToken, "new-access")
+	}
+}
+
+func TestRefreshTokenMissing(t *testing.T) {
+	c := New()
+	_, err := c.RefreshToken(context.Background())
+	if err == nil {
+		t.Fatal("expected error when no refresh token set")
+	}
+}
+
+func TestBearerTokenInHeader(t *testing.T) {
+	var gotAuth string
+	c := setup(t, func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		respondResource(w, "1", "anime", map[string]any{"slug": "test"})
+	})
+	c.mu.Lock()
+	c.accessToken = "kitsu-tok"
+	c.mu.Unlock()
+
+	_, err := c.GetAnime(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotAuth != "Bearer kitsu-tok" {
+		t.Errorf("Authorization = %q, want %q", gotAuth, "Bearer kitsu-tok")
+	}
+}
+
+func TestAuthenticateError(t *testing.T) {
+	authSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"error":"invalid_grant","error_description":"Invalid credentials"}`))
+	}))
+	t.Cleanup(authSrv.Close)
+
+	c := New()
+	c.authURL = authSrv.URL
+
+	_, err := c.Authenticate(context.Background(), "bad", "wrong")
+	if err == nil {
+		t.Fatal("expected error for bad credentials")
+	}
+	var apiErr *APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("expected *APIError, got %T", err)
+	}
+	if apiErr.StatusCode != http.StatusUnauthorized {
+		t.Errorf("StatusCode = %d, want %d", apiErr.StatusCode, http.StatusUnauthorized)
+	}
+}

@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Seerr client
-	client := seerr.New("http://localhost:5055", "your-api-key")
+	client, err := seerr.New("http://localhost:5055", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 
@@ -22,9 +25,9 @@ func Example() {
 	fmt.Printf("Seerr version %s\n", status.Version)
 
 	// Get requests
-	requests, err := client.GetRequests(ctx, nil)
+	requests, _, err := client.GetRequests(ctx, 25, 0, "")
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Total requests: %d\n", requests.PageInfo.Results)
+	fmt.Printf("Total requests: %d\n", len(requests))
 }

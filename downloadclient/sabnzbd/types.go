@@ -59,10 +59,10 @@ type HistorySlot struct {
 
 // ServerStats holds SABnzbd server statistics.
 type ServerStats struct {
-	Total string `json:"total"`
-	Day   string `json:"day"`
-	Week  string `json:"week"`
-	Month string `json:"month"`
+	Total int64 `json:"total"`
+	Day   int64 `json:"day"`
+	Week  int64 `json:"week"`
+	Month int64 `json:"month"`
 }
 
 // VersionInfo holds version information.

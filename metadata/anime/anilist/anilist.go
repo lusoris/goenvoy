@@ -118,11 +118,19 @@ func WithBaseURL(u string) Option {
 	return func(cl *Client) { cl.rawBaseURL = u }
 }
 
+// WithAccessToken sets an OAuth2 access token for user-authenticated requests
+// (mutations like updating anime lists, toggling favorites, etc.).
+// AniList tokens are long-lived (~1 year) and do not require refresh.
+func WithAccessToken(token string) Option {
+	return func(cl *Client) { cl.accessToken = token }
+}
+
 // Client is an AniList GraphQL API client.
 type Client struct {
-	rawBaseURL string
-	httpClient *http.Client
-	userAgent  string
+	rawBaseURL  string
+	httpClient  *http.Client
+	userAgent   string
+	accessToken string
 }
 
 // New creates an AniList [Client].
@@ -163,6 +171,9 @@ func (c *Client) Query(ctx context.Context, query string, variables map[string]a
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.userAgent)
+	if c.accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

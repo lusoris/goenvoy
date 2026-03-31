@@ -15,7 +15,7 @@ func Example() {
 	ctx := context.Background()
 
 	// Search for a movie
-	results, err := client.SearchMovie(ctx, "Inception", nil)
+	results, err := client.SearchMovies(ctx, "Inception", "en-US", 1)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,7 +23,7 @@ func Example() {
 
 	// Get movie details
 	if len(results.Results) > 0 {
-		movie, err := client.GetMovie(ctx, results.Results[0].ID, nil)
+		movie, err := client.GetMovie(ctx, results.Results[0].ID, "en-US")
 		if err != nil {
 			log.Fatal(err)
 		}

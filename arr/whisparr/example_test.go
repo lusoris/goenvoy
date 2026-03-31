@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Whisparr client
-	client := whisparr.New("http://localhost:6969", "your-api-key")
+	client, err := whisparr.New("http://localhost:6969", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 
@@ -21,10 +24,10 @@ func Example() {
 	}
 	fmt.Printf("%s version %s\n", status.AppName, status.Version)
 
-	// Get all sites
-	sites, err := client.GetAllSites(ctx)
+	// Get all series
+	series, err := client.GetAllSeries(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Total sites: %d\n", len(sites))
+	fmt.Printf("Total series: %d\n", len(series))
 }

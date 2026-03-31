@@ -38,7 +38,7 @@ func WithAccessToken(token string) Option {
 	return func(cl *Client) { cl.accessToken = token }
 }
 
-// WithDeviceID sets the X-Emby-Device-Id header.
+// WithDeviceID sets the device identifier sent in the Authorization header.
 func WithDeviceID(id string) Option {
 	return func(cl *Client) { cl.deviceID = id }
 }
@@ -87,6 +87,15 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("jellyfin: HTTP %d", e.StatusCode)
 }
 
+func (c *Client) authHeader() string {
+	h := fmt.Sprintf("MediaBrowser Client=%q, Device=%q, DeviceId=%q, Version=%q",
+		c.clientName, c.deviceName, c.deviceID, c.version)
+	if c.accessToken != "" {
+		h += fmt.Sprintf(", Token=%q", c.accessToken)
+	}
+	return h
+}
+
 func (c *Client) doRequest(ctx context.Context, method, path string, body, dst any) error {
 	u, err := url.Parse(c.rawBaseURL + path)
 	if err != nil {
@@ -109,13 +118,7 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body, dst a
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	if c.accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.accessToken)
-	}
-	req.Header.Set("X-Emby-Client", c.clientName)
-	req.Header.Set("X-Emby-Client-Version", c.version)
-	req.Header.Set("X-Emby-Device-Id", c.deviceID)
-	req.Header.Set("X-Emby-Device-Name", c.deviceName)
+	req.Header.Set("Authorization", c.authHeader())
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -159,13 +162,7 @@ func (c *Client) get(ctx context.Context, path string, params url.Values) ([]byt
 	}
 
 	req.Header.Set("Accept", "application/json")
-	if c.accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.accessToken)
-	}
-	req.Header.Set("X-Emby-Client", c.clientName)
-	req.Header.Set("X-Emby-Client-Version", c.version)
-	req.Header.Set("X-Emby-Device-Id", c.deviceID)
-	req.Header.Set("X-Emby-Device-Name", c.deviceName)
+	req.Header.Set("Authorization", c.authHeader())
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

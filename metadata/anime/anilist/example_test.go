@@ -15,7 +15,7 @@ func Example() {
 	ctx := context.Background()
 
 	// Search for anime
-	results, err := client.SearchAnime(ctx, "Cowboy Bebop", nil)
+	results, err := client.SearchMedia(ctx, "Cowboy Bebop", anilist.MediaTypeAnime, 1, 10)
 	if err != nil {
 		log.Fatal(err)
 	}

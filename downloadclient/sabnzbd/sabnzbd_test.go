@@ -147,7 +147,7 @@ func TestGetVersion(t *testing.T) {
 
 func TestGetServerStats(t *testing.T) {
 	result := map[string]any{
-		"total": "100 GB", "day": "5 GB", "week": "25 GB", "month": "80 GB",
+		"total": 107374182400, "day": 5368709120, "week": 26843545600, "month": 85899345920,
 	}
 	ts := newServer(t, "server_stats", result)
 	defer ts.Close()
@@ -157,8 +157,8 @@ func TestGetServerStats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if stats.Total != "100 GB" {
-		t.Errorf("Total = %q, want %q", stats.Total, "100 GB")
+	if stats.Total != 107374182400 {
+		t.Errorf("Total = %d, want %d", stats.Total, 107374182400)
 	}
 }
 

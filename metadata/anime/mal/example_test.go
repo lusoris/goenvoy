@@ -15,9 +15,9 @@ func Example() {
 	ctx := context.Background()
 
 	// Search anime
-	results, err := client.SearchAnime(ctx, "Steins Gate", nil)
+	results, _, err := client.SearchAnime(ctx, "Steins Gate", nil, 10, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Found %d anime\n", len(results.Data))
+	fmt.Printf("Found %d anime\n", len(results))
 }

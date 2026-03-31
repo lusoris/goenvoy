@@ -15,16 +15,17 @@ func Example() {
 	ctx := context.Background()
 
 	// Get system status
-	status, err := client.SystemStatus(ctx)
+	status, err := client.GetSystemStatus(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Stash version: %s\n", status.Version)
+	fmt.Printf("Stash status: %s\n", status.Status)
 
 	// Find scenes
-	scenes, err := client.FindScenes(ctx, nil)
+	scenes, count, err := client.FindScenes(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Total scenes: %d\n", scenes.Count)
+	fmt.Printf("Total scenes: %d\n", count)
+	_ = scenes
 }

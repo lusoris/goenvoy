@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/lusoris/goenvoy/mediaserver/jellyfin"
@@ -368,8 +369,12 @@ func TestContextCancellation(t *testing.T) {
 
 func TestWithOptions(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.Header.Get("X-Emby-Device-Id"); got != "my-device-123" {
-			t.Errorf("X-Emby-Device-Id = %q, want my-device-123", got)
+		auth := r.Header.Get("Authorization")
+		if !strings.Contains(auth, `DeviceId="my-device-123"`) {
+			t.Errorf("Authorization = %q, want DeviceId my-device-123", auth)
+		}
+		if !strings.Contains(auth, `Token="token"`) {
+			t.Errorf("Authorization = %q, want Token", auth)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode([]jellyfin.UserDto{})

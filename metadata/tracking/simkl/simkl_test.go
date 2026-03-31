@@ -438,6 +438,131 @@ func TestAPIError(t *testing.T) {
 	}
 }
 
+// OAuth2 tests.
+
+func TestGetDeviceCode(t *testing.T) {
+	t.Parallel()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		if r.URL.Path != "/oauth/pin" {
+			t.Errorf("path = %q, want /oauth/pin", r.URL.Path)
+		}
+		if got := r.Header.Get("simkl-api-key"); got != "cid" {
+			t.Errorf("simkl-api-key = %q, want %q", got, "cid")
+		}
+		var body map[string]string
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["client_id"] != "cid" {
+			t.Errorf("client_id = %q, want %q", body["client_id"], "cid")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(simkl.DeviceCode{
+			Result:          "OK",
+			DeviceCode:      "dev-code",
+			UserCode:        "ABC123",
+			VerificationURL: "https://simkl.com/pin/ABC123",
+			ExpiresIn:       900,
+			Interval:        5,
+		})
+	}))
+	defer ts.Close()
+
+	c := simkl.New("cid", simkl.WithBaseURL(ts.URL))
+	dc, err := c.GetDeviceCode(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dc.UserCode != "ABC123" {
+		t.Errorf("UserCode = %q, want %q", dc.UserCode, "ABC123")
+	}
+	if dc.DeviceCode != "dev-code" {
+		t.Errorf("DeviceCode = %q, want %q", dc.DeviceCode, "dev-code")
+	}
+}
+
+func TestExchangeCode(t *testing.T) {
+	t.Parallel()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/oauth/token" {
+			t.Errorf("path = %q, want /oauth/token", r.URL.Path)
+		}
+		var body map[string]string
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["grant_type"] != "authorization_code" {
+			t.Errorf("grant_type = %q, want authorization_code", body["grant_type"])
+		}
+		if body["code"] != "auth-code" {
+			t.Errorf("code = %q, want auth-code", body["code"])
+		}
+		if body["client_id"] != "cid" {
+			t.Errorf("client_id = %q, want cid", body["client_id"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"access_token": "simkl-access-tok",
+			"token_type":   "Bearer",
+		})
+	}))
+	defer ts.Close()
+
+	var callbackToken string
+	c := simkl.New("cid",
+		simkl.WithBaseURL(ts.URL),
+		simkl.WithClientSecret("secret"),
+		simkl.WithTokenCallback(func(tok string) { callbackToken = tok }),
+	)
+	tok, err := c.ExchangeCode(context.Background(), "auth-code", "urn:ietf:wg:oauth:2.0:oob")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok != "simkl-access-tok" {
+		t.Errorf("token = %q, want %q", tok, "simkl-access-tok")
+	}
+	if callbackToken != "simkl-access-tok" {
+		t.Errorf("callback token = %q, want %q", callbackToken, "simkl-access-tok")
+	}
+}
+
+func TestBearerTokenInHeader(t *testing.T) {
+	t.Parallel()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer my-tok" {
+			t.Errorf("Authorization = %q, want %q", auth, "Bearer my-tok")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(simkl.Movie{Title: "Test"})
+	}))
+	defer ts.Close()
+
+	c := simkl.New("cid", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("my-tok"))
+	_, err := c.GetMovie(context.Background(), "1")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNoBearerTokenWhenEmpty(t *testing.T) {
+	t.Parallel()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "" {
+			t.Errorf("Authorization = %q, want empty", auth)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(simkl.Movie{Title: "Test"})
+	}))
+	defer ts.Close()
+
+	c := simkl.New("cid", simkl.WithBaseURL(ts.URL))
+	_, err := c.GetMovie(context.Background(), "1")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestAPIErrorRawBody(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)

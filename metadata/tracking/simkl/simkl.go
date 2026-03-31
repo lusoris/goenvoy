@@ -1,13 +1,16 @@
 package simkl
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -47,13 +50,40 @@ func WithCalendarURL(u string) Option {
 	return func(cl *Client) { cl.calBaseURL = u }
 }
 
+// WithClientSecret sets the client secret needed for OAuth2 flows.
+func WithClientSecret(secret string) Option {
+	return func(cl *Client) { cl.clientSecret = secret }
+}
+
+// WithAccessToken sets a pre-existing OAuth2 access token for user-authenticated requests.
+func WithAccessToken(token string) Option {
+	return func(cl *Client) {
+		cl.mu.Lock()
+		cl.accessToken = token
+		cl.mu.Unlock()
+	}
+}
+
+// TokenCallback is called when a new access token is obtained.
+type TokenCallback func(accessToken string)
+
+// WithTokenCallback sets a callback invoked when a new token is obtained.
+func WithTokenCallback(cb TokenCallback) Option {
+	return func(cl *Client) { cl.onToken = cb }
+}
+
 // Client is a Simkl API client.
 type Client struct {
-	clientID   string
-	rawBaseURL string
-	calBaseURL string
-	httpClient *http.Client
-	userAgent  string
+	clientID     string
+	clientSecret string
+	rawBaseURL   string
+	calBaseURL   string
+	httpClient   *http.Client
+	userAgent    string
+	onToken      TokenCallback
+
+	mu          sync.RWMutex
+	accessToken string
 }
 
 // New creates a Simkl [Client] using the given client ID (API key).
@@ -111,6 +141,13 @@ func (c *Client) doGet(ctx context.Context, baseURL, path string, params url.Val
 	req.Header.Set("simkl-api-key", c.clientID)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -452,4 +489,137 @@ func (c *Client) CalendarMoviesMonth(ctx context.Context, year, month int) ([]Ca
 		return nil, err
 	}
 	return out, nil
+}
+
+// OAuth2.
+
+func (c *Client) post(ctx context.Context, path string, body, dst any) error {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("simkl: marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.rawBaseURL+path, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("simkl: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("simkl-api-key", c.clientID)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("simkl: POST %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("simkl: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(respBody, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(respBody)
+		}
+		return apiErr
+	}
+
+	if dst != nil && len(respBody) > 0 {
+		if err := json.Unmarshal(respBody, dst); err != nil {
+			return fmt.Errorf("simkl: decode response: %w", err)
+		}
+	}
+	return nil
+}
+
+// GetDeviceCode starts the Simkl PIN-based device code flow.
+// Display the returned UserCode and VerificationURL to the user.
+func (c *Client) GetDeviceCode(ctx context.Context) (*DeviceCode, error) {
+	var out DeviceCode
+	err := c.post(ctx, "/oauth/pin", map[string]string{
+		"client_id": c.clientID,
+	}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// PollDeviceToken polls for the PIN/device token after the user has authorized the app.
+// It blocks until the token is obtained, the code expires, or the context is canceled.
+func (c *Client) PollDeviceToken(ctx context.Context, code *DeviceCode) (string, error) {
+	interval := code.Interval
+	if interval < 5 {
+		interval = 5
+	}
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+	defer ticker.Stop()
+
+	deadline := time.Now().Add(time.Duration(code.ExpiresIn) * time.Second)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-ticker.C:
+			if time.Now().After(deadline) {
+				return "", errors.New("simkl: device code expired")
+			}
+			var result struct {
+				Result      string `json:"result"`
+				AccessToken string `json:"access_token"`
+				Message     string `json:"message"`
+			}
+			err := c.post(ctx, "/oauth/pin/"+url.PathEscape(code.UserCode), map[string]string{
+				"client_id": c.clientID,
+			}, &result)
+			if err != nil {
+				return "", err
+			}
+			switch result.Result {
+			case "OK":
+				c.mu.Lock()
+				c.accessToken = result.AccessToken
+				c.mu.Unlock()
+				if c.onToken != nil {
+					c.onToken(result.AccessToken)
+				}
+				return result.AccessToken, nil
+			case "KO":
+				// Not yet authorized, keep polling.
+				continue
+			default:
+				continue
+			}
+		}
+	}
+}
+
+// ExchangeCode exchanges an authorization code for an access token.
+func (c *Client) ExchangeCode(ctx context.Context, code, redirectURI string) (string, error) {
+	var result struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+	}
+	err := c.post(ctx, "/oauth/token", map[string]string{
+		"code":          code,
+		"client_id":     c.clientID,
+		"client_secret": c.clientSecret,
+		"redirect_uri":  redirectURI,
+		"grant_type":    "authorization_code",
+	}, &result)
+	if err != nil {
+		return "", err
+	}
+	c.mu.Lock()
+	c.accessToken = result.AccessToken
+	c.mu.Unlock()
+	if c.onToken != nil {
+		c.onToken(result.AccessToken)
+	}
+	return result.AccessToken, nil
 }

@@ -19,5 +19,5 @@ func Example() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Anime: %s\n", anime.Title)
+	fmt.Printf("Anime ID: %d\n", anime.ID)
 }

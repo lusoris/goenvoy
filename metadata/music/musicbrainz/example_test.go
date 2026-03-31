@@ -10,14 +10,14 @@ import (
 
 func Example() {
 	// Create a new MusicBrainz client
-	client := musicbrainz.New("your-app-name/1.0")
+	client := musicbrainz.New(musicbrainz.WithUserAgent("your-app-name/1.0"))
 
 	ctx := context.Background()
 
 	// Search for artists
-	results, err := client.SearchArtist(ctx, "The Beatles", 10, 0)
+	results, err := client.SearchArtists(ctx, "The Beatles", 10, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Found %d artists\n", len(results.Artists))
+	fmt.Printf("Found %d artists\n", len(results.Entities))
 }

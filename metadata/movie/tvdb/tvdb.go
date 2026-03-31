@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -82,7 +83,7 @@ func (c *Client) Login(ctx context.Context) error {
 		body.PIN = c.pin
 	}
 
-	payload, err := json.Marshal(body) //nolint:gosec // API key is intentionally sent to the auth endpoint
+	payload, err := json.Marshal(body) // #nosec G117 -- API key is intentionally sent to the auth endpoint
 	if err != nil {
 		return fmt.Errorf("tvdb: marshal login body: %w", err)
 	}
@@ -141,6 +142,26 @@ func (c *Client) get(ctx context.Context, path string, dst any) error {
 		return err
 	}
 
+	err := c.doGet(ctx, path, dst)
+	if err == nil {
+		return nil
+	}
+
+	// On 401 Unauthorized, re-login and retry once.
+	var apiErr *APIError
+	if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusUnauthorized {
+		c.mu.Lock()
+		c.token = ""
+		c.mu.Unlock()
+		if loginErr := c.Login(ctx); loginErr != nil {
+			return loginErr
+		}
+		return c.doGet(ctx, path, dst)
+	}
+	return err
+}
+
+func (c *Client) doGet(ctx context.Context, path string, dst any) error {
 	u, err := url.Parse(c.rawBaseURL + path)
 	if err != nil {
 		return fmt.Errorf("tvdb: parse URL: %w", err)

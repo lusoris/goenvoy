@@ -15,7 +15,7 @@ func Example() {
 	ctx := context.Background()
 
 	// Search for performers
-	results, err := client.SearchPerformer(ctx, "Jane Doe")
+	results, err := client.SearchPerformers(ctx, "Jane Doe", 10)
 	if err != nil {
 		log.Fatal(err)
 	}

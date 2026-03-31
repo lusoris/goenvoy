@@ -10,13 +10,12 @@ import (
 
 func Example() {
 	// Create a new NZBGet client
-	client := nzbget.New("http://localhost:6789",
-		nzbget.WithAuth("username", "password"))
+	client := nzbget.New("http://localhost:6789", "username", "password")
 
 	ctx := context.Background()
 
 	// Get version
-	version, err := client.Version(ctx)
+	version, err := client.GetVersion(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Lidarr client
-	client := lidarr.New("http://localhost:8686", "your-api-key")
+	client, err := lidarr.New("http://localhost:8686", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 

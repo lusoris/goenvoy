@@ -20,7 +20,7 @@ func Example() {
 	}
 
 	// Search for a series
-	results, err := client.SearchSeries(ctx, "Breaking Bad")
+	results, err := client.Search(ctx, "Breaking Bad", nil)
 	if err != nil {
 		log.Fatal(err)
 	}

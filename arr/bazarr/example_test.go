@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Bazarr client
-	client := bazarr.New("http://localhost:6767", "your-api-key")
+	client, err := bazarr.New("http://localhost:6767", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 
@@ -19,12 +22,12 @@ func Example() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Bazarr version %s\n", status.Version)
+	fmt.Printf("Bazarr version %s\n", status.BazarrVersion)
 
 	// Get series
-	series, err := client.GetSeries(ctx)
+	series, err := client.GetSeries(ctx, 0, 25)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Total series: %d\n", len(series))
+	fmt.Printf("Total series: %d\n", series.Total)
 }

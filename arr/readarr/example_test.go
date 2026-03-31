@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Readarr client
-	client := readarr.New("http://localhost:8787", "your-api-key")
+	client, err := readarr.New("http://localhost:8787", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 

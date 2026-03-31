@@ -272,6 +272,21 @@ type Certification struct {
 	Description string `json:"description"`
 }
 
+// Alias represents a title alias.
+type Alias struct {
+	Title   string `json:"title"`
+	Country string `json:"country"`
+}
+
+// MovieRelease represents a movie release date and certification.
+type MovieRelease struct {
+	Country       string `json:"country"`
+	Certification string `json:"certification"`
+	ReleaseDate   string `json:"release_date"`
+	ReleaseType   string `json:"release_type"`
+	Note          string `json:"note,omitempty"`
+}
+
 // Country represents a country.
 type Country struct {
 	Name string `json:"name"`
@@ -287,21 +302,27 @@ type Language struct {
 // Network represents a TV network.
 type Network struct {
 	Name    string `json:"name"`
-	Country string `json:"country,omitempty"`
+	Country string `json:"country"`
 	IDs     IDs    `json:"ids"`
 }
 
-// Alias represents an alternate title.
-type Alias struct {
-	Title   string `json:"title"`
-	Country string `json:"country"`
+// OAuth2 types.
+
+// DeviceCode holds the response from the device code request.
+type DeviceCode struct {
+	DeviceCode      string `json:"device_code"`
+	UserCode        string `json:"user_code"`
+	VerificationURL string `json:"verification_url"`
+	ExpiresIn       int    `json:"expires_in"`
+	Interval        int    `json:"interval"`
 }
 
-// MovieRelease contains release info for a specific country.
-type MovieRelease struct {
-	Country       string `json:"country"`
-	Certification string `json:"certification"`
-	ReleaseDate   string `json:"release_date"`
-	ReleaseType   string `json:"release_type"`
-	Note          string `json:"note,omitempty"`
+// Token holds OAuth2 access and refresh tokens.
+type Token struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	Scope        string `json:"scope"`
+	CreatedAt    int64  `json:"created_at"`
 }

@@ -15,9 +15,9 @@ func Example() {
 	ctx := context.Background()
 
 	// Get anime by ID
-	anime, err := client.GetAnime(ctx, "1")
+	anime, err := client.GetAnime(ctx, 1)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Anime: %s\n", anime.Attributes.CanonicalTitle)
+	fmt.Printf("Anime: %s\n", anime.CanonicalTitle)
 }

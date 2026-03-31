@@ -1,13 +1,16 @@
 package trakt
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -42,12 +45,50 @@ func WithBaseURL(u string) Option {
 	return func(cl *Client) { cl.rawBaseURL = u }
 }
 
+// WithClientSecret sets the client secret needed for OAuth2 flows.
+func WithClientSecret(secret string) Option {
+	return func(cl *Client) { cl.clientSecret = secret }
+}
+
+// WithAccessToken sets a pre-existing OAuth2 access token for user-authenticated requests.
+func WithAccessToken(token string) Option {
+	return func(cl *Client) {
+		cl.mu.Lock()
+		cl.accessToken = token
+		cl.mu.Unlock()
+	}
+}
+
+// WithRefreshToken sets a pre-existing OAuth2 refresh token.
+func WithRefreshToken(token string) Option {
+	return func(cl *Client) {
+		cl.mu.Lock()
+		cl.refreshToken = token
+		cl.mu.Unlock()
+	}
+}
+
+// TokenCallback is called whenever a new token pair is obtained (via refresh or exchange).
+// Store the tokens persistently so they survive restarts.
+type TokenCallback func(token Token)
+
+// WithTokenCallback sets a callback invoked whenever tokens are refreshed or exchanged.
+func WithTokenCallback(cb TokenCallback) Option {
+	return func(cl *Client) { cl.onToken = cb }
+}
+
 // Client is a Trakt API v2 client.
 type Client struct {
-	clientID   string
-	rawBaseURL string
-	httpClient *http.Client
-	userAgent  string
+	clientID     string
+	clientSecret string
+	rawBaseURL   string
+	httpClient   *http.Client
+	userAgent    string
+	onToken      TokenCallback
+
+	mu           sync.RWMutex
+	accessToken  string
+	refreshToken string
 }
 
 // New creates a Trakt [Client] using the given client ID (API key).
@@ -126,6 +167,13 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, dst an
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -647,4 +695,182 @@ func (c *Client) Networks(ctx context.Context) ([]Network, error) {
 		return nil, err
 	}
 	return out, nil
+}
+
+// OAuth2.
+
+func (c *Client) post(ctx context.Context, path string, body, dst any) error {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("trakt: marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.rawBaseURL+path, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("trakt: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("trakt-api-key", c.clientID)
+	req.Header.Set("trakt-api-version", apiVersion)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("trakt: POST %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("trakt: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(respBody, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(respBody)
+		}
+		return apiErr
+	}
+
+	if dst != nil && len(respBody) > 0 {
+		if err := json.Unmarshal(respBody, dst); err != nil {
+			return fmt.Errorf("trakt: decode response: %w", err)
+		}
+	}
+	return nil
+}
+
+// GetDeviceCode starts the OAuth2 device code flow.
+// Display the returned UserCode and VerificationURL to the user.
+func (c *Client) GetDeviceCode(ctx context.Context) (*DeviceCode, error) {
+	var out DeviceCode
+	err := c.post(ctx, "/oauth/device/code", map[string]string{
+		"client_id": c.clientID,
+	}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// PollDeviceToken polls for the device token after the user has authorized the app.
+// It blocks until the token is obtained, the code expires, or the context is canceled.
+// The interval between polls is taken from the DeviceCode response.
+func (c *Client) PollDeviceToken(ctx context.Context, code *DeviceCode) (*Token, error) {
+	ticker := time.NewTicker(time.Duration(code.Interval) * time.Second)
+	defer ticker.Stop()
+
+	deadline := time.Now().Add(time.Duration(code.ExpiresIn) * time.Second)
+	body := map[string]string{
+		"code":          code.DeviceCode,
+		"client_id":     c.clientID,
+		"client_secret": c.clientSecret,
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-ticker.C:
+			if time.Now().After(deadline) {
+				return nil, errors.New("trakt: device code expired")
+			}
+			var token Token
+			err := c.post(ctx, "/oauth/device/token", body, &token)
+			if err != nil {
+				var apiErr *APIError
+				if ok := errorAs(err, &apiErr); ok {
+					switch apiErr.StatusCode {
+					case http.StatusBadRequest: // 400 = pending
+						continue
+					case http.StatusNotFound: // 404 = invalid code
+						return nil, errors.New("trakt: invalid device code")
+					case http.StatusConflict: // 409 = already approved
+						continue
+					case http.StatusGone: // 410 = expired
+						return nil, errors.New("trakt: device code expired")
+					case http.StatusTeapot: // 418 = denied
+						return nil, errors.New("trakt: user denied authorization")
+					case http.StatusTooManyRequests: // 429 = slow down
+						time.Sleep(time.Duration(code.Interval) * time.Second)
+						continue
+					}
+				}
+				return nil, err
+			}
+			c.storeToken(&token)
+			return &token, nil
+		}
+	}
+}
+
+// ExchangeCode exchanges an authorization code for access and refresh tokens.
+func (c *Client) ExchangeCode(ctx context.Context, code, redirectURI string) (*Token, error) {
+	var token Token
+	err := c.post(ctx, "/oauth/token", map[string]string{
+		"code":          code,
+		"client_id":     c.clientID,
+		"client_secret": c.clientSecret,
+		"redirect_uri":  redirectURI,
+		"grant_type":    "authorization_code",
+	}, &token)
+	if err != nil {
+		return nil, err
+	}
+	c.storeToken(&token)
+	return &token, nil
+}
+
+// RefreshToken uses the refresh token to obtain a new access token.
+func (c *Client) RefreshToken(ctx context.Context, redirectURI string) (*Token, error) {
+	c.mu.RLock()
+	rt := c.refreshToken
+	c.mu.RUnlock()
+	if rt == "" {
+		return nil, errors.New("trakt: no refresh token available")
+	}
+
+	var token Token
+	err := c.post(ctx, "/oauth/token", map[string]string{
+		"refresh_token": rt,
+		"client_id":     c.clientID,
+		"client_secret": c.clientSecret,
+		"redirect_uri":  redirectURI,
+		"grant_type":    "refresh_token",
+	}, &token)
+	if err != nil {
+		return nil, err
+	}
+	c.storeToken(&token)
+	return &token, nil
+}
+
+// RevokeToken revokes the current access token.
+func (c *Client) RevokeToken(ctx context.Context) error {
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+
+	return c.post(ctx, "/oauth/revoke", map[string]string{
+		"token":         token,
+		"client_id":     c.clientID,
+		"client_secret": c.clientSecret,
+	}, nil)
+}
+
+func (c *Client) storeToken(t *Token) {
+	c.mu.Lock()
+	c.accessToken = t.AccessToken
+	c.refreshToken = t.RefreshToken
+	c.mu.Unlock()
+	if c.onToken != nil {
+		c.onToken(*t)
+	}
+}
+
+func errorAs(err error, target **APIError) bool {
+	return errors.As(err, target)
 }

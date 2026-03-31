@@ -326,6 +326,16 @@ type SearchIDResult struct {
 	IDs           IDs    `json:"ids"`
 }
 
+// DeviceCode holds the response from the PIN/device code request.
+type DeviceCode struct {
+	Result          string `json:"result"`
+	DeviceCode      string `json:"device_code"`
+	UserCode        string `json:"user_code"`
+	VerificationURL string `json:"verification_url"`
+	ExpiresIn       int    `json:"expires_in"`
+	Interval        int    `json:"interval"`
+}
+
 // CalendarShow represents a show in the TV calendar.
 type CalendarShow struct {
 	Title   string `json:"title"`

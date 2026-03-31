@@ -693,6 +693,190 @@ func TestFieldsParam(t *testing.T) {
 	}
 }
 
+// OAuth2 tests.
+
+func TestGeneratePKCE(t *testing.T) {
+	t.Parallel()
+	pkce, err := mal.GeneratePKCE()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pkce.CodeVerifier == "" {
+		t.Fatal("CodeVerifier is empty")
+	}
+	if pkce.CodeChallenge == "" {
+		t.Fatal("CodeChallenge is empty")
+	}
+	// PKCE verifier should be base64url-encoded 64 bytes ≈ 86 chars.
+	if len(pkce.CodeVerifier) < 43 {
+		t.Errorf("CodeVerifier too short: %d", len(pkce.CodeVerifier))
+	}
+	// Two calls should produce different verifiers.
+	pkce2, _ := mal.GeneratePKCE()
+	if pkce.CodeVerifier == pkce2.CodeVerifier {
+		t.Error("two PKCE calls produced the same verifier")
+	}
+}
+
+func TestAuthorizationURL(t *testing.T) {
+	t.Parallel()
+	authSrv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	t.Cleanup(authSrv.Close)
+
+	c := mal.New("my-client-id", mal.WithAuthURL(authSrv.URL))
+	pkce := &mal.PKCEChallenge{
+		CodeVerifier:  "test-verifier",
+		CodeChallenge: "test-challenge",
+	}
+	u := c.AuthorizationURL("mystate", pkce)
+	if !strings.Contains(u, "client_id=my-client-id") {
+		t.Errorf("URL missing client_id: %s", u)
+	}
+	if !strings.Contains(u, "code_challenge=test-challenge") {
+		t.Errorf("URL missing code_challenge: %s", u)
+	}
+	if !strings.Contains(u, "code_challenge_method=S256") {
+		t.Errorf("URL missing code_challenge_method: %s", u)
+	}
+	if !strings.Contains(u, "state=mystate") {
+		t.Errorf("URL missing state: %s", u)
+	}
+	if !strings.Contains(u, "response_type=code") {
+		t.Errorf("URL missing response_type: %s", u)
+	}
+}
+
+func TestExchangeCode(t *testing.T) {
+	t.Parallel()
+	authSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/token" {
+			t.Errorf("path = %q, want /token", r.URL.Path)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		if r.PostForm.Get("grant_type") != "authorization_code" {
+			t.Errorf("grant_type = %q", r.PostForm.Get("grant_type"))
+		}
+		if r.PostForm.Get("code") != "auth-code-123" {
+			t.Errorf("code = %q", r.PostForm.Get("code"))
+		}
+		if r.PostForm.Get("code_verifier") != "test-verifier" {
+			t.Errorf("code_verifier = %q", r.PostForm.Get("code_verifier"))
+		}
+		if r.PostForm.Get("client_id") != "cid" {
+			t.Errorf("client_id = %q", r.PostForm.Get("client_id"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"mal-access","token_type":"Bearer","expires_in":2592000,"refresh_token":"mal-refresh"}`))
+	}))
+	t.Cleanup(authSrv.Close)
+
+	var callbackToken mal.Token
+	c := mal.New("cid",
+		mal.WithAuthURL(authSrv.URL),
+		mal.WithTokenCallback(func(tok mal.Token) { callbackToken = tok }),
+	)
+	pkce := &mal.PKCEChallenge{CodeVerifier: "test-verifier", CodeChallenge: "test-challenge"}
+	tok, err := c.ExchangeCode(context.Background(), "auth-code-123", pkce, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok.AccessToken != "mal-access" {
+		t.Errorf("AccessToken = %q, want %q", tok.AccessToken, "mal-access")
+	}
+	if tok.RefreshToken != "mal-refresh" {
+		t.Errorf("RefreshToken = %q, want %q", tok.RefreshToken, "mal-refresh")
+	}
+	if callbackToken.AccessToken != "mal-access" {
+		t.Errorf("callback AccessToken = %q, want %q", callbackToken.AccessToken, "mal-access")
+	}
+}
+
+func TestRefreshToken(t *testing.T) {
+	t.Parallel()
+	authSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		if r.PostForm.Get("grant_type") != "refresh_token" {
+			t.Errorf("grant_type = %q, want refresh_token", r.PostForm.Get("grant_type"))
+		}
+		if r.PostForm.Get("refresh_token") != "old-rt" {
+			t.Errorf("refresh_token = %q, want old-rt", r.PostForm.Get("refresh_token"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"new-access","refresh_token":"new-refresh"}`))
+	}))
+	t.Cleanup(authSrv.Close)
+
+	c := mal.New("cid", mal.WithAuthURL(authSrv.URL), mal.WithRefreshToken("old-rt"))
+	tok, err := c.RefreshToken(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok.AccessToken != "new-access" {
+		t.Errorf("AccessToken = %q, want %q", tok.AccessToken, "new-access")
+	}
+}
+
+func TestRefreshTokenMissing(t *testing.T) {
+	t.Parallel()
+	c := mal.New("cid")
+	_, err := c.RefreshToken(context.Background())
+	if err == nil {
+		t.Fatal("expected error when no refresh token set")
+	}
+}
+
+func TestBearerTokenOverClientID(t *testing.T) {
+	t.Parallel()
+	var gotAuth, gotClientID string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		gotClientID = r.Header.Get("X-MAL-CLIENT-ID")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id": 1}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	c := mal.New("cid", mal.WithBaseURL(srv.URL), mal.WithAccessToken("my-tok"))
+	_, err := c.GetAnime(context.Background(), 1, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotAuth != "Bearer my-tok" {
+		t.Errorf("Authorization = %q, want %q", gotAuth, "Bearer my-tok")
+	}
+	if gotClientID != "" {
+		t.Errorf("X-MAL-CLIENT-ID = %q, want empty when token present", gotClientID)
+	}
+}
+
+func TestClientIDFallback(t *testing.T) {
+	t.Parallel()
+	var gotAuth, gotClientID string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		gotClientID = r.Header.Get("X-MAL-CLIENT-ID")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id": 1}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	c := mal.New("cid", mal.WithBaseURL(srv.URL))
+	_, err := c.GetAnime(context.Background(), 1, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotAuth != "" {
+		t.Errorf("Authorization = %q, want empty when no token", gotAuth)
+	}
+	if gotClientID != "cid" {
+		t.Errorf("X-MAL-CLIENT-ID = %q, want %q", gotClientID, "cid")
+	}
+}
+
 func TestPaginationParams(t *testing.T) {
 	t.Parallel()
 	var gotLimit, gotOffset string

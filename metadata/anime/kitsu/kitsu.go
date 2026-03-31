@@ -3,16 +3,20 @@ package kitsu
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 )
 
 const (
 	defaultBaseURL   = "https://kitsu.io/api/edge"
+	defaultAuthURL   = "https://kitsu.io/api/oauth/token"
 	defaultTimeout   = 30 * time.Second
 	defaultUserAgent = "goenvoy/0.0.1"
 	jsonAPIMediaType = "application/vnd.api+json"
@@ -41,17 +45,50 @@ func WithBaseURL(u string) Option {
 	return func(cl *Client) { cl.rawBaseURL = u }
 }
 
+// WithAccessToken sets a pre-existing OAuth2 access token.
+func WithAccessToken(token string) Option {
+	return func(cl *Client) {
+		cl.mu.Lock()
+		cl.accessToken = token
+		cl.mu.Unlock()
+	}
+}
+
+// WithRefreshToken sets a pre-existing OAuth2 refresh token.
+func WithRefreshToken(token string) Option {
+	return func(cl *Client) {
+		cl.mu.Lock()
+		cl.refreshToken = token
+		cl.mu.Unlock()
+	}
+}
+
+// TokenCallback is called whenever a new token pair is obtained.
+type TokenCallback func(token Token)
+
+// WithTokenCallback sets a callback invoked when tokens change.
+func WithTokenCallback(cb TokenCallback) Option {
+	return func(cl *Client) { cl.onToken = cb }
+}
+
 // Client is a Kitsu API client. Authentication is not required for public reads.
 type Client struct {
 	rawBaseURL string
+	authURL    string
 	httpClient *http.Client
 	userAgent  string
+	onToken    TokenCallback
+
+	mu           sync.RWMutex
+	accessToken  string
+	refreshToken string
 }
 
 // New creates a Kitsu [Client].
 func New(opts ...Option) *Client {
 	c := &Client{
 		rawBaseURL: defaultBaseURL,
+		authURL:    defaultAuthURL,
 		httpClient: &http.Client{Timeout: defaultTimeout},
 		userAgent:  defaultUserAgent,
 	}
@@ -104,6 +141,13 @@ func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
 
 	req.Header.Set("Accept", jsonAPIMediaType)
 	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -256,4 +300,71 @@ func (c *Client) SearchUsers(ctx context.Context, query string, limit, offset in
 		"&page%5Blimit%5D=" + strconv.Itoa(limit) +
 		"&page%5Boffset%5D=" + strconv.Itoa(offset)
 	return getCollection[User](c, ctx, path)
+}
+
+// OAuth2.
+
+// Authenticate performs the resource owner password grant to obtain tokens.
+func (c *Client) Authenticate(ctx context.Context, username, password string) (*Token, error) {
+	data := url.Values{
+		"grant_type": {"password"},
+		"username":   {username},
+		"password":   {password},
+	}
+	return c.tokenRequest(ctx, data)
+}
+
+// RefreshToken uses the stored refresh token to obtain a new access token.
+func (c *Client) RefreshToken(ctx context.Context) (*Token, error) {
+	c.mu.RLock()
+	rt := c.refreshToken
+	c.mu.RUnlock()
+	if rt == "" {
+		return nil, errors.New("kitsu: no refresh token available")
+	}
+	data := url.Values{
+		"grant_type":    {"refresh_token"},
+		"refresh_token": {rt},
+	}
+	return c.tokenRequest(ctx, data)
+}
+
+func (c *Client) tokenRequest(ctx context.Context, data url.Values) (*Token, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.authURL,
+		strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("kitsu: create token request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("kitsu: token request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("kitsu: read token response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, &APIError{StatusCode: resp.StatusCode, Status: resp.Status, Body: string(body)}
+	}
+
+	var token Token
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("kitsu: decode token response: %w", err)
+	}
+
+	c.mu.Lock()
+	c.accessToken = token.AccessToken
+	c.refreshToken = token.RefreshToken
+	c.mu.Unlock()
+	if c.onToken != nil {
+		c.onToken(token)
+	}
+	return &token, nil
 }

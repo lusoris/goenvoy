@@ -151,13 +151,19 @@ func (c *Client) Resume(ctx context.Context) error {
 
 // PauseItem pauses a single download by its NZO ID.
 func (c *Client) PauseItem(ctx context.Context, nzoID string) error {
-	params := url.Values{"value": {nzoID}}
+	params := url.Values{
+		"name":  {"pause"},
+		"value": {nzoID},
+	}
 	return c.get(ctx, "queue", params, nil)
 }
 
 // ResumeItem resumes a single download by its NZO ID.
 func (c *Client) ResumeItem(ctx context.Context, nzoID string) error {
-	params := url.Values{"value": {nzoID}}
+	params := url.Values{
+		"name":  {"resume"},
+		"value": {nzoID},
+	}
 	return c.get(ctx, "queue", params, nil)
 }
 
@@ -173,7 +179,10 @@ func (c *Client) DeleteItem(ctx context.Context, nzoID string) error {
 // SetSpeedLimit sets the download speed limit.
 // Pass 0 to remove the limit. Value is in KiB/s or a percentage (e.g. "50%").
 func (c *Client) SetSpeedLimit(ctx context.Context, limit string) error {
-	params := url.Values{"value": {limit}}
+	params := url.Values{
+		"name":  {"speedlimit"},
+		"value": {limit},
+	}
 	return c.get(ctx, "config", params, nil)
 }
 

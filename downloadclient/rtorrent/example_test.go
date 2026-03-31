@@ -14,12 +14,12 @@ func Example() {
 
 	ctx := context.Background()
 
-	// Get rTorrent version
-	version, err := client.GetVersion(ctx)
+	// Get rTorrent system info
+	info, err := client.GetSystemInfo(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("rTorrent version: %s\n", version)
+	fmt.Printf("rTorrent: %s\n", info.LibraryVersion)
 
 	// Get download list
 	torrents, err := client.GetTorrents(ctx, "")

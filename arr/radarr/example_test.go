@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Radarr client
-	client := radarr.New("http://localhost:7878", "your-api-key")
+	client, err := radarr.New("http://localhost:7878", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 

@@ -569,3 +569,85 @@ func TestLoginError(t *testing.T) {
 		t.Fatalf("expected APIError, got %T: %v", err, err)
 	}
 }
+
+func TestTokenRefreshOn401(t *testing.T) {
+	t.Parallel()
+	loginCount := 0
+	requestCount := 0
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/login" {
+			loginCount++
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{
+				"status": "success",
+				"data":   map[string]any{"token": "jwt-token-" + string(rune('0'+loginCount))},
+			})
+			return
+		}
+		requestCount++
+		// First data request returns 401 (expired token), second succeeds.
+		if requestCount == 1 {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]any{"message": "token expired"})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"status": "success",
+			"data":   map[string]any{"id": float64(1), "name": "Test Series"},
+		})
+	}))
+	defer srv.Close()
+
+	c := tvdb.New("test-key", tvdb.WithBaseURL(srv.URL))
+	series, err := c.GetSeries(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetSeries: %v", err)
+	}
+	if series.Name != "Test Series" {
+		t.Errorf("Name = %q, want %q", series.Name, "Test Series")
+	}
+	// Should have logged in twice: once for initial token, once after 401.
+	if loginCount != 2 {
+		t.Errorf("loginCount = %d, want 2", loginCount)
+	}
+	// Should have made 2 data requests: first failed (401), second succeeded.
+	if requestCount != 2 {
+		t.Errorf("requestCount = %d, want 2", requestCount)
+	}
+}
+
+func TestTokenRefreshOn401LoginFails(t *testing.T) {
+	t.Parallel()
+	loginCount := 0
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/login" {
+			loginCount++
+			if loginCount == 1 {
+				// First login succeeds.
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]any{
+					"status": "success",
+					"data":   map[string]any{"token": "jwt-1"},
+				})
+				return
+			}
+			// Second login fails.
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]any{"message": "invalid"})
+			return
+		}
+		// Always return 401 for data requests.
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]any{"message": "token expired"})
+	}))
+	defer srv.Close()
+
+	c := tvdb.New("test-key", tvdb.WithBaseURL(srv.URL))
+	_, err := c.GetSeries(context.Background(), 1)
+	if err == nil {
+		t.Fatal("expected error when re-login fails")
+	}
+}

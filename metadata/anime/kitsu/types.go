@@ -185,3 +185,13 @@ type PageLinks struct {
 	Last  string `json:"last"`
 	Prev  string `json:"prev"`
 }
+
+// Token holds OAuth2 access and refresh tokens from Kitsu.
+type Token struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	Scope        string `json:"scope"`
+	CreatedAt    int64  `json:"created_at"`
+}

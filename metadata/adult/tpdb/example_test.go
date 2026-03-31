@@ -15,9 +15,9 @@ func Example() {
 	ctx := context.Background()
 
 	// Search for performers
-	results, err := client.SearchPerformers(ctx, "Jane Doe")
+	results, _, err := client.SearchPerformers(ctx, &tpdb.PerformerSearchParams{Query: "Jane Doe"})
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Found %d performers\n", len(results.Data))
+	fmt.Printf("Found %d performers\n", len(results))
 }

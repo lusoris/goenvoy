@@ -15,7 +15,7 @@ func Example() {
 	ctx := context.Background()
 
 	// Search by title
-	movie, err := client.GetByTitle(ctx, "The Matrix", nil)
+	movie, err := client.GetByTitle(ctx, "The Matrix", 0, "", "")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -20,14 +20,14 @@ func Example() {
 	}
 
 	// Get application version
-	version, err := client.GetVersion(ctx)
+	version, err := client.Version(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("qBittorrent version: %s\n", version)
 
 	// Get all torrents
-	torrents, err := client.GetTorrents(ctx, nil)
+	torrents, err := client.ListTorrents(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -308,3 +308,11 @@ type forumTopicDetailResponse struct {
 	Data   ForumTopicDetail `json:"data"`
 	Paging Paging           `json:"paging"`
 }
+
+// Token holds OAuth2 access and refresh tokens.
+type Token struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+}

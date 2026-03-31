@@ -10,7 +10,10 @@ import (
 
 func Example() {
 	// Create a new Sonarr client
-	client := sonarr.New("http://localhost:8989", "your-api-key")
+	client, err := sonarr.New("http://localhost:8989", "your-api-key")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 
