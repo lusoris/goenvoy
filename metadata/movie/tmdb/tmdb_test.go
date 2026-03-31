@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/movie/tmdb"
@@ -374,7 +375,7 @@ func TestDiscoverMovies(t *testing.T) {
 	defer srv.Close()
 
 	c := newClient(t, srv)
-	got, err := c.DiscoverMovies(context.Background(), "en-US", 1, "&sort_by=popularity.desc")
+	got, err := c.DiscoverMovies(context.Background(), "en-US", 1, url.Values{"sort_by": {"popularity.desc"}})
 	if err != nil {
 		t.Fatalf("DiscoverMovies: %v", err)
 	}
@@ -609,7 +610,7 @@ func TestDiscoverTV(t *testing.T) {
 	defer srv.Close()
 
 	c := newClient(t, srv)
-	got, err := c.DiscoverTV(context.Background(), "en-US", 1, "&sort_by=popularity.desc")
+	got, err := c.DiscoverTV(context.Background(), "en-US", 1, url.Values{"sort_by": {"popularity.desc"}})
 	if err != nil {
 		t.Fatalf("DiscoverTV: %v", err)
 	}

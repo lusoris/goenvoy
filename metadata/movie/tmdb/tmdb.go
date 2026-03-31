@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -303,10 +304,18 @@ func (c *Client) GetPersonExternalIDs(ctx context.Context, id int) (*ExternalIDs
 }
 
 // DiscoverMovies returns a paginated list of movies matching discover filters.
-// Filter parameters are appended as query string (e.g. "&sort_by=popularity.desc&year=2024").
-func (c *Client) DiscoverMovies(ctx context.Context, language string, page int, extraParams string) (*PaginatedResult[MovieResult], error) {
+// Extra filter parameters are safely encoded and appended to the query string.
+func (c *Client) DiscoverMovies(ctx context.Context, language string, page int, extraParams url.Values) (*PaginatedResult[MovieResult], error) {
 	var out PaginatedResult[MovieResult]
-	path := fmt.Sprintf("/discover/movie?language=%s&page=%d%s", url.QueryEscape(language), page, extraParams)
+	params := url.Values{}
+	params.Set("language", language)
+	params.Set("page", strconv.Itoa(page))
+	for k, vs := range extraParams {
+		for _, v := range vs {
+			params.Add(k, v)
+		}
+	}
+	path := "/discover/movie?" + params.Encode()
 	if err := c.get(ctx, path, &out); err != nil {
 		return nil, err
 	}
@@ -314,9 +323,18 @@ func (c *Client) DiscoverMovies(ctx context.Context, language string, page int, 
 }
 
 // DiscoverTV returns a paginated list of TV shows matching discover filters.
-func (c *Client) DiscoverTV(ctx context.Context, language string, page int, extraParams string) (*PaginatedResult[TVResult], error) {
+// Extra filter parameters are safely encoded and appended to the query string.
+func (c *Client) DiscoverTV(ctx context.Context, language string, page int, extraParams url.Values) (*PaginatedResult[TVResult], error) {
 	var out PaginatedResult[TVResult]
-	path := fmt.Sprintf("/discover/tv?language=%s&page=%d%s", url.QueryEscape(language), page, extraParams)
+	params := url.Values{}
+	params.Set("language", language)
+	params.Set("page", strconv.Itoa(page))
+	for k, vs := range extraParams {
+		for _, v := range vs {
+			params.Add(k, v)
+		}
+	}
+	path := "/discover/tv?" + params.Encode()
 	if err := c.get(ctx, path, &out); err != nil {
 		return nil, err
 	}
@@ -328,7 +346,7 @@ func (c *Client) DiscoverTV(ctx context.Context, language string, page int, extr
 // timeWindow can be "day" or "week".
 func (c *Client) GetTrending(ctx context.Context, mediaType, timeWindow, language string, page int) (*PaginatedResult[MultiResult], error) {
 	var out PaginatedResult[MultiResult]
-	path := fmt.Sprintf("/trending/%s/%s?language=%s&page=%d", mediaType, timeWindow, url.QueryEscape(language), page)
+	path := fmt.Sprintf("/trending/%s/%s?language=%s&page=%d", url.PathEscape(mediaType), url.PathEscape(timeWindow), url.QueryEscape(language), page)
 	if err := c.get(ctx, path, &out); err != nil {
 		return nil, err
 	}

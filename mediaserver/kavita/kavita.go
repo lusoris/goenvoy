@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type Client struct {
 	baseURL string
 	apiKey  string
 	token   string
+	mu      sync.RWMutex
 	http    *http.Client
 }
 
@@ -81,12 +83,17 @@ func (c *Client) Authenticate(ctx context.Context) error {
 	if err := json.Unmarshal(rb, &result); err != nil {
 		return err
 	}
+	c.mu.Lock()
 	c.token = result.Token
+	c.mu.Unlock()
 	return nil
 }
 
 func (c *Client) do(ctx context.Context, method, path string, body, v any) error {
-	if c.token == "" {
+	c.mu.RLock()
+	needAuth := c.token == ""
+	c.mu.RUnlock()
+	if needAuth {
 		if err := c.Authenticate(ctx); err != nil {
 			return err
 		}
@@ -124,6 +131,12 @@ func (c *Client) do(ctx context.Context, method, path string, body, v any) error
 	return json.Unmarshal(rb, v)
 }
 
+func (c *Client) getToken() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.token
+}
+
 func (c *Client) send(ctx context.Context, method, path string, body any) (*http.Response, error) {
 	var reqBody io.Reader = http.NoBody
 	if body != nil {
@@ -138,7 +151,7 @@ func (c *Client) send(ctx context.Context, method, path string, body any) (*http
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Authorization", "Bearer "+c.getToken())
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
