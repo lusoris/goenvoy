@@ -1,0 +1,19 @@
+package googlebooks_test
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/lusoris/goenvoy/metadata/book/googlebooks"
+)
+
+func Example() {
+	c := googlebooks.New("your-api-key")
+
+	results, err := c.Search(context.Background(), "flowers for algernon")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Found: %d\n", results.TotalItems)
+}

@@ -16,6 +16,15 @@ Each module is versioned independently following [Semantic Versioning](https://s
 - **OpenSubtitles** (`metadata/movie/opensubtitles`): Subtitle search and download — search, features, languages, formats, user info, popular, latest.
 - **Last.fm** (`metadata/music/lastfm`): Music metadata — artist/album/track info, similar artists, charts, tags, search.
 - **Discogs** (`metadata/music/discogs`): Music database — releases, artists, labels, master releases, search.
+- **Kavita** (`mediaserver/kavita`): Manga/comic/ebook reader with JWT auth — libraries, series, volumes, chapters, collections, reading lists, search.
+- **Tdarr** (`mediaserver/tdarr`): Media transcoding server — status, nodes, workers, file search, resolution stats, scan management.
+- **Mylar3** (`arr/mylar`): Comic book automation — comics, issues, wanted, history, story arcs, reading lists, providers.
+- **FlareSolverr** (`arr/flaresolverr`): Cloudflare bypass proxy — GET/POST requests, session management.
+- **Gotify** (`notification/gotify`): Push notification server — messages, applications, clients, users, health.
+- **TheAudioDB** (`metadata/music/audiodb`): Music metadata — artist/album/track search and lookup, music videos, discography, charts, trending.
+- **Open Library** (`metadata/book/openlibrary`): Book metadata — search, works, editions, authors, subjects, ISBN lookup.
+- **Google Books** (`metadata/book/googlebooks`): Book search and volume details — search with filters, volume retrieval.
+- New `notification/` category with shared notification types.
 - OAuth2 support for Trakt (device code, auth code, refresh, revoke).
 - OAuth2 support for Simkl (device PIN, auth code exchange).
 - OAuth2/PKCE support for MAL (authorization URL, code exchange, refresh).

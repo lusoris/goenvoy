@@ -8,10 +8,11 @@ Designed as a **multi-module monorepo** — import only what you need, from a si
 
 | Category | Module | Services |
 |---|---|---|
-| **Arr Stack** | `github.com/lusoris/goenvoy/arr` | Sonarr, Radarr, Lidarr, Readarr, Whisparr (v2+v3), Prowlarr, Bazarr, Seerr, Autobrr |
-| **Metadata** | `github.com/lusoris/goenvoy/metadata` | TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, AniList, Kitsu, AniDB, MAL, Trakt, Simkl, MusicBrainz, StashBox, TPDB, OpenSubtitles, Last.fm, Discogs |
+| **Arr Stack** | `github.com/lusoris/goenvoy/arr` | Sonarr, Radarr, Lidarr, Readarr, Whisparr (v2+v3), Prowlarr, Bazarr, Seerr, Autobrr, Mylar3, FlareSolverr |
+| **Metadata** | `github.com/lusoris/goenvoy/metadata` | TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, AniList, Kitsu, AniDB, MAL, Trakt, Simkl, MusicBrainz, StashBox, TPDB, OpenSubtitles, Last.fm, Discogs, TheAudioDB, Open Library, Google Books |
 | **Download Clients** | `github.com/lusoris/goenvoy/downloadclient` | qBittorrent, Transmission, Deluge, rTorrent, SABnzbd, NZBGet |
-| **Media Servers** | `github.com/lusoris/goenvoy/mediaserver` | Plex, Jellyfin, Emby, Tautulli, Audiobookshelf, Komga, Navidrome |
+| **Media Servers** | `github.com/lusoris/goenvoy/mediaserver` | Plex, Jellyfin, Emby, Tautulli, Audiobookshelf, Komga, Navidrome, Kavita, Tdarr |
+| **Notifications** | `github.com/lusoris/goenvoy/notification` | Gotify |
 | **Anime** | `github.com/lusoris/goenvoy/anime` | Shoko Server |
 | **Adult Media** | `github.com/lusoris/goenvoy/stash` | StashApp |
 
@@ -87,7 +88,7 @@ goenvoy/
 Requires Go 1.26+. See [CONTRIBUTING.md](CONTRIBUTING.md) for full details.
 
 ```bash
-# Set up workspace (local dev, links all 46 modules)
+# Set up workspace (local dev, links all 56 modules)
 go work init && find . -name 'go.mod' -not -path './.workingdir/*' -exec dirname {} \; | xargs go work use
 
 # Run all tests
