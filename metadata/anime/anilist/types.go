@@ -183,7 +183,7 @@ type GraphQLError struct {
 
 // APIError is returned when the AniList API responds with one or more GraphQL errors.
 type APIError struct {
-	Errors []GraphQLError
+	Errors []GraphQLError `json:"errors"`
 }
 
 func (e *APIError) Error() string {

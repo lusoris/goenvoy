@@ -29,11 +29,6 @@ type Torrent struct {
 	Comment             string  `json:"comment"`
 }
 
-// Version holds Deluge daemon version information.
-type Version struct {
-	Version string
-}
-
 // SessionStatus holds session statistics.
 type SessionStatus struct {
 	DownloadRate           int64 `json:"payload_download_rate"`
