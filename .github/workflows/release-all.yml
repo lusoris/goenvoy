@@ -1,0 +1,103 @@
+name: Release All Modules
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Semver version to release (e.g. v1.1.0)'
+        required: true
+        type: string
+      dry-run:
+        description: 'Dry run — validate only, skip tag and release creation'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release all modules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Discover modules
+        id: discover
+        run: |
+          modules=$(find . -name 'go.mod' -not -path './.workingdir/*' -exec dirname {} \; | sed 's|^\./||' | sort)
+          count=$(echo "$modules" | wc -l)
+          echo "Found $count modules"
+          echo "$modules"
+          echo "modules<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$modules" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Validate all modules
+        run: |
+          failed=0
+          while IFS= read -r module; do
+            echo "::group::Validating $module"
+            if ! (cd "$module" && go build ./... && go vet ./...); then
+              echo "::error::Validation failed for $module"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done <<< "${{ steps.discover.outputs.modules }}"
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::One or more modules failed validation"
+            exit 1
+          fi
+
+      - name: Create tags and releases
+        if: ${{ !inputs.dry-run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ inputs.version }}"
+
+          # Validate version format
+          if ! echo "$version" | grep -qP '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid version format: $version (expected vX.Y.Z)"
+            exit 1
+          fi
+
+          created=0
+          skipped=0
+
+          while IFS= read -r module; do
+            tag="${module}/${version}"
+
+            # Create tag if it doesn't exist
+            if git rev-parse "refs/tags/$tag" >/dev/null 2>&1; then
+              echo "Tag $tag already exists"
+            else
+              git tag "$tag"
+              git push origin "$tag"
+              echo "Created tag $tag"
+            fi
+
+            # Create release if it doesn't exist
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "Release $tag already exists — skipped"
+              skipped=$((skipped + 1))
+            else
+              gh release create "$tag" \
+                --title "$module $version" \
+                --generate-notes
+              echo "Created release $tag"
+              created=$((created + 1))
+            fi
+          done <<< "${{ steps.discover.outputs.modules }}"
+
+          echo "### Release Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** $version" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Created:** $created" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Skipped (already existed):** $skipped" >> "$GITHUB_STEP_SUMMARY"

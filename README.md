@@ -1,8 +1,6 @@
 # goenvoy
 
-[![CI](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml/badge.svg)](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/lusoris/goenvoy.svg)](https://pkg.go.dev/github.com/lusoris/goenvoy)
-[![Go Report Card](https://goreportcard.com/badge/github.com/lusoris/goenvoy)](https://goreportcard.com/report/github.com/lusoris/goenvoy)
+[![CI](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 
