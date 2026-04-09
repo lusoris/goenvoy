@@ -460,8 +460,8 @@ type WatchProviderCountry struct {
 
 // WatchProvidersResponse contains watch provider information.
 type WatchProvidersResponse struct {
-	ID      int                              `json:"id"`
-	Results map[string]WatchProviderCountry  `json:"results,omitempty"`
+	ID      int                             `json:"id"`
+	Results map[string]WatchProviderCountry `json:"results,omitempty"`
 }
 
 // AlternativeTitle represents an alternative title.
@@ -473,8 +473,8 @@ type AlternativeTitle struct {
 
 // AlternativeTitlesResponse contains alternative titles.
 type AlternativeTitlesResponse struct {
-	ID     int                `json:"id"`
-	Titles []AlternativeTitle `json:"titles,omitempty"`
+	ID      int                `json:"id"`
+	Titles  []AlternativeTitle `json:"titles,omitempty"`
 	Results []AlternativeTitle `json:"results,omitempty"`
 }
 
@@ -525,8 +525,8 @@ type AccountStates struct {
 
 // ContentRating represents a content rating entry.
 type ContentRating struct {
-	ISO31661    string `json:"iso_3166_1,omitempty"`
-	Rating      string `json:"rating,omitempty"`
+	ISO31661    string   `json:"iso_3166_1,omitempty"`
+	Rating      string   `json:"rating,omitempty"`
 	Descriptors []string `json:"descriptors,omitempty"`
 }
 
@@ -538,13 +538,13 @@ type ContentRatingsResponse struct {
 
 // EpisodeGroup represents an episode group.
 type EpisodeGroup struct {
-	Description  string  `json:"description,omitempty"`
-	EpisodeCount int     `json:"episode_count,omitempty"`
-	GroupCount   int     `json:"group_count,omitempty"`
-	ID           string  `json:"id,omitempty"`
-	Name         string  `json:"name,omitempty"`
+	Description  string   `json:"description,omitempty"`
+	EpisodeCount int      `json:"episode_count,omitempty"`
+	GroupCount   int      `json:"group_count,omitempty"`
+	ID           string   `json:"id,omitempty"`
+	Name         string   `json:"name,omitempty"`
 	Network      *Network `json:"network,omitempty"`
-	Type         int     `json:"type,omitempty"`
+	Type         int      `json:"type,omitempty"`
 }
 
 // EpisodeGroupsResponse contains episode groups for a TV show.
@@ -624,50 +624,50 @@ type EpisodeDetails struct {
 
 // PersonCastCredit represents a cast credit for a person.
 type PersonCastCredit struct {
-	ID               int     `json:"id"`
-	Title            string  `json:"title,omitempty"`
-	Name             string  `json:"name,omitempty"`
-	OriginalTitle    string  `json:"original_title,omitempty"`
-	OriginalName     string  `json:"original_name,omitempty"`
-	Character        string  `json:"character,omitempty"`
-	Overview         string  `json:"overview,omitempty"`
-	PosterPath       string  `json:"poster_path,omitempty"`
-	BackdropPath     string  `json:"backdrop_path,omitempty"`
-	MediaType        string  `json:"media_type,omitempty"`
-	ReleaseDate      string  `json:"release_date,omitempty"`
-	FirstAirDate     string  `json:"first_air_date,omitempty"`
-	VoteAverage      float64 `json:"vote_average,omitempty"`
-	VoteCount        int     `json:"vote_count,omitempty"`
-	Popularity       float64 `json:"popularity,omitempty"`
-	GenreIDs         []int   `json:"genre_ids,omitempty"`
-	CreditID         string  `json:"credit_id,omitempty"`
-	Adult            bool    `json:"adult,omitempty"`
-	EpisodeCount     int     `json:"episode_count,omitempty"`
-	Order            int     `json:"order,omitempty"`
+	ID            int     `json:"id"`
+	Title         string  `json:"title,omitempty"`
+	Name          string  `json:"name,omitempty"`
+	OriginalTitle string  `json:"original_title,omitempty"`
+	OriginalName  string  `json:"original_name,omitempty"`
+	Character     string  `json:"character,omitempty"`
+	Overview      string  `json:"overview,omitempty"`
+	PosterPath    string  `json:"poster_path,omitempty"`
+	BackdropPath  string  `json:"backdrop_path,omitempty"`
+	MediaType     string  `json:"media_type,omitempty"`
+	ReleaseDate   string  `json:"release_date,omitempty"`
+	FirstAirDate  string  `json:"first_air_date,omitempty"`
+	VoteAverage   float64 `json:"vote_average,omitempty"`
+	VoteCount     int     `json:"vote_count,omitempty"`
+	Popularity    float64 `json:"popularity,omitempty"`
+	GenreIDs      []int   `json:"genre_ids,omitempty"`
+	CreditID      string  `json:"credit_id,omitempty"`
+	Adult         bool    `json:"adult,omitempty"`
+	EpisodeCount  int     `json:"episode_count,omitempty"`
+	Order         int     `json:"order,omitempty"`
 }
 
 // PersonCrewCredit represents a crew credit for a person.
 type PersonCrewCredit struct {
-	ID               int     `json:"id"`
-	Title            string  `json:"title,omitempty"`
-	Name             string  `json:"name,omitempty"`
-	OriginalTitle    string  `json:"original_title,omitempty"`
-	OriginalName     string  `json:"original_name,omitempty"`
-	Department       string  `json:"department,omitempty"`
-	Job              string  `json:"job,omitempty"`
-	Overview         string  `json:"overview,omitempty"`
-	PosterPath       string  `json:"poster_path,omitempty"`
-	BackdropPath     string  `json:"backdrop_path,omitempty"`
-	MediaType        string  `json:"media_type,omitempty"`
-	ReleaseDate      string  `json:"release_date,omitempty"`
-	FirstAirDate     string  `json:"first_air_date,omitempty"`
-	VoteAverage      float64 `json:"vote_average,omitempty"`
-	VoteCount        int     `json:"vote_count,omitempty"`
-	Popularity       float64 `json:"popularity,omitempty"`
-	GenreIDs         []int   `json:"genre_ids,omitempty"`
-	CreditID         string  `json:"credit_id,omitempty"`
-	Adult            bool    `json:"adult,omitempty"`
-	EpisodeCount     int     `json:"episode_count,omitempty"`
+	ID            int     `json:"id"`
+	Title         string  `json:"title,omitempty"`
+	Name          string  `json:"name,omitempty"`
+	OriginalTitle string  `json:"original_title,omitempty"`
+	OriginalName  string  `json:"original_name,omitempty"`
+	Department    string  `json:"department,omitempty"`
+	Job           string  `json:"job,omitempty"`
+	Overview      string  `json:"overview,omitempty"`
+	PosterPath    string  `json:"poster_path,omitempty"`
+	BackdropPath  string  `json:"backdrop_path,omitempty"`
+	MediaType     string  `json:"media_type,omitempty"`
+	ReleaseDate   string  `json:"release_date,omitempty"`
+	FirstAirDate  string  `json:"first_air_date,omitempty"`
+	VoteAverage   float64 `json:"vote_average,omitempty"`
+	VoteCount     int     `json:"vote_count,omitempty"`
+	Popularity    float64 `json:"popularity,omitempty"`
+	GenreIDs      []int   `json:"genre_ids,omitempty"`
+	CreditID      string  `json:"credit_id,omitempty"`
+	Adult         bool    `json:"adult,omitempty"`
+	EpisodeCount  int     `json:"episode_count,omitempty"`
 }
 
 // PersonCredits contains cast and crew credits for a person.
@@ -692,11 +692,11 @@ type TaggedImage struct {
 
 // CollectionResult represents a collection in search results.
 type CollectionResult struct {
-	ID           int    `json:"id"`
-	Name         string `json:"name,omitempty"`
-	PosterPath   string `json:"poster_path,omitempty"`
-	BackdropPath string `json:"backdrop_path,omitempty"`
-	Adult        bool   `json:"adult,omitempty"`
+	ID               int    `json:"id"`
+	Name             string `json:"name,omitempty"`
+	PosterPath       string `json:"poster_path,omitempty"`
+	BackdropPath     string `json:"backdrop_path,omitempty"`
+	Adult            bool   `json:"adult,omitempty"`
 	OriginalLanguage string `json:"original_language,omitempty"`
 	OriginalName     string `json:"original_name,omitempty"`
 	Overview         string `json:"overview,omitempty"`
@@ -741,19 +741,19 @@ type CollectionDetails struct {
 
 // AccountDetails contains the account information for the authenticated user.
 type AccountDetails struct {
-	ID           int    `json:"id"`
-	Name         string `json:"name,omitempty"`
-	Username     string `json:"username,omitempty"`
-	ISO6391      string `json:"iso_639_1,omitempty"`
-	ISO31661     string `json:"iso_3166_1,omitempty"`
-	IncludeAdult bool   `json:"include_adult,omitempty"`
+	ID           int     `json:"id"`
+	Name         string  `json:"name,omitempty"`
+	Username     string  `json:"username,omitempty"`
+	ISO6391      string  `json:"iso_639_1,omitempty"`
+	ISO31661     string  `json:"iso_3166_1,omitempty"`
+	IncludeAdult bool    `json:"include_adult,omitempty"`
 	Avatar       *Avatar `json:"avatar,omitempty"`
 }
 
 // Avatar contains avatar information.
 type Avatar struct {
-	Gravatar *Gravatar `json:"gravatar,omitempty"`
-	TMDb     *TMDbAvatar `json:"tmdb,omitempty"`
+	Gravatar *Gravatar   `json:"gravatar,omitempty"`
+	TMDb     *UserAvatar `json:"tmdb,omitempty"`
 }
 
 // Gravatar contains a gravatar hash.
@@ -761,8 +761,8 @@ type Gravatar struct {
 	Hash string `json:"hash,omitempty"`
 }
 
-// TMDbAvatar contains a TMDb avatar path.
-type TMDbAvatar struct {
+// UserAvatar contains a TMDb avatar path.
+type UserAvatar struct {
 	AvatarPath string `json:"avatar_path,omitempty"`
 }
 
@@ -860,13 +860,13 @@ type WatchProviderListResponse struct {
 
 // CompanyDetails contains full details for a production company.
 type CompanyDetails struct {
-	ID            int    `json:"id"`
-	Name          string `json:"name,omitempty"`
-	Description   string `json:"description,omitempty"`
-	Headquarters  string `json:"headquarters,omitempty"`
-	Homepage      string `json:"homepage,omitempty"`
-	LogoPath      string `json:"logo_path,omitempty"`
-	OriginCountry string `json:"origin_country,omitempty"`
+	ID            int                `json:"id"`
+	Name          string             `json:"name,omitempty"`
+	Description   string             `json:"description,omitempty"`
+	Headquarters  string             `json:"headquarters,omitempty"`
+	Homepage      string             `json:"homepage,omitempty"`
+	LogoPath      string             `json:"logo_path,omitempty"`
+	OriginCountry string             `json:"origin_country,omitempty"`
 	ParentCompany *ProductionCompany `json:"parent_company,omitempty"`
 }
 
@@ -878,10 +878,10 @@ type ChangeItem struct {
 
 // ChangesResponse contains a list of changed items.
 type ChangesResponse struct {
-	Results    []ChangeItem `json:"results,omitempty"`
-	Page       int          `json:"page"`
-	TotalPages int          `json:"total_pages"`
-	TotalResults int        `json:"total_results"`
+	Results      []ChangeItem `json:"results,omitempty"`
+	Page         int          `json:"page"`
+	TotalPages   int          `json:"total_pages"`
+	TotalResults int          `json:"total_results"`
 }
 
 // Language represents a language from the configuration endpoint.

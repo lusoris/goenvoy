@@ -144,7 +144,7 @@ func TestWithUserAgent(t *testing.T) {
 	}
 }
 
-// --- Release Ratings ---
+// Release Ratings.
 
 func TestGetReleaseRatingByUser(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
@@ -191,7 +191,7 @@ func TestDeleteReleaseRating(t *testing.T) {
 }
 
 func TestGetCommunityReleaseRating(t *testing.T) {
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
 		json.NewEncoder(w).Encode(CommunityRating{ReleaseID: 249504, Rating: Rating{Count: 100, Average: 4.5}})
 	})
 	cr, err := c.GetCommunityReleaseRating(context.Background(), 249504)
@@ -216,7 +216,7 @@ func TestGetReleaseStats(t *testing.T) {
 	}
 }
 
-// --- User Identity ---
+// User Identity.
 
 func TestGetIdentity(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
@@ -294,7 +294,7 @@ func TestGetUserContributions(t *testing.T) {
 	}
 }
 
-// --- User Collection ---
+// User Collection.
 
 func TestGetCollectionFolders(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
@@ -485,7 +485,7 @@ func TestGetCollectionValue(t *testing.T) {
 	}
 }
 
-// --- User Wantlist ---
+// User Wantlist.
 
 func TestGetWantlist(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
@@ -548,7 +548,7 @@ func TestDeleteFromWantlist(t *testing.T) {
 	}
 }
 
-// --- User Lists ---
+// User Lists.
 
 func TestGetUserLists(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
@@ -585,7 +585,7 @@ func TestGetList(t *testing.T) {
 	}
 }
 
-// --- Marketplace ---
+// Marketplace.
 
 func TestGetInventory(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
@@ -805,7 +805,7 @@ func TestGetMarketplaceReleaseStats(t *testing.T) {
 	}
 }
 
-// --- Inventory Export ---
+// Inventory Export.
 
 func TestExportInventory(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
@@ -861,7 +861,7 @@ func TestDownloadExport(t *testing.T) {
 	}
 }
 
-// --- doJSON / post / put / del errors ---
+// doJSON / post / put / del errors.
 
 func TestPostError(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {

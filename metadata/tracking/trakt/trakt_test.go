@@ -2639,7 +2639,7 @@ func TestDeleteNote(t *testing.T) {
 
 func TestGetLastActivities(t *testing.T) {
 	ts := newAuthServer(t, http.MethodGet, "/sync/last_activities", "la-key", "la-tok", trakt.LastActivities{
-		All: "2024-06-15T20:00:00.000Z",
+		All:    "2024-06-15T20:00:00.000Z",
 		Movies: trakt.LastActivityTimes{WatchedAt: "2024-06-14T10:00:00.000Z"},
 	})
 	defer ts.Close()

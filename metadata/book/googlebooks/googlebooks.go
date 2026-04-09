@@ -195,7 +195,7 @@ func (c *Client) GetUserBookshelf(ctx context.Context, userID string, shelfID in
 }
 
 // GetUserBookshelfVolumes returns volumes on a public bookshelf.
-func (c *Client) GetUserBookshelfVolumes(ctx context.Context, userID string, shelfID int, startIndex, maxResults int) (*VolumesResponse, error) {
+func (c *Client) GetUserBookshelfVolumes(ctx context.Context, userID string, shelfID, startIndex, maxResults int) (*VolumesResponse, error) {
 	params := url.Values{}
 	if startIndex > 0 {
 		params.Set("startIndex", strconv.Itoa(startIndex))
@@ -244,7 +244,7 @@ func (c *Client) GetMyLibraryBookshelf(ctx context.Context, shelfID int) (*Books
 }
 
 // GetMyLibraryBookshelfVolumes returns volumes on an authenticated user's bookshelf.
-func (c *Client) GetMyLibraryBookshelfVolumes(ctx context.Context, shelfID int, startIndex, maxResults int) (*VolumesResponse, error) {
+func (c *Client) GetMyLibraryBookshelfVolumes(ctx context.Context, shelfID, startIndex, maxResults int) (*VolumesResponse, error) {
 	params := url.Values{}
 	if startIndex > 0 {
 		params.Set("startIndex", strconv.Itoa(startIndex))

@@ -577,17 +577,17 @@ type UpdatedShow struct {
 
 // Comment represents a comment/review on a media item.
 type Comment struct {
-	ID        int    `json:"id,omitempty"`
-	ParentID  int    `json:"parent_id,omitempty"`
-	Comment   string `json:"comment"`
-	Spoiler   bool   `json:"spoiler,omitempty"`
-	Review    bool   `json:"review,omitempty"`
-	Likes     int    `json:"likes,omitempty"`
-	Replies   int    `json:"replies,omitempty"`
-	UserRating int   `json:"user_rating,omitempty"`
-	CreatedAt string `json:"created_at,omitempty"`
-	UpdatedAt string `json:"updated_at,omitempty"`
-	User      *UserProfile `json:"user,omitempty"`
+	ID         int          `json:"id,omitempty"`
+	ParentID   int          `json:"parent_id,omitempty"`
+	Comment    string       `json:"comment"`
+	Spoiler    bool         `json:"spoiler,omitempty"`
+	Review     bool         `json:"review,omitempty"`
+	Likes      int          `json:"likes,omitempty"`
+	Replies    int          `json:"replies,omitempty"`
+	UserRating int          `json:"user_rating,omitempty"`
+	CreatedAt  string       `json:"created_at,omitempty"`
+	UpdatedAt  string       `json:"updated_at,omitempty"`
+	User       *UserProfile `json:"user,omitempty"`
 }
 
 // CommentItem wraps a comment with its attached media.
@@ -723,26 +723,26 @@ type PersonShowCrewMember struct {
 
 // PlaybackProgress represents a playback progress item.
 type PlaybackProgress struct {
-	ID        int64    `json:"id"`
-	Progress  float64  `json:"progress"`
-	PausedAt  string   `json:"paused_at"`
-	Type      string   `json:"type"`
-	Movie     *Movie   `json:"movie,omitempty"`
-	Show      *Show    `json:"show,omitempty"`
-	Episode   *Episode `json:"episode,omitempty"`
+	ID       int64    `json:"id"`
+	Progress float64  `json:"progress"`
+	PausedAt string   `json:"paused_at"`
+	Type     string   `json:"type"`
+	Movie    *Movie   `json:"movie,omitempty"`
+	Show     *Show    `json:"show,omitempty"`
+	Episode  *Episode `json:"episode,omitempty"`
 }
 
 // LastActivities represents the last time each section was updated.
 type LastActivities struct {
-	All       string             `json:"all"`
-	Movies    LastActivityTimes  `json:"movies"`
-	Episodes  LastActivityTimes  `json:"episodes"`
-	Shows     LastActivityShow   `json:"shows"`
-	Seasons   LastActivitySeason `json:"seasons"`
+	All       string              `json:"all"`
+	Movies    LastActivityTimes   `json:"movies"`
+	Episodes  LastActivityTimes   `json:"episodes"`
+	Shows     LastActivityShow    `json:"shows"`
+	Seasons   LastActivitySeason  `json:"seasons"`
 	Comments  LastActivityComment `json:"comments"`
-	Lists     LastActivityList   `json:"lists"`
-	Watchlist LastActivityTimes  `json:"watchlist"`
-	Favorites LastActivityTimes  `json:"favorites"`
+	Lists     LastActivityList    `json:"lists"`
+	Watchlist LastActivityTimes   `json:"watchlist"`
+	Favorites LastActivityTimes   `json:"favorites"`
 	Account   LastActivityAccount `json:"account"`
 }
 
@@ -769,10 +769,10 @@ type LastActivityShow struct {
 
 // LastActivitySeason holds timestamps specific to seasons.
 type LastActivitySeason struct {
-	RatedAt     string `json:"rated_at,omitempty"`
+	RatedAt       string `json:"rated_at,omitempty"`
 	WatchlistedAt string `json:"watchlisted_at,omitempty"`
-	CommentedAt string `json:"commented_at,omitempty"`
-	HiddenAt    string `json:"hidden_at,omitempty"`
+	CommentedAt   string `json:"commented_at,omitempty"`
+	HiddenAt      string `json:"hidden_at,omitempty"`
 }
 
 // LastActivityComment holds timestamps for comment activities.
@@ -789,19 +789,19 @@ type LastActivityList struct {
 
 // LastActivityAccount holds timestamps for account activities.
 type LastActivityAccount struct {
-	SettingsAt string `json:"settings_at,omitempty"`
-	FollowedAt string `json:"followed_at,omitempty"`
+	SettingsAt  string `json:"settings_at,omitempty"`
+	FollowedAt  string `json:"followed_at,omitempty"`
 	FollowingAt string `json:"following_at,omitempty"`
 	PendingAt   string `json:"pending_at,omitempty"`
 }
 
 // WatchedItem represents a watched movie or show.
 type WatchedItem struct {
-	Plays         int      `json:"plays"`
-	LastWatchedAt string   `json:"last_watched_at"`
-	LastUpdatedAt string   `json:"last_updated_at"`
-	Movie         *Movie   `json:"movie,omitempty"`
-	Show          *Show    `json:"show,omitempty"`
+	Plays         int             `json:"plays"`
+	LastWatchedAt string          `json:"last_watched_at"`
+	LastUpdatedAt string          `json:"last_updated_at"`
+	Movie         *Movie          `json:"movie,omitempty"`
+	Show          *Show           `json:"show,omitempty"`
 	Seasons       []WatchedSeason `json:"seasons,omitempty"`
 }
 
@@ -831,13 +831,13 @@ type FollowRequest struct {
 	User        UserProfile `json:"user"`
 }
 
-// Favorites represents a favorites item.
+// FavoritesItem represents a favorite item.
 type FavoritesItem struct {
-	Rank     int      `json:"rank"`
-	ListedAt string   `json:"listed_at"`
-	Type     string   `json:"type"`
-	Movie    *Movie   `json:"movie,omitempty"`
-	Show     *Show    `json:"show,omitempty"`
+	Rank     int    `json:"rank"`
+	ListedAt string `json:"listed_at"`
+	Type     string `json:"type"`
+	Movie    *Movie `json:"movie,omitempty"`
+	Show     *Show  `json:"show,omitempty"`
 }
 
 // HideRequest contains items to hide from recommendations.
@@ -859,13 +859,13 @@ type CommentRequest struct {
 
 // WatchedProgress represents the watch progress for a show.
 type WatchedProgress struct {
-	Aired         int             `json:"aired"`
-	Completed     int             `json:"completed"`
-	LastWatchedAt string          `json:"last_watched_at,omitempty"`
-	ResetAt       string          `json:"reset_at,omitempty"`
+	Aired         int              `json:"aired"`
+	Completed     int              `json:"completed"`
+	LastWatchedAt string           `json:"last_watched_at,omitempty"`
+	ResetAt       string           `json:"reset_at,omitempty"`
 	Seasons       []SeasonProgress `json:"seasons"`
-	NextEpisode   *Episode        `json:"next_episode,omitempty"`
-	LastEpisode   *Episode        `json:"last_episode,omitempty"`
+	NextEpisode   *Episode         `json:"next_episode,omitempty"`
+	LastEpisode   *Episode         `json:"last_episode,omitempty"`
 }
 
 // SeasonProgress represents watch progress for a season.
@@ -879,24 +879,24 @@ type SeasonProgress struct {
 
 // EpisodeProgress represents watch progress for an episode.
 type EpisodeProgress struct {
-	Number    int    `json:"number"`
-	Completed bool   `json:"completed"`
+	Number        int    `json:"number"`
+	Completed     bool   `json:"completed"`
 	LastWatchedAt string `json:"last_watched_at,omitempty"`
 }
 
 // CollectionProgress represents the collection progress for a show.
 type CollectionProgress struct {
-	Aired     int                      `json:"aired"`
-	Completed int                      `json:"completed"`
-	LastCollectedAt string             `json:"last_collected_at,omitempty"`
-	Seasons   []CollectionSeasonProgress `json:"seasons"`
+	Aired           int                        `json:"aired"`
+	Completed       int                        `json:"completed"`
+	LastCollectedAt string                     `json:"last_collected_at,omitempty"`
+	Seasons         []CollectionSeasonProgress `json:"seasons"`
 }
 
 // CollectionSeasonProgress is collection progress for a season.
 type CollectionSeasonProgress struct {
-	Number    int                        `json:"number"`
-	Aired     int                        `json:"aired"`
-	Completed int                        `json:"completed"`
+	Number    int                         `json:"number"`
+	Aired     int                         `json:"aired"`
+	Completed int                         `json:"completed"`
 	Episodes  []CollectionEpisodeProgress `json:"episodes"`
 }
 

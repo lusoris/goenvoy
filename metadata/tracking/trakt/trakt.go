@@ -1681,7 +1681,7 @@ func (c *Client) GetUserWatchlist(ctx context.Context, username, mediaType strin
 	return out, pg, nil
 }
 
-// GetUserLists returns all custom lists for a user by username.
+// GetUserListsByUsername returns all custom lists for a user by username.
 func (c *Client) GetUserListsByUsername(ctx context.Context, username string) ([]UserList, error) {
 	var out []UserList
 	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/lists", nil, &out)
@@ -1749,7 +1749,7 @@ func (c *Client) GetUserCollection(ctx context.Context, username, mediaType stri
 	return out, nil
 }
 
-// GetUserStats returns a user's stats by username.
+// GetUserStatsByUsername returns a user's stats by username.
 func (c *Client) GetUserStatsByUsername(ctx context.Context, username string) (*UserStats, error) {
 	var out UserStats
 	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/stats", nil, &out)

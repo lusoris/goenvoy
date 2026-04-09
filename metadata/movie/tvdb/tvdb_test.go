@@ -674,7 +674,7 @@ func newPostTestServer(t *testing.T, wantPath string) *httptest.Server {
 	}))
 }
 
-// --- Artwork ---
+// Artwork.
 
 func TestGetArtworkStatuses(t *testing.T) {
 	t.Parallel()
@@ -692,7 +692,7 @@ func TestGetArtworkStatuses(t *testing.T) {
 	}
 }
 
-// --- Awards ---
+// Awards.
 
 func TestGetAwards(t *testing.T) {
 	t.Parallel()
@@ -774,7 +774,7 @@ func TestGetAwardCategoryExtended(t *testing.T) {
 	}
 }
 
-// --- Companies ---
+// Companies.
 
 func TestGetCompanies(t *testing.T) {
 	t.Parallel()
@@ -824,7 +824,7 @@ func TestGetCompany(t *testing.T) {
 	}
 }
 
-// --- Countries ---
+// Countries.
 
 func TestGetCountries(t *testing.T) {
 	t.Parallel()
@@ -842,7 +842,7 @@ func TestGetCountries(t *testing.T) {
 	}
 }
 
-// --- Entity Types ---
+// Entity Types.
 
 func TestGetEntityTypes(t *testing.T) {
 	t.Parallel()
@@ -860,7 +860,7 @@ func TestGetEntityTypes(t *testing.T) {
 	}
 }
 
-// --- Episodes (paginated) ---
+// Episodes (paginated).
 
 func TestGetEpisodes(t *testing.T) {
 	t.Parallel()
@@ -878,7 +878,7 @@ func TestGetEpisodes(t *testing.T) {
 	}
 }
 
-// --- Genders ---
+// Genders.
 
 func TestGetGenders(t *testing.T) {
 	t.Parallel()
@@ -896,7 +896,7 @@ func TestGetGenders(t *testing.T) {
 	}
 }
 
-// --- Genres ---
+// Genres.
 
 func TestGetGenre(t *testing.T) {
 	t.Parallel()
@@ -914,7 +914,7 @@ func TestGetGenre(t *testing.T) {
 	}
 }
 
-// --- Inspiration Types ---
+// Inspiration Types.
 
 func TestGetInspirationTypes(t *testing.T) {
 	t.Parallel()
@@ -932,7 +932,7 @@ func TestGetInspirationTypes(t *testing.T) {
 	}
 }
 
-// --- Lists ---
+// Lists.
 
 func TestGetLists(t *testing.T) {
 	t.Parallel()
@@ -1014,7 +1014,7 @@ func TestGetListTranslation(t *testing.T) {
 	}
 }
 
-// --- Movies (paginated/filter/slug/statuses) ---
+// Movies (paginated/filter/slug/statuses).
 
 func TestGetMovies(t *testing.T) {
 	t.Parallel()
@@ -1080,7 +1080,7 @@ func TestGetMovieStatuses(t *testing.T) {
 	}
 }
 
-// --- People ---
+// People.
 
 func TestGetPeople(t *testing.T) {
 	t.Parallel()
@@ -1114,7 +1114,7 @@ func TestGetPeopleTypes(t *testing.T) {
 	}
 }
 
-// --- Seasons ---
+// Seasons.
 
 func TestGetSeasons(t *testing.T) {
 	t.Parallel()
@@ -1148,7 +1148,7 @@ func TestGetSeasonTypes(t *testing.T) {
 	}
 }
 
-// --- Series ---
+// Series.
 
 func TestGetAllSeries(t *testing.T) {
 	t.Parallel()
@@ -1230,7 +1230,7 @@ func TestGetSeriesStatuses(t *testing.T) {
 	}
 }
 
-// --- Source Types ---
+// Source Types.
 
 func TestGetSourceTypes(t *testing.T) {
 	t.Parallel()
@@ -1248,7 +1248,7 @@ func TestGetSourceTypes(t *testing.T) {
 	}
 }
 
-// --- User ---
+// User.
 
 func TestGetUserInfo(t *testing.T) {
 	t.Parallel()

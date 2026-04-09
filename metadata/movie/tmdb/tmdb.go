@@ -510,7 +510,7 @@ func (c *Client) GetTopRatedTV(ctx context.Context, language string, page int) (
 	return &out, nil
 }
 
-// --- Movie extras ---
+// Movie extras.
 
 // GetMovieVideos returns videos (trailers, teasers, etc.) for a movie.
 func (c *Client) GetMovieVideos(ctx context.Context, id int, language string) (*VideosResponse, error) {
@@ -616,7 +616,7 @@ func (c *Client) DeleteMovieRating(ctx context.Context, id int) error {
 	return c.del(ctx, fmt.Sprintf("/movie/%d/rating", id))
 }
 
-// --- TV Show extras ---
+// TV Show extras.
 
 // GetTVVideos returns videos for a TV show.
 func (c *Client) GetTVVideos(ctx context.Context, id int, language string) (*VideosResponse, error) {
@@ -729,7 +729,7 @@ func (c *Client) DeleteTVRating(ctx context.Context, id int) error {
 	return c.del(ctx, fmt.Sprintf("/tv/%d/rating", id))
 }
 
-// --- TV Season extras ---
+// TV Season extras.
 
 // GetTVSeasonCredits returns credits for a TV season.
 func (c *Client) GetTVSeasonCredits(ctx context.Context, tvID, seasonNumber int, language string) (*Credits, error) {
@@ -791,7 +791,7 @@ func (c *Client) GetTVSeasonWatchProviders(ctx context.Context, tvID, seasonNumb
 	return &out, nil
 }
 
-// --- TV Episode ---
+// TV Episode.
 
 // GetTVEpisode returns details for a specific TV episode.
 func (c *Client) GetTVEpisode(ctx context.Context, tvID, seasonNumber, episodeNumber int, language string) (*EpisodeDetails, error) {
@@ -874,7 +874,7 @@ func (c *Client) DeleteTVEpisodeRating(ctx context.Context, tvID, seasonNumber, 
 	return c.del(ctx, fmt.Sprintf("/tv/%d/season/%d/episode/%d/rating", tvID, seasonNumber, episodeNumber))
 }
 
-// --- Person extras ---
+// Person extras.
 
 // GetPersonMovieCredits returns movie credits for a person.
 func (c *Client) GetPersonMovieCredits(ctx context.Context, id int, language string) (*PersonCredits, error) {
@@ -926,7 +926,7 @@ func (c *Client) GetPersonTaggedImages(ctx context.Context, id int, language str
 	return &out, nil
 }
 
-// --- Search extras ---
+// Search extras.
 
 // SearchKeywords searches for keywords by query.
 func (c *Client) SearchKeywords(ctx context.Context, query string, page int) (*PaginatedResult[Keyword], error) {
@@ -958,7 +958,7 @@ func (c *Client) SearchCompanies(ctx context.Context, query string, page int) (*
 	return &out, nil
 }
 
-// --- Collections ---
+// Collections.
 
 // GetCollection returns details for a movie collection.
 func (c *Client) GetCollection(ctx context.Context, id int, language string) (*CollectionDetails, error) {
@@ -990,7 +990,7 @@ func (c *Client) GetCollectionTranslations(ctx context.Context, id int) (*Transl
 	return &out, nil
 }
 
-// --- Account ---
+// Account.
 
 // GetAccountDetails returns the account details for the authenticated user.
 func (c *Client) GetAccountDetails(ctx context.Context) (*AccountDetails, error) {
@@ -1091,7 +1091,7 @@ func (c *Client) GetRatedTVEpisodes(ctx context.Context, accountID int, language
 	return &out, nil
 }
 
-// --- Lists ---
+// Lists.
 
 // GetList returns details for a list.
 func (c *Client) GetList(ctx context.Context, listID int, language string) (*ListDetails, error) {
@@ -1149,7 +1149,7 @@ func (c *Client) CheckItemStatus(ctx context.Context, listID, movieID int) (*Ite
 	return &out, nil
 }
 
-// --- Certifications ---
+// Certifications.
 
 // GetMovieCertifications returns the list of movie certifications by country.
 func (c *Client) GetMovieCertifications(ctx context.Context) (*CertificationsResponse, error) {
@@ -1169,7 +1169,7 @@ func (c *Client) GetTVCertifications(ctx context.Context) (*CertificationsRespon
 	return &out, nil
 }
 
-// --- Watch Providers ---
+// Watch Providers.
 
 // GetAvailableWatchProviderRegions returns available watch provider regions.
 func (c *Client) GetAvailableWatchProviderRegions(ctx context.Context, language string) (*WatchProviderRegionsResponse, error) {
@@ -1201,7 +1201,7 @@ func (c *Client) GetTVWatchProviderList(ctx context.Context, language, watchRegi
 	return &out, nil
 }
 
-// --- Companies & Keywords ---
+// Companies & Keywords.
 
 // GetCompany returns details for a production company.
 func (c *Client) GetCompany(ctx context.Context, id int) (*CompanyDetails, error) {
@@ -1223,7 +1223,7 @@ func (c *Client) GetKeyword(ctx context.Context, id int) (*Keyword, error) {
 	return &out, nil
 }
 
-// --- Changes ---
+// Changes.
 
 // GetMovieChanges returns recently changed movie IDs.
 func (c *Client) GetMovieChanges(ctx context.Context, startDate, endDate string, page int) (*ChangesResponse, error) {
@@ -1279,7 +1279,7 @@ func (c *Client) GetPersonChanges(ctx context.Context, startDate, endDate string
 	return &out, nil
 }
 
-// --- Reviews ---
+// Reviews.
 
 // GetReview returns a single review by ID.
 func (c *Client) GetReview(ctx context.Context, reviewID string) (*Review, error) {
@@ -1291,7 +1291,7 @@ func (c *Client) GetReview(ctx context.Context, reviewID string) (*Review, error
 	return &out, nil
 }
 
-// --- Networks ---
+// Networks.
 
 // GetNetwork returns details for a TV network.
 func (c *Client) GetNetwork(ctx context.Context, id int) (*Network, error) {

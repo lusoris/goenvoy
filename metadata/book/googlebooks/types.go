@@ -102,15 +102,15 @@ type BookshelvesResponse struct {
 
 // Bookshelf represents a user's bookshelf.
 type Bookshelf struct {
-	Kind           string `json:"kind"`
-	ID             int    `json:"id"`
-	SelfLink       string `json:"selfLink"`
-	Title          string `json:"title"`
-	Description    string `json:"description,omitempty"`
-	Access         string `json:"access"`
-	Updated        string `json:"updated"`
-	Created        string `json:"created"`
-	VolumeCount    int    `json:"volumeCount"`
+	Kind               string `json:"kind"`
+	ID                 int    `json:"id"`
+	SelfLink           string `json:"selfLink"`
+	Title              string `json:"title"`
+	Description        string `json:"description,omitempty"`
+	Access             string `json:"access"`
+	Updated            string `json:"updated"`
+	Created            string `json:"created"`
+	VolumeCount        int    `json:"volumeCount"`
 	VolumesLastUpdated string `json:"volumesLastUpdated,omitempty"`
 }
 
@@ -123,31 +123,31 @@ type AnnotationsResponse struct {
 
 // Annotation represents a highlight or note in a volume.
 type Annotation struct {
-	Kind             string `json:"kind"`
-	ID               string `json:"id"`
-	SelfLink         string `json:"selfLink"`
-	VolumeID         string `json:"volumeId"`
-	LayerID          string `json:"layerId"`
-	SelectedText     string `json:"selectedText,omitempty"`
-	HighlightStyle   string `json:"highlightStyle,omitempty"`
-	Data             string `json:"data,omitempty"`
-	Created          string `json:"created"`
-	Updated          string `json:"updated"`
-	PageIDs          []string `json:"pageIds,omitempty"`
-	BeforeSelectedText string `json:"beforeSelectedText,omitempty"`
-	AfterSelectedText  string `json:"afterSelectedText,omitempty"`
+	Kind               string   `json:"kind"`
+	ID                 string   `json:"id"`
+	SelfLink           string   `json:"selfLink"`
+	VolumeID           string   `json:"volumeId"`
+	LayerID            string   `json:"layerId"`
+	SelectedText       string   `json:"selectedText,omitempty"`
+	HighlightStyle     string   `json:"highlightStyle,omitempty"`
+	Data               string   `json:"data,omitempty"`
+	Created            string   `json:"created"`
+	Updated            string   `json:"updated"`
+	PageIDs            []string `json:"pageIds,omitempty"`
+	BeforeSelectedText string   `json:"beforeSelectedText,omitempty"`
+	AfterSelectedText  string   `json:"afterSelectedText,omitempty"`
 }
 
 // ReadingPosition represents the reading position in a volume.
 type ReadingPosition struct {
-	Kind               string `json:"kind"`
-	VolumeID           string `json:"volumeId"`
-	Position           string `json:"position"`
-	Updated            string `json:"updated"`
-	PdfPosition        string `json:"pdfPosition,omitempty"`
-	EpubCfiPosition    string `json:"epubCfiPosition,omitempty"`
-	GbImagePosition    string `json:"gbImagePosition,omitempty"`
-	GbTextPosition     string `json:"gbTextPosition,omitempty"`
+	Kind            string `json:"kind"`
+	VolumeID        string `json:"volumeId"`
+	Position        string `json:"position"`
+	Updated         string `json:"updated"`
+	PdfPosition     string `json:"pdfPosition,omitempty"`
+	EpubCfiPosition string `json:"epubCfiPosition,omitempty"`
+	GbImagePosition string `json:"gbImagePosition,omitempty"`
+	GbTextPosition  string `json:"gbTextPosition,omitempty"`
 }
 
 // SeriesResponse represents the response from a series request.
@@ -158,11 +158,11 @@ type SeriesResponse struct {
 
 // SeriesInfo represents a book series.
 type SeriesInfo struct {
-	Kind                  string `json:"kind"`
-	SeriesID              string `json:"seriesId"`
-	Title                 string `json:"title"`
-	BannerImageURL        string `json:"bannerImageUrl,omitempty"`
-	ImageURL              string `json:"imageUrl,omitempty"`
-	SeriesType            string `json:"seriesType,omitempty"`
-	EligibleForSubscription bool  `json:"eligibleForSubscription,omitempty"`
+	Kind                    string `json:"kind"`
+	SeriesID                string `json:"seriesId"`
+	Title                   string `json:"title"`
+	BannerImageURL          string `json:"bannerImageUrl,omitempty"`
+	ImageURL                string `json:"imageUrl,omitempty"`
+	SeriesType              string `json:"seriesType,omitempty"`
+	EligibleForSubscription bool   `json:"eligibleForSubscription,omitempty"`
 }

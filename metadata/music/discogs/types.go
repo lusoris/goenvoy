@@ -192,7 +192,7 @@ type SearchResult struct {
 	CatNo       string   `json:"catno,omitempty"`
 }
 
-// --- Release Ratings ---
+// Release Ratings.
 
 // ReleaseRating represents a user's rating for a release.
 type ReleaseRating struct {
@@ -203,8 +203,8 @@ type ReleaseRating struct {
 
 // CommunityRating represents the community rating for a release.
 type CommunityRating struct {
-	ReleaseID int     `json:"release_id"`
-	Rating    Rating  `json:"rating"`
+	ReleaseID int    `json:"release_id"`
+	Rating    Rating `json:"rating"`
 }
 
 // ReleaseStats contains marketplace statistics for a release.
@@ -213,49 +213,49 @@ type ReleaseStats struct {
 	NumWant int `json:"num_want"`
 }
 
-// --- User Identity ---
+// User Identity.
 
 // Identity represents the identity of the authenticated user.
 type Identity struct {
-	ID          int    `json:"id"`
-	Username    string `json:"username"`
-	ResourceURL string `json:"resource_url"`
+	ID           int    `json:"id"`
+	Username     string `json:"username"`
+	ResourceURL  string `json:"resource_url"`
 	ConsumerName string `json:"consumer_name"`
 }
 
 // Profile represents a Discogs user profile.
 type Profile struct {
-	ID               int    `json:"id"`
-	Username         string `json:"username"`
-	Name             string `json:"name,omitempty"`
-	Email            string `json:"email,omitempty"`
-	ResourceURL      string `json:"resource_url,omitempty"`
-	URI              string `json:"uri,omitempty"`
-	HomePage         string `json:"home_page,omitempty"`
-	Location         string `json:"location,omitempty"`
-	Profile          string `json:"profile,omitempty"`
-	Registered       string `json:"registered,omitempty"`
-	NumLists         int    `json:"num_lists,omitempty"`
-	NumForSale       int    `json:"num_for_sale,omitempty"`
-	NumCollection    int    `json:"num_collection,omitempty"`
-	NumWantlist      int    `json:"num_wantlist,omitempty"`
-	NumPending       int    `json:"num_pending,omitempty"`
-	ReleasesContributed int `json:"releases_contributed,omitempty"`
-	Rank             int    `json:"rank,omitempty"`
-	ReleasesRated    int    `json:"releases_rated,omitempty"`
-	RatingAvg        float64 `json:"rating_avg,omitempty"`
-	InventoryURL     string `json:"inventory_url,omitempty"`
-	CollectionFoldersURL string `json:"collection_folders_url,omitempty"`
-	WantlistURL      string `json:"wantlist_url,omitempty"`
-	AvatarURL        string `json:"avatar_url,omitempty"`
-	BannerURL        string `json:"banner_url,omitempty"`
-	BuyerRating      float64 `json:"buyer_rating,omitempty"`
-	BuyerRatingStars float64 `json:"buyer_rating_stars,omitempty"`
-	BuyerNumRatings  int    `json:"buyer_num_ratings,omitempty"`
-	SellerRating     float64 `json:"seller_rating,omitempty"`
-	SellerRatingStars float64 `json:"seller_rating_stars,omitempty"`
-	SellerNumRatings int    `json:"seller_num_ratings,omitempty"`
-	CurrAbbr         string `json:"curr_abbr,omitempty"`
+	ID                   int     `json:"id"`
+	Username             string  `json:"username"`
+	Name                 string  `json:"name,omitempty"`
+	Email                string  `json:"email,omitempty"`
+	ResourceURL          string  `json:"resource_url,omitempty"`
+	URI                  string  `json:"uri,omitempty"`
+	HomePage             string  `json:"home_page,omitempty"`
+	Location             string  `json:"location,omitempty"`
+	Profile              string  `json:"profile,omitempty"`
+	Registered           string  `json:"registered,omitempty"`
+	NumLists             int     `json:"num_lists,omitempty"`
+	NumForSale           int     `json:"num_for_sale,omitempty"`
+	NumCollection        int     `json:"num_collection,omitempty"`
+	NumWantlist          int     `json:"num_wantlist,omitempty"`
+	NumPending           int     `json:"num_pending,omitempty"`
+	ReleasesContributed  int     `json:"releases_contributed,omitempty"`
+	Rank                 int     `json:"rank,omitempty"`
+	ReleasesRated        int     `json:"releases_rated,omitempty"`
+	RatingAvg            float64 `json:"rating_avg,omitempty"`
+	InventoryURL         string  `json:"inventory_url,omitempty"`
+	CollectionFoldersURL string  `json:"collection_folders_url,omitempty"`
+	WantlistURL          string  `json:"wantlist_url,omitempty"`
+	AvatarURL            string  `json:"avatar_url,omitempty"`
+	BannerURL            string  `json:"banner_url,omitempty"`
+	BuyerRating          float64 `json:"buyer_rating,omitempty"`
+	BuyerRatingStars     float64 `json:"buyer_rating_stars,omitempty"`
+	BuyerNumRatings      int     `json:"buyer_num_ratings,omitempty"`
+	SellerRating         float64 `json:"seller_rating,omitempty"`
+	SellerRatingStars    float64 `json:"seller_rating_stars,omitempty"`
+	SellerNumRatings     int     `json:"seller_num_ratings,omitempty"`
+	CurrAbbr             string  `json:"curr_abbr,omitempty"`
 }
 
 // ProfileUpdate contains fields that can be updated on a user profile.
@@ -269,11 +269,11 @@ type ProfileUpdate struct {
 
 // SubmissionsResponse contains user submissions.
 type SubmissionsResponse struct {
-	Pagination Pagination    `json:"pagination"`
+	Pagination  Pagination `json:"pagination"`
 	Submissions struct {
-		Artists  []Artist       `json:"artists,omitempty"`
-		Labels   []Label        `json:"labels,omitempty"`
-		Releases []Release      `json:"releases,omitempty"`
+		Artists  []Artist  `json:"artists,omitempty"`
+		Labels   []Label   `json:"labels,omitempty"`
+		Releases []Release `json:"releases,omitempty"`
 	} `json:"submissions"`
 }
 
@@ -283,7 +283,7 @@ type ContributionsResponse struct {
 	Contributions []SearchResult `json:"contributions"`
 }
 
-// --- User Collection ---
+// User Collection.
 
 // CollectionFoldersResponse contains collection folders.
 type CollectionFoldersResponse struct {
@@ -317,16 +317,16 @@ type CollectionItem struct {
 
 // BasicInfo is basic release info within a collection item.
 type BasicInfo struct {
-	ID       int         `json:"id"`
-	Title    string      `json:"title"`
-	Year     int         `json:"year,omitempty"`
-	Thumb    string      `json:"thumb,omitempty"`
-	CoverImage string   `json:"cover_image,omitempty"`
-	Artists  []ArtistRef `json:"artists,omitempty"`
-	Labels   []LabelRef  `json:"labels,omitempty"`
-	Formats  []Format    `json:"formats,omitempty"`
-	Genres   []string    `json:"genres,omitempty"`
-	Styles   []string    `json:"styles,omitempty"`
+	ID         int         `json:"id"`
+	Title      string      `json:"title"`
+	Year       int         `json:"year,omitempty"`
+	Thumb      string      `json:"thumb,omitempty"`
+	CoverImage string      `json:"cover_image,omitempty"`
+	Artists    []ArtistRef `json:"artists,omitempty"`
+	Labels     []LabelRef  `json:"labels,omitempty"`
+	Formats    []Format    `json:"formats,omitempty"`
+	Genres     []string    `json:"genres,omitempty"`
+	Styles     []string    `json:"styles,omitempty"`
 }
 
 // FieldNote represents a custom field value on a collection item.
@@ -353,12 +353,12 @@ type CustomField struct {
 
 // CollectionValue represents the estimated value of a collection.
 type CollectionValue struct {
-	Maximum  string `json:"maximum,omitempty"`
-	Median   string `json:"median,omitempty"`
-	Minimum  string `json:"minimum,omitempty"`
+	Maximum string `json:"maximum,omitempty"`
+	Median  string `json:"median,omitempty"`
+	Minimum string `json:"minimum,omitempty"`
 }
 
-// --- User Wantlist ---
+// User Wantlist.
 
 // WantlistResponse contains wantlist items.
 type WantlistResponse struct {
@@ -368,15 +368,15 @@ type WantlistResponse struct {
 
 // WantlistItem represents an item in the wantlist.
 type WantlistItem struct {
-	ID           int        `json:"id"`
-	Rating       int        `json:"rating"`
-	Notes        string     `json:"notes,omitempty"`
-	DateAdded    string     `json:"date_added,omitempty"`
-	ResourceURL  string     `json:"resource_url,omitempty"`
-	BasicInfo    *BasicInfo `json:"basic_information,omitempty"`
+	ID          int        `json:"id"`
+	Rating      int        `json:"rating"`
+	Notes       string     `json:"notes,omitempty"`
+	DateAdded   string     `json:"date_added,omitempty"`
+	ResourceURL string     `json:"resource_url,omitempty"`
+	BasicInfo   *BasicInfo `json:"basic_information,omitempty"`
 }
 
-// --- User Lists ---
+// User Lists.
 
 // UserListsResponse contains user lists.
 type UserListsResponse struct {
@@ -398,29 +398,29 @@ type UserListMeta struct {
 
 // UserList represents a full user list with items.
 type UserList struct {
-	ID          int             `json:"id"`
-	Name        string          `json:"name"`
-	Description string          `json:"description,omitempty"`
-	Public      bool            `json:"public"`
-	DateAdded   string          `json:"date_added,omitempty"`
-	DateChanged string          `json:"date_changed,omitempty"`
-	URI         string          `json:"uri,omitempty"`
-	ResourceURL string          `json:"resource_url,omitempty"`
-	Items       []UserListItem  `json:"items,omitempty"`
+	ID          int            `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	Public      bool           `json:"public"`
+	DateAdded   string         `json:"date_added,omitempty"`
+	DateChanged string         `json:"date_changed,omitempty"`
+	URI         string         `json:"uri,omitempty"`
+	ResourceURL string         `json:"resource_url,omitempty"`
+	Items       []UserListItem `json:"items,omitempty"`
 }
 
 // UserListItem represents an item in a user list.
 type UserListItem struct {
-	ID          int    `json:"id"`
-	Type        string `json:"type"`
-	Comment     string `json:"comment,omitempty"`
-	URI         string `json:"uri,omitempty"`
-	ResourceURL string `json:"resource_url,omitempty"`
+	ID           int    `json:"id"`
+	Type         string `json:"type"`
+	Comment      string `json:"comment,omitempty"`
+	URI          string `json:"uri,omitempty"`
+	ResourceURL  string `json:"resource_url,omitempty"`
 	DisplayTitle string `json:"display_title,omitempty"`
-	ImageURL    string `json:"image_url,omitempty"`
+	ImageURL     string `json:"image_url,omitempty"`
 }
 
-// --- Marketplace ---
+// Marketplace.
 
 // InventoryResponse contains inventory listings.
 type InventoryResponse struct {
@@ -430,24 +430,24 @@ type InventoryResponse struct {
 
 // Listing represents a marketplace listing.
 type Listing struct {
-	ID              int            `json:"id"`
-	ResourceURL     string         `json:"resource_url,omitempty"`
-	URI             string         `json:"uri,omitempty"`
-	Status          string         `json:"status"`
-	Condition       string         `json:"condition"`
-	SleeveCondition string         `json:"sleeve_condition,omitempty"`
-	Comments        string         `json:"comments,omitempty"`
-	ShipsFrom       string         `json:"ships_from,omitempty"`
-	Posted          string         `json:"posted,omitempty"`
-	AllowOffers     bool           `json:"allow_offers"`
-	FormatQuantity  int            `json:"format_quantity,omitempty"`
-	ExternalID      string         `json:"external_id,omitempty"`
-	Location        string         `json:"location,omitempty"`
-	Weight          float64        `json:"weight,omitempty"`
-	Price           *ListingPrice  `json:"price,omitempty"`
-	Release         *BasicInfo     `json:"release,omitempty"`
-	Seller          *Seller        `json:"seller,omitempty"`
-	OriginalPrice   *ListingPrice  `json:"original_price,omitempty"`
+	ID              int           `json:"id"`
+	ResourceURL     string        `json:"resource_url,omitempty"`
+	URI             string        `json:"uri,omitempty"`
+	Status          string        `json:"status"`
+	Condition       string        `json:"condition"`
+	SleeveCondition string        `json:"sleeve_condition,omitempty"`
+	Comments        string        `json:"comments,omitempty"`
+	ShipsFrom       string        `json:"ships_from,omitempty"`
+	Posted          string        `json:"posted,omitempty"`
+	AllowOffers     bool          `json:"allow_offers"`
+	FormatQuantity  int           `json:"format_quantity,omitempty"`
+	ExternalID      string        `json:"external_id,omitempty"`
+	Location        string        `json:"location,omitempty"`
+	Weight          float64       `json:"weight,omitempty"`
+	Price           *ListingPrice `json:"price,omitempty"`
+	Release         *BasicInfo    `json:"release,omitempty"`
+	Seller          *Seller       `json:"seller,omitempty"`
+	OriginalPrice   *ListingPrice `json:"original_price,omitempty"`
 }
 
 // ListingPrice represents a listing price.
@@ -483,34 +483,34 @@ type NewListing struct {
 
 // Order represents a marketplace order.
 type Order struct {
-	ID                string         `json:"id"`
-	ResourceURL       string         `json:"resource_url,omitempty"`
-	MessagesURL       string         `json:"messages_url,omitempty"`
-	URI               string         `json:"uri,omitempty"`
-	Status            string         `json:"status"`
-	NextStatus        []string       `json:"next_status,omitempty"`
-	Fee               *ListingPrice  `json:"fee,omitempty"`
-	Created           string         `json:"created,omitempty"`
-	LastActivity      string         `json:"last_activity,omitempty"`
-	Buyer             *Seller        `json:"buyer,omitempty"`
-	Seller            *Seller        `json:"seller,omitempty"`
-	Items             []OrderItem    `json:"items,omitempty"`
-	Shipping          *ListingPrice  `json:"shipping,omitempty"`
-	ShippingAddress   string         `json:"shipping_address,omitempty"`
-	AdditionalInstructions string    `json:"additional_instructions,omitempty"`
-	Total             *ListingPrice  `json:"total,omitempty"`
+	ID                     string        `json:"id"`
+	ResourceURL            string        `json:"resource_url,omitempty"`
+	MessagesURL            string        `json:"messages_url,omitempty"`
+	URI                    string        `json:"uri,omitempty"`
+	Status                 string        `json:"status"`
+	NextStatus             []string      `json:"next_status,omitempty"`
+	Fee                    *ListingPrice `json:"fee,omitempty"`
+	Created                string        `json:"created,omitempty"`
+	LastActivity           string        `json:"last_activity,omitempty"`
+	Buyer                  *Seller       `json:"buyer,omitempty"`
+	Seller                 *Seller       `json:"seller,omitempty"`
+	Items                  []OrderItem   `json:"items,omitempty"`
+	Shipping               *ListingPrice `json:"shipping,omitempty"`
+	ShippingAddress        string        `json:"shipping_address,omitempty"`
+	AdditionalInstructions string        `json:"additional_instructions,omitempty"`
+	Total                  *ListingPrice `json:"total,omitempty"`
 }
 
 // OrderItem represents an item in an order.
 type OrderItem struct {
-	ID    int            `json:"id"`
-	Price *ListingPrice  `json:"price,omitempty"`
-	Release *BasicInfo   `json:"release,omitempty"`
+	ID      int           `json:"id"`
+	Price   *ListingPrice `json:"price,omitempty"`
+	Release *BasicInfo    `json:"release,omitempty"`
 }
 
 // OrderUpdate contains fields for updating an order.
 type OrderUpdate struct {
-	Status   string `json:"status,omitempty"`
+	Status   string  `json:"status,omitempty"`
 	Shipping float64 `json:"shipping,omitempty"`
 }
 
@@ -528,12 +528,12 @@ type OrderMessagesResponse struct {
 
 // OrderMessage represents a message in an order.
 type OrderMessage struct {
-	Subject     string `json:"subject,omitempty"`
-	Message     string `json:"message,omitempty"`
-	From        *Seller `json:"from,omitempty"`
-	Timestamp   string `json:"timestamp,omitempty"`
-	StatusID    int    `json:"status_id,omitempty"`
-	Order       *Order `json:"order,omitempty"`
+	Subject   string  `json:"subject,omitempty"`
+	Message   string  `json:"message,omitempty"`
+	From      *Seller `json:"from,omitempty"`
+	Timestamp string  `json:"timestamp,omitempty"`
+	StatusID  int     `json:"status_id,omitempty"`
+	Order     *Order  `json:"order,omitempty"`
 }
 
 // Fee represents a marketplace fee.
@@ -544,14 +544,14 @@ type Fee struct {
 
 // PriceSuggestions contains price suggestions for different conditions.
 type PriceSuggestions struct {
-	VeryGood   *SuggestedPrice `json:"Very Good (VG),omitempty"`
-	GoodPlus   *SuggestedPrice `json:"Good Plus (G+),omitempty"`
-	NearMint   *SuggestedPrice `json:"Near Mint (NM or M-),omitempty"`
-	Mint       *SuggestedPrice `json:"Mint (M),omitempty"`
+	VeryGood     *SuggestedPrice `json:"Very Good (VG),omitempty"`
+	GoodPlus     *SuggestedPrice `json:"Good Plus (G+),omitempty"`
+	NearMint     *SuggestedPrice `json:"Near Mint (NM or M-),omitempty"`
+	Mint         *SuggestedPrice `json:"Mint (M),omitempty"`
 	VeryGoodPlus *SuggestedPrice `json:"Very Good Plus (VG+),omitempty"`
-	Fair       *SuggestedPrice `json:"Fair (F),omitempty"`
-	Good       *SuggestedPrice `json:"Good (G),omitempty"`
-	Poor       *SuggestedPrice `json:"Poor (P),omitempty"`
+	Fair         *SuggestedPrice `json:"Fair (F),omitempty"`
+	Good         *SuggestedPrice `json:"Good (G),omitempty"`
+	Poor         *SuggestedPrice `json:"Poor (P),omitempty"`
 }
 
 // SuggestedPrice represents a suggested price for a condition.
@@ -562,12 +562,12 @@ type SuggestedPrice struct {
 
 // MarketplaceReleaseStats contains marketplace statistics for a release.
 type MarketplaceReleaseStats struct {
-	LowestPrice  *ListingPrice `json:"lowest_price,omitempty"`
-	NumForSale   int           `json:"num_for_sale"`
-	Blocked      bool          `json:"blocked,omitempty"`
+	LowestPrice *ListingPrice `json:"lowest_price,omitempty"`
+	NumForSale  int           `json:"num_for_sale"`
+	Blocked     bool          `json:"blocked,omitempty"`
 }
 
-// --- Inventory Export ---
+// Inventory Export.
 
 // ExportsResponse contains recent exports.
 type ExportsResponse struct {
@@ -577,10 +577,10 @@ type ExportsResponse struct {
 
 // Export represents an inventory export.
 type Export struct {
-	ID            int    `json:"id"`
-	Status        string `json:"status"`
-	CreatedTS     string `json:"created_ts,omitempty"`
-	FinishedTS    string `json:"finished_ts,omitempty"`
-	DownloadURL   string `json:"download_url,omitempty"`
-	Filename      string `json:"filename,omitempty"`
+	ID          int    `json:"id"`
+	Status      string `json:"status"`
+	CreatedTS   string `json:"created_ts,omitempty"`
+	FinishedTS  string `json:"finished_ts,omitempty"`
+	DownloadURL string `json:"download_url,omitempty"`
+	Filename    string `json:"filename,omitempty"`
 }

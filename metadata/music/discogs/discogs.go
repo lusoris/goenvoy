@@ -253,7 +253,7 @@ func (c *Client) Search(ctx context.Context, query, searchType string, page, per
 	return &sr, nil
 }
 
-// --- Database: Release Ratings ---
+// Database: Release Ratings.
 
 // GetReleaseRatingByUser returns the rating for a release by a specific user.
 func (c *Client) GetReleaseRatingByUser(ctx context.Context, releaseID int, username string) (*ReleaseRating, error) {
@@ -296,7 +296,7 @@ func (c *Client) GetReleaseStats(ctx context.Context, releaseID int) (*ReleaseSt
 	return &rs, nil
 }
 
-// --- User Identity ---
+// User Identity.
 
 // GetIdentity returns the identity of the authenticated user.
 func (c *Client) GetIdentity(ctx context.Context) (*Identity, error) {
@@ -349,7 +349,7 @@ func (c *Client) GetUserContributions(ctx context.Context, username string, page
 	return &cr, nil
 }
 
-// --- User Collection ---
+// User Collection.
 
 // GetCollectionFolders returns collection folders for a user.
 func (c *Client) GetCollectionFolders(ctx context.Context, username string) (*CollectionFoldersResponse, error) {
@@ -455,7 +455,7 @@ func (c *Client) GetCollectionValue(ctx context.Context, username string) (*Coll
 	return &cv, nil
 }
 
-// --- User Wantlist ---
+// User Wantlist.
 
 // GetWantlist returns the user's wantlist.
 func (c *Client) GetWantlist(ctx context.Context, username string, page, perPage int) (*WantlistResponse, error) {
@@ -506,7 +506,7 @@ func (c *Client) DeleteFromWantlist(ctx context.Context, username string, releas
 	return c.del(ctx, fmt.Sprintf("/users/%s/wants/%d", url.PathEscape(username), releaseID))
 }
 
-// --- User Lists ---
+// User Lists.
 
 // GetUserLists returns lists created by a user.
 func (c *Client) GetUserLists(ctx context.Context, username string, page, perPage int) (*UserListsResponse, error) {
@@ -529,7 +529,7 @@ func (c *Client) GetList(ctx context.Context, listID int) (*UserList, error) {
 	return &l, nil
 }
 
-// --- Marketplace ---
+// Marketplace.
 
 // GetInventory returns a user's marketplace inventory.
 func (c *Client) GetInventory(ctx context.Context, username string, page, perPage int) (*InventoryResponse, error) {
@@ -617,7 +617,7 @@ func (c *Client) GetOrderMessages(ctx context.Context, orderID string, page, per
 }
 
 // AddOrderMessage adds a message to an order.
-func (c *Client) AddOrderMessage(ctx context.Context, orderID, message string, status string) (*OrderMessage, error) {
+func (c *Client) AddOrderMessage(ctx context.Context, orderID, message, status string) (*OrderMessage, error) {
 	payload := map[string]string{}
 	if message != "" {
 		payload["message"] = message
@@ -668,7 +668,7 @@ func (c *Client) GetMarketplaceReleaseStats(ctx context.Context, releaseID int) 
 	return &mrs, nil
 }
 
-// --- Inventory Export ---
+// Inventory Export.
 
 // ExportInventory starts an inventory export.
 func (c *Client) ExportInventory(ctx context.Context) error {

@@ -473,10 +473,10 @@ type WatchlistItem struct {
 	ListSlug      string `json:"list_slug,omitempty"`
 
 	// Show/anime fields.
-	Show       *ShowShort       `json:"show,omitempty"`
-	Seasons    []WatchlistSeason `json:"seasons,omitempty"`
-	TotalEpisodesCount int      `json:"total_episodes_count,omitempty"`
-	WatchedEpisodesCount int    `json:"watched_episodes_count,omitempty"`
+	Show                 *ShowShort        `json:"show,omitempty"`
+	Seasons              []WatchlistSeason `json:"seasons,omitempty"`
+	TotalEpisodesCount   int               `json:"total_episodes_count,omitempty"`
+	WatchedEpisodesCount int               `json:"watched_episodes_count,omitempty"`
 
 	// Movie fields.
 	Movie *MovieShort `json:"movie,omitempty"`
@@ -484,7 +484,7 @@ type WatchlistItem struct {
 
 // WatchlistSeason represents season progress in a watchlist entry.
 type WatchlistSeason struct {
-	Number   int               `json:"number"`
+	Number   int                `json:"number"`
 	Episodes []WatchlistEpisode `json:"episodes,omitempty"`
 }
 
@@ -532,12 +532,12 @@ type SyncCount struct {
 
 // PlaybackSession represents a paused playback session.
 type PlaybackSession struct {
-	ID       int64          `json:"id"`
-	Progress float64        `json:"progress"`
-	PausedAt string         `json:"paused_at,omitempty"`
-	Type     string         `json:"type,omitempty"`
-	Movie    *MovieShort    `json:"movie,omitempty"`
-	Show     *ShowShort     `json:"show,omitempty"`
+	ID       int64           `json:"id"`
+	Progress float64         `json:"progress"`
+	PausedAt string          `json:"paused_at,omitempty"`
+	Type     string          `json:"type,omitempty"`
+	Movie    *MovieShort     `json:"movie,omitempty"`
+	Show     *ShowShort      `json:"show,omitempty"`
 	Episode  *EpisodeMinimal `json:"episode,omitempty"`
 }
 

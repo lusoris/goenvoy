@@ -514,7 +514,7 @@ func (c *Client) GetCharacter(ctx context.Context, id int) (*Character, error) {
 	return &out.Data, nil
 }
 
-// --- Artwork ---
+// Artwork.
 
 // GetArtworkStatuses returns all artwork status records.
 func (c *Client) GetArtworkStatuses(ctx context.Context) ([]ArtworkStatus, error) {
@@ -525,7 +525,7 @@ func (c *Client) GetArtworkStatuses(ctx context.Context) ([]ArtworkStatus, error
 	return out.Data, nil
 }
 
-// --- Awards ---
+// Awards.
 
 // GetAwards returns all award base records.
 func (c *Client) GetAwards(ctx context.Context) ([]AwardBase, error) {
@@ -572,7 +572,7 @@ func (c *Client) GetAwardCategoryExtended(ctx context.Context, id int) (*AwardCa
 	return &out.Data, nil
 }
 
-// --- Companies ---
+// Companies.
 
 // GetCompanies returns a paginated list of company records.
 func (c *Client) GetCompanies(ctx context.Context, page int) ([]Company, error) {
@@ -601,7 +601,7 @@ func (c *Client) GetCompany(ctx context.Context, id int) (*Company, error) {
 	return &out.Data, nil
 }
 
-// --- Countries ---
+// Countries.
 
 // GetCountries returns all country records.
 func (c *Client) GetCountries(ctx context.Context) ([]Country, error) {
@@ -612,7 +612,7 @@ func (c *Client) GetCountries(ctx context.Context) ([]Country, error) {
 	return out.Data, nil
 }
 
-// --- Entity Types ---
+// Entity Types.
 
 // GetEntityTypes returns all entity type records.
 func (c *Client) GetEntityTypes(ctx context.Context) ([]EntityType, error) {
@@ -623,7 +623,7 @@ func (c *Client) GetEntityTypes(ctx context.Context) ([]EntityType, error) {
 	return out.Data, nil
 }
 
-// --- Episodes (paginated) ---
+// Episodes (paginated).
 
 // GetEpisodes returns a paginated list of episodes.
 func (c *Client) GetEpisodes(ctx context.Context, page int) ([]EpisodeBase, error) {
@@ -634,7 +634,7 @@ func (c *Client) GetEpisodes(ctx context.Context, page int) ([]EpisodeBase, erro
 	return out.Data, nil
 }
 
-// --- Genders ---
+// Genders.
 
 // GetGenders returns all gender records.
 func (c *Client) GetGenders(ctx context.Context) ([]Gender, error) {
@@ -645,7 +645,7 @@ func (c *Client) GetGenders(ctx context.Context) ([]Gender, error) {
 	return out.Data, nil
 }
 
-// --- Genres ---
+// Genres.
 
 // GetGenre returns a single genre record by ID.
 func (c *Client) GetGenre(ctx context.Context, id int) (*Genre, error) {
@@ -656,7 +656,7 @@ func (c *Client) GetGenre(ctx context.Context, id int) (*Genre, error) {
 	return &out.Data, nil
 }
 
-// --- Inspiration Types ---
+// Inspiration Types.
 
 // GetInspirationTypes returns all inspiration type records.
 func (c *Client) GetInspirationTypes(ctx context.Context) ([]InspirationType, error) {
@@ -667,7 +667,7 @@ func (c *Client) GetInspirationTypes(ctx context.Context) ([]InspirationType, er
 	return out.Data, nil
 }
 
-// --- Lists ---
+// Lists.
 
 // GetLists returns a paginated list of list records.
 func (c *Client) GetLists(ctx context.Context, page int) ([]ListBase, error) {
@@ -715,7 +715,7 @@ func (c *Client) GetListTranslation(ctx context.Context, id int, language string
 	return &out.Data, nil
 }
 
-// --- Movies (paginated, filter, slug, statuses) ---
+// Movies (paginated, filter, slug, statuses).
 
 // GetMovies returns a paginated list of movies.
 func (c *Client) GetMovies(ctx context.Context, page int) ([]MovieBase, error) {
@@ -753,7 +753,7 @@ func (c *Client) GetMovieStatuses(ctx context.Context) ([]Status, error) {
 	return out.Data, nil
 }
 
-// --- People (paginated, types) ---
+// People (paginated, types).
 
 // GetPeople returns a paginated list of people.
 func (c *Client) GetPeople(ctx context.Context, page int) ([]PersonBase, error) {
@@ -773,7 +773,7 @@ func (c *Client) GetPeopleTypes(ctx context.Context) ([]PeopleType, error) {
 	return out.Data, nil
 }
 
-// --- Seasons (paginated, types) ---
+// Seasons (paginated, types).
 
 // GetSeasons returns a paginated list of seasons.
 func (c *Client) GetSeasons(ctx context.Context, page int) ([]SeasonBase, error) {
@@ -793,7 +793,7 @@ func (c *Client) GetSeasonTypes(ctx context.Context) ([]SeasonType, error) {
 	return out.Data, nil
 }
 
-// --- Series (paginated, filter, slug, statuses, episodes+lang) ---
+// Series (paginated, filter, slug, statuses, episodes+lang).
 
 // GetAllSeries returns a paginated list of series.
 func (c *Client) GetAllSeries(ctx context.Context, page int) ([]SeriesBase, error) {
@@ -841,7 +841,7 @@ func (c *Client) GetSeriesStatuses(ctx context.Context) ([]Status, error) {
 	return out.Data, nil
 }
 
-// --- Source Types ---
+// Source Types.
 
 // GetSourceTypes returns all source type records.
 func (c *Client) GetSourceTypes(ctx context.Context) ([]SourceType, error) {
@@ -852,7 +852,7 @@ func (c *Client) GetSourceTypes(ctx context.Context) ([]SourceType, error) {
 	return out.Data, nil
 }
 
-// --- User ---
+// User.
 
 // GetUserInfo returns the current user's info.
 func (c *Client) GetUserInfo(ctx context.Context) (*UserInfo, error) {

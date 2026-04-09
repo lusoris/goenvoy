@@ -615,14 +615,14 @@ func TestWithCustomHTTPClient(t *testing.T) {
 	}
 }
 
-func newPostTestServer(t *testing.T, wantPath, wantMethod, wantKey string, response any) *httptest.Server {
+func newPostTestServer(t *testing.T, wantPath, wantKey string, response any) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != wantPath {
 			t.Errorf("path = %q, want %q", r.URL.Path, wantPath)
 		}
-		if r.Method != wantMethod {
-			t.Errorf("method = %q, want %q", r.Method, wantMethod)
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %q, want POST", r.Method)
 		}
 		if wantKey != "" {
 			if got := r.Header.Get("simkl-api-key"); got != wantKey {
@@ -708,7 +708,7 @@ func TestSearchRandom(t *testing.T) {
 		Type:  "movie",
 		IDs:   simkl.IDs{Simkl: 999},
 	}
-	ts := newPostTestServer(t, "/search/random", http.MethodPost, "rnd-key", result)
+	ts := newPostTestServer(t, "/search/random", "rnd-key", result)
 	defer ts.Close()
 
 	c := simkl.New("rnd-key", simkl.WithBaseURL(ts.URL))
@@ -766,7 +766,7 @@ func TestBestMovies(t *testing.T) {
 
 func TestScrobbleStart(t *testing.T) {
 	resp := simkl.ScrobbleResponse{Action: "start", Result: "success"}
-	ts := newPostTestServer(t, "/scrobble/start", http.MethodPost, "sc-key", resp)
+	ts := newPostTestServer(t, "/scrobble/start", "sc-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("sc-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -783,7 +783,7 @@ func TestScrobbleStart(t *testing.T) {
 
 func TestScrobblePause(t *testing.T) {
 	resp := simkl.ScrobbleResponse{Action: "pause", Result: "success"}
-	ts := newPostTestServer(t, "/scrobble/pause", http.MethodPost, "sp-key", resp)
+	ts := newPostTestServer(t, "/scrobble/pause", "sp-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("sp-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -800,7 +800,7 @@ func TestScrobblePause(t *testing.T) {
 
 func TestScrobbleStop(t *testing.T) {
 	resp := simkl.ScrobbleResponse{Action: "stop", Result: "success"}
-	ts := newPostTestServer(t, "/scrobble/stop", http.MethodPost, "ss-key", resp)
+	ts := newPostTestServer(t, "/scrobble/stop", "ss-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("ss-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -818,7 +818,7 @@ func TestScrobbleStop(t *testing.T) {
 
 func TestScrobbleCheckin(t *testing.T) {
 	resp := simkl.ScrobbleResponse{Action: "checkin", Result: "success"}
-	ts := newPostTestServer(t, "/scrobble/checkin", http.MethodPost, "ci-key", resp)
+	ts := newPostTestServer(t, "/scrobble/checkin", "ci-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("ci-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -899,7 +899,7 @@ func TestGetAllItemsNoFilter(t *testing.T) {
 
 func TestAddToHistory(t *testing.T) {
 	resp := simkl.SyncResponse{Added: &simkl.SyncCount{Movies: 1}}
-	ts := newPostTestServer(t, "/sync/history", http.MethodPost, "ah-key", resp)
+	ts := newPostTestServer(t, "/sync/history", "ah-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("ah-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -916,7 +916,7 @@ func TestAddToHistory(t *testing.T) {
 
 func TestRemoveFromHistory(t *testing.T) {
 	resp := simkl.SyncResponse{Deleted: &simkl.SyncCount{Shows: 2}}
-	ts := newPostTestServer(t, "/sync/history/remove", http.MethodPost, "rh-key", resp)
+	ts := newPostTestServer(t, "/sync/history/remove", "rh-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("rh-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -955,7 +955,7 @@ func TestGetSyncRatings(t *testing.T) {
 
 func TestAddRatings(t *testing.T) {
 	resp := simkl.SyncResponse{Added: &simkl.SyncCount{Movies: 1}}
-	ts := newPostTestServer(t, "/sync/ratings", http.MethodPost, "ar-key", resp)
+	ts := newPostTestServer(t, "/sync/ratings", "ar-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("ar-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -972,7 +972,7 @@ func TestAddRatings(t *testing.T) {
 
 func TestRemoveRatings(t *testing.T) {
 	resp := simkl.SyncResponse{Deleted: &simkl.SyncCount{Movies: 1}}
-	ts := newPostTestServer(t, "/sync/ratings/remove", http.MethodPost, "rr-key", resp)
+	ts := newPostTestServer(t, "/sync/ratings/remove", "rr-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("rr-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -989,7 +989,7 @@ func TestRemoveRatings(t *testing.T) {
 
 func TestAddToList(t *testing.T) {
 	resp := simkl.SyncResponse{Added: &simkl.SyncCount{Shows: 1}}
-	ts := newPostTestServer(t, "/sync/add-to-list", http.MethodPost, "al-key", resp)
+	ts := newPostTestServer(t, "/sync/add-to-list", "al-key", resp)
 	defer ts.Close()
 
 	c := simkl.New("al-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
@@ -1043,7 +1043,7 @@ func TestCheckIfWatched(t *testing.T) {
 		{Title: "Inception", Year: 2010, Result: true, List: "completed", IDs: simkl.IDs{Simkl: 42}},
 		{Title: "Unknown", Year: 2000, Result: false, IDs: simkl.IDs{Simkl: 99}},
 	}
-	ts := newPostTestServer(t, "/sync/watched/", http.MethodPost, "cw-key", results)
+	ts := newPostTestServer(t, "/sync/watched/", "cw-key", results)
 	defer ts.Close()
 
 	c := simkl.New("cw-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))

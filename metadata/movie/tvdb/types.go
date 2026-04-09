@@ -571,10 +571,10 @@ func httpStatusText(code int) string {
 
 // AwardNominee is an award nominee record.
 type AwardNominee struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	Character *Character `json:"character,omitempty"`
-	Details   string     `json:"details"`
+	ID        int          `json:"id"`
+	Name      string       `json:"name"`
+	Character *Character   `json:"character,omitempty"`
+	Details   string       `json:"details"`
 	Episode   *EpisodeBase `json:"episode,omitempty"`
 	Movie     *MovieBase   `json:"movie,omitempty"`
 	Series    *SeriesBase  `json:"series,omitempty"`
@@ -585,11 +585,11 @@ type AwardNominee struct {
 
 // AwardCategory is a base award category record.
 type AwardCategory struct {
-	ID              int64    `json:"id"`
-	Name            string   `json:"name"`
-	AllowCoNominees bool     `json:"allowCoNominees"`
-	ForSeries       bool     `json:"forSeries"`
-	ForMovies       bool     `json:"forMovies"`
+	ID              int64     `json:"id"`
+	Name            string    `json:"name"`
+	AllowCoNominees bool      `json:"allowCoNominees"`
+	ForSeries       bool      `json:"forSeries"`
+	ForMovies       bool      `json:"forMovies"`
 	Award           AwardBase `json:"award"`
 }
 
@@ -602,7 +602,7 @@ type AwardCategoryExtended struct {
 // AwardExtended is the extended award record.
 type AwardExtended struct {
 	AwardBase
-	Score      int              `json:"score"`
+	Score      int             `json:"score"`
 	Categories []AwardCategory `json:"categories,omitempty"`
 }
 
@@ -621,9 +621,9 @@ type Country struct {
 
 // EntityType is an entity type record.
 type EntityType struct {
-	ID         int64  `json:"id"`
-	Name       string `json:"name"`
-	HasSpecials bool  `json:"hasSpecials"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	HasSpecials bool   `json:"hasSpecials"`
 }
 
 // Gender is a gender record.
@@ -634,9 +634,9 @@ type Gender struct {
 
 // InspirationType is an inspiration type record.
 type InspirationType struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
 	ReferenceURL string `json:"reference_url"`
 	URL          string `json:"url"`
 }
@@ -649,9 +649,9 @@ type ListExtended struct {
 
 // ListEntity is an entity within a list.
 type ListEntity struct {
-	Order    int64  `json:"order"`
-	SeriesID int64  `json:"seriesId,omitempty"`
-	MovieID  int64  `json:"movieId,omitempty"`
+	Order    int64 `json:"order"`
+	SeriesID int64 `json:"seriesId,omitempty"`
+	MovieID  int64 `json:"movieId,omitempty"`
 }
 
 // PeopleType is a people type record.
@@ -662,19 +662,19 @@ type PeopleType struct {
 
 // SourceType is a source type record.
 type SourceType struct {
-	ID     int64  `json:"id"`
-	Name   string `json:"name"`
-	Slug   string `json:"slug"`
-	Prefix string `json:"prefix"`
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Slug    string `json:"slug"`
+	Prefix  string `json:"prefix"`
 	PostFix string `json:"postfix"`
-	Sort   int    `json:"sort"`
+	Sort    int    `json:"sort"`
 }
 
 // UserInfo contains authenticated user information.
 type UserInfo struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Language string `json:"language"`
+	ID                   int    `json:"id"`
+	Name                 string `json:"name"`
+	Language             string `json:"language"`
 	FavoritesDisplayMode string `json:"favoritesDisplaymode"`
 }
 
@@ -690,8 +690,8 @@ type Favorites struct {
 
 // FavoriteRecord is used to add items to user favorites via POST.
 type FavoriteRecord struct {
-	Series int `json:"series,omitempty"`
-	Movies int `json:"movies,omitempty"`
+	Series   int `json:"series,omitempty"`
+	Movies   int `json:"movies,omitempty"`
 	Episodes int `json:"episodes,omitempty"`
 	Artwork  int `json:"artwork,omitempty"`
 	People   int `json:"people,omitempty"`
@@ -700,15 +700,15 @@ type FavoriteRecord struct {
 
 // FilterParams holds optional query parameters for filter endpoints.
 type FilterParams struct {
-	Country  string
-	Language string
-	Company  int
+	Country       string
+	Language      string
+	Company       int
 	ContentRating int
-	Genre    int
-	Year     int
-	Sort     string
-	SortType string
-	Status   int
+	Genre         int
+	Year          int
+	Sort          string
+	SortType      string
+	Status        int
 }
 
 func (p *FilterParams) encode() string {

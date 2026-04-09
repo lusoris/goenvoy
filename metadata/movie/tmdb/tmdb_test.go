@@ -764,7 +764,7 @@ func newMethodTestServer(t *testing.T, wantMethod, wantPath string, response any
 	}))
 }
 
-// --- Movie extras tests ---
+// Movie extras tests.
 
 func TestGetMovieVideos(t *testing.T) {
 	t.Parallel()
@@ -912,7 +912,7 @@ func TestDeleteMovieRating(t *testing.T) {
 	}
 }
 
-// --- TV extras tests ---
+// TV extras tests.
 
 func TestGetTVVideos(t *testing.T) {
 	t.Parallel()
@@ -1074,7 +1074,7 @@ func TestDeleteTVRating(t *testing.T) {
 	}
 }
 
-// --- TV Season extras tests ---
+// TV Season extras tests.
 
 func TestGetTVSeasonCredits(t *testing.T) {
 	t.Parallel()
@@ -1160,7 +1160,7 @@ func TestGetTVSeasonWatchProviders(t *testing.T) {
 	}
 }
 
-// --- TV Episode tests ---
+// TV Episode tests.
 
 func TestGetTVEpisode(t *testing.T) {
 	t.Parallel()
@@ -1280,7 +1280,7 @@ func TestDeleteTVEpisodeRating(t *testing.T) {
 	}
 }
 
-// --- Person extras tests ---
+// Person extras tests.
 
 func TestGetPersonMovieCredits(t *testing.T) {
 	t.Parallel()
@@ -1352,7 +1352,7 @@ func TestGetPersonTaggedImages(t *testing.T) {
 	}
 }
 
-// --- Search extras tests ---
+// Search extras tests.
 
 func TestSearchKeywords(t *testing.T) {
 	t.Parallel()
@@ -1396,7 +1396,7 @@ func TestSearchCompanies(t *testing.T) {
 	}
 }
 
-// --- Collection tests ---
+// Collection tests.
 
 func TestGetCollection(t *testing.T) {
 	t.Parallel()
@@ -1440,7 +1440,7 @@ func TestGetCollectionTranslations(t *testing.T) {
 	}
 }
 
-// --- Account tests ---
+// Account tests.
 
 func TestGetAccountDetails(t *testing.T) {
 	t.Parallel()
@@ -1574,7 +1574,7 @@ func TestGetRatedTVEpisodes(t *testing.T) {
 	}
 }
 
-// --- List tests ---
+// List tests.
 
 func TestGetList(t *testing.T) {
 	t.Parallel()
@@ -1658,7 +1658,7 @@ func TestCheckItemStatus(t *testing.T) {
 	}
 }
 
-// --- Certification tests ---
+// Certification tests.
 
 func TestGetMovieCertifications(t *testing.T) {
 	t.Parallel()
@@ -1688,7 +1688,7 @@ func TestGetTVCertifications(t *testing.T) {
 	}
 }
 
-// --- Watch Provider tests ---
+// Watch Provider tests.
 
 func TestGetAvailableWatchProviderRegions(t *testing.T) {
 	t.Parallel()
@@ -1732,7 +1732,7 @@ func TestGetTVWatchProviderList(t *testing.T) {
 	}
 }
 
-// --- Company & Keyword tests ---
+// Company & Keyword tests.
 
 func TestGetCompany(t *testing.T) {
 	t.Parallel()
@@ -1762,7 +1762,7 @@ func TestGetKeyword(t *testing.T) {
 	}
 }
 
-// --- Changes tests ---
+// Changes tests.
 
 func TestGetMovieChanges(t *testing.T) {
 	t.Parallel()
@@ -1806,7 +1806,7 @@ func TestGetPersonChanges(t *testing.T) {
 	}
 }
 
-// --- Misc tests ---
+// Misc tests.
 
 func TestGetReview(t *testing.T) {
 	t.Parallel()
