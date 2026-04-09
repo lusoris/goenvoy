@@ -298,3 +298,76 @@ type ImportListExclusion struct {
 	MovieTitle string `json:"movieTitle,omitempty"`
 	MovieYear  int    `json:"movieYear,omitempty"`
 }
+
+// LocalizationResource represents localization strings.
+type LocalizationResource struct {
+	ID      int               `json:"id"`
+	Strings map[string]string `json:"strings"`
+}
+
+// FileSystemResource represents the result of a filesystem browse.
+type FileSystemResource struct {
+	Directories []FileSystemEntry `json:"directories"`
+	Files       []FileSystemEntry `json:"files"`
+}
+
+// FileSystemEntry is a single directory or file entry.
+type FileSystemEntry struct {
+	Path         string `json:"path"`
+	RelativePath string `json:"relativePath,omitempty"`
+	Name         string `json:"name"`
+	Size         int64  `json:"size,omitempty"`
+}
+
+// ImportListConfigResource holds import list global configuration.
+type ImportListConfigResource struct {
+	ID            int    `json:"id"`
+	ListSyncLevel string `json:"listSyncLevel"`
+	ListSyncTag   int    `json:"listSyncTag"`
+}
+
+// MovieFileEditorResource is the request body for bulk updating movie file quality/language.
+type MovieFileEditorResource struct {
+	MovieFileIDs []int         `json:"movieFileIds"`
+	Languages    []Language    `json:"languages,omitempty"`
+	Quality      *QualityModel `json:"quality,omitempty"`
+	ReleaseGroup string        `json:"releaseGroup,omitempty"`
+}
+
+// ExtraFileResource represents an extra file associated with a movie.
+type ExtraFileResource struct {
+	ID           int      `json:"id"`
+	MovieID      int      `json:"movieId"`
+	MovieFileID  int      `json:"movieFileId,omitempty"`
+	RelativePath string   `json:"relativePath,omitempty"`
+	Extension    string   `json:"extension,omitempty"`
+	LanguageTags []string `json:"languageTags,omitempty"`
+	Title        string   `json:"title,omitempty"`
+	Type         string   `json:"type,omitempty"`
+}
+
+// MetadataConfigResource holds metadata global configuration.
+type MetadataConfigResource struct {
+	ID                   int    `json:"id"`
+	CertificationCountry string `json:"certificationCountry,omitempty"`
+}
+
+// AlternativeTitleResource represents an alternative title returned by the API.
+type AlternativeTitleResource struct {
+	ID              int    `json:"id"`
+	SourceType      string `json:"sourceType,omitempty"`
+	MovieMetadataID int    `json:"movieMetadataId,omitempty"`
+	Title           string `json:"title,omitempty"`
+	CleanTitle      string `json:"cleanTitle,omitempty"`
+}
+
+// LocalizationLanguageResource represents a localization language identifier.
+type LocalizationLanguageResource struct {
+	Identifier string `json:"identifier"`
+}
+
+// QualityDefinitionLimitsResource holds min/max limits for quality definitions.
+type QualityDefinitionLimitsResource struct {
+	Min int `json:"min"`
+	Max int `json:"max"`
+}

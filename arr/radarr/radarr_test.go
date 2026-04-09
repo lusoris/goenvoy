@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/lusoris/goenvoy/arr"
@@ -29,6 +31,24 @@ func newTestServer(t *testing.T, method, wantPath string, body any) *httptest.Se
 		if body != nil {
 			json.NewEncoder(w).Encode(body)
 		}
+	}))
+}
+
+func newRawTestServer(t *testing.T, method, wantPath, body string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			t.Errorf("method = %s, want %s", r.Method, method)
+		}
+		if r.Header.Get("X-Api-Key") == "" {
+			t.Error("missing X-Api-Key header")
+		}
+		if wantPath != "" && r.URL.RequestURI() != wantPath {
+			t.Errorf("path = %q, want %q", r.URL.RequestURI(), wantPath)
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, body)
 	}))
 }
 
@@ -843,5 +863,927 @@ func TestDeleteMovies(t *testing.T) {
 	c, _ := radarr.New(srv.URL, "test-key")
 	if err := c.DeleteMovies(context.Background(), &radarr.MovieEditorResource{MovieIDs: []int{1}}); err != nil {
 		t.Fatalf("DeleteMovies: %v", err)
+	}
+}
+
+func TestDeleteCommand(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/command/1", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.DeleteCommand(context.Background(), 1); err != nil {
+		t.Fatalf("DeleteCommand: %v", err)
+	}
+}
+
+func TestUpdateMovieFile(t *testing.T) {
+	t.Parallel()
+
+	want := radarr.MovieFile{ID: 1}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/moviefile/1", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateMovieFile(context.Background(), &radarr.MovieFile{ID: 1})
+	if err != nil {
+		t.Fatalf("UpdateMovieFile: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestEditMovieFiles(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/moviefile/editor", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.EditMovieFiles(context.Background(), &radarr.MovieFileEditorResource{
+		MovieFileIDs: []int{1, 2},
+	}); err != nil {
+		t.Fatalf("EditMovieFiles: %v", err)
+	}
+}
+
+func TestUpdateCustomFormatsBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.CustomFormatResource{{ID: 1, Name: "test"}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/customformat/bulk", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateCustomFormatsBulk(context.Background(), &arr.CustomFormatBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateCustomFormatsBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteCustomFormatsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/customformat/bulk", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.DeleteCustomFormatsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteCustomFormatsBulk: %v", err)
+	}
+}
+
+func TestUpdateDownloadClientsBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.ProviderResource{{ID: 1}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/downloadclient/bulk", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateDownloadClientsBulk(context.Background(), &arr.ProviderBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateDownloadClientsBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteDownloadClientsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/downloadclient/bulk", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.DeleteDownloadClientsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteDownloadClientsBulk: %v", err)
+	}
+}
+
+func TestTestAllDownloadClients(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/downloadclient/testall", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.TestAllDownloadClients(context.Background()); err != nil {
+		t.Fatalf("TestAllDownloadClients: %v", err)
+	}
+}
+
+func TestUpdateIndexersBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.ProviderResource{{ID: 1}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/indexer/bulk", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateIndexersBulk(context.Background(), &arr.ProviderBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateIndexersBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteIndexersBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/indexer/bulk", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.DeleteIndexersBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteIndexersBulk: %v", err)
+	}
+}
+
+func TestTestAllIndexers(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/indexer/testall", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.TestAllIndexers(context.Background()); err != nil {
+		t.Fatalf("TestAllIndexers: %v", err)
+	}
+}
+
+func TestUpdateImportListsBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.ProviderResource{{ID: 1}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/importlist/bulk", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateImportListsBulk(context.Background(), &arr.ProviderBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateImportListsBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteImportListsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/importlist/bulk", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.DeleteImportListsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteImportListsBulk: %v", err)
+	}
+}
+
+func TestTestAllImportLists(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/importlist/testall", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.TestAllImportLists(context.Background()); err != nil {
+		t.Fatalf("TestAllImportLists: %v", err)
+	}
+}
+
+func TestGetImportListConfig(t *testing.T) {
+	t.Parallel()
+
+	want := radarr.ImportListConfigResource{ID: 1, ListSyncLevel: "disabled"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/importlist", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListConfig(context.Background())
+	if err != nil {
+		t.Fatalf("GetImportListConfig: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestUpdateImportListConfig(t *testing.T) {
+	t.Parallel()
+
+	want := radarr.ImportListConfigResource{ID: 1, ListSyncLevel: "logOnly"}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/config/importlist/1", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateImportListConfig(context.Background(), &radarr.ImportListConfigResource{ID: 1, ListSyncLevel: "logOnly"})
+	if err != nil {
+		t.Fatalf("UpdateImportListConfig: %v", err)
+	}
+	if got.ListSyncLevel != "logOnly" {
+		t.Errorf("ListSyncLevel = %q, want logOnly", got.ListSyncLevel)
+	}
+}
+
+func TestGetImportListExclusionsPaged(t *testing.T) {
+	t.Parallel()
+
+	want := arr.PagingResource[radarr.ImportListExclusion]{
+		Page:         1,
+		PageSize:     10,
+		TotalRecords: 1,
+		Records:      []radarr.ImportListExclusion{{ID: 1, TmdbID: 123}},
+	}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/exclusions/paged?page=1&pageSize=10", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListExclusionsPaged(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("GetImportListExclusionsPaged: %v", err)
+	}
+	if got.TotalRecords != 1 {
+		t.Errorf("TotalRecords = %d, want 1", got.TotalRecords)
+	}
+}
+
+func TestDeleteImportListExclusionsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/exclusions/bulk", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.DeleteImportListExclusionsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteImportListExclusionsBulk: %v", err)
+	}
+}
+
+func TestTestAllNotifications(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/notification/testall", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.TestAllNotifications(context.Background()); err != nil {
+		t.Fatalf("TestAllNotifications: %v", err)
+	}
+}
+
+func TestTestAllMetadataConsumers(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/metadata/testall", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.TestAllMetadataConsumers(context.Background()); err != nil {
+		t.Fatalf("TestAllMetadataConsumers: %v", err)
+	}
+}
+
+func TestGetLanguage(t *testing.T) {
+	t.Parallel()
+
+	want := radarr.Language{ID: 1, Name: "English"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/language/1", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetLanguage(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetLanguage: %v", err)
+	}
+	if got.Name != "English" {
+		t.Errorf("Name = %q, want English", got.Name)
+	}
+}
+
+func TestGetLocalization(t *testing.T) {
+	t.Parallel()
+
+	want := radarr.LocalizationResource{ID: 1, Strings: map[string]string{"key": "val"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/localization", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetLocalization(context.Background())
+	if err != nil {
+		t.Fatalf("GetLocalization: %v", err)
+	}
+	if got.Strings["key"] != "val" {
+		t.Errorf("Strings[key] = %q, want val", got.Strings["key"])
+	}
+}
+
+func TestUpdateQualityDefinitions(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.QualityDefinitionResource{{ID: 1, Title: "Bluray-1080p"}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/qualitydefinition/update", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateQualityDefinitions(context.Background(), []arr.QualityDefinitionResource{{ID: 1, Title: "Bluray-1080p"}})
+	if err != nil {
+		t.Fatalf("UpdateQualityDefinitions: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetQualityProfileSchema(t *testing.T) {
+	t.Parallel()
+
+	want := arr.QualityProfile{ID: 1, Name: "schema"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/qualityprofile/schema", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetQualityProfileSchema(context.Background())
+	if err != nil {
+		t.Fatalf("GetQualityProfileSchema: %v", err)
+	}
+	if got.Name != "schema" {
+		t.Errorf("Name = %q, want schema", got.Name)
+	}
+}
+
+func TestUpdateRootFolder(t *testing.T) {
+	t.Parallel()
+
+	want := arr.RootFolder{ID: 1, Path: "/movies"}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/rootfolder/1", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateRootFolder(context.Background(), &arr.RootFolder{ID: 1, Path: "/movies"})
+	if err != nil {
+		t.Fatalf("UpdateRootFolder: %v", err)
+	}
+	if got.Path != "/movies" {
+		t.Errorf("Path = %q, want /movies", got.Path)
+	}
+}
+
+func TestBrowseFileSystem(t *testing.T) {
+	t.Parallel()
+
+	want := radarr.FileSystemResource{
+		Directories: []radarr.FileSystemEntry{{Path: "/movies", Name: "movies"}},
+	}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/filesystem?path=%2Fmovies&includeFiles=true", want)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.BrowseFileSystem(context.Background(), "/movies", true)
+	if err != nil {
+		t.Fatalf("BrowseFileSystem: %v", err)
+	}
+	if len(got.Directories) != 1 {
+		t.Errorf("len(Directories) = %d", len(got.Directories))
+	}
+}
+
+func TestPing(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodGet, "/ping", nil)
+	defer srv.Close()
+
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.Ping(context.Background()); err != nil {
+		t.Fatalf("Ping: %v", err)
+	}
+}
+
+func TestGetAlternativeTitles(t *testing.T) {
+	t.Parallel()
+	want := []radarr.AlternativeTitleResource{{ID: 1, Title: "Alt"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/alttitle", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetAlternativeTitles(context.Background())
+	if err != nil {
+		t.Fatalf("GetAlternativeTitles: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+}
+
+func TestGetAlternativeTitle(t *testing.T) {
+	t.Parallel()
+	want := radarr.AlternativeTitleResource{ID: 1, Title: "Alt"}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/alttitle/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetAlternativeTitle(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetAlternativeTitle: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetBlocklistMovies(t *testing.T) {
+	t.Parallel()
+	want := []arr.BlocklistResource{{ID: 1}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/blocklist/movie", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetBlocklistMovies(context.Background())
+	if err != nil {
+		t.Fatalf("GetBlocklistMovies: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+}
+
+func TestGetCreditByID(t *testing.T) {
+	t.Parallel()
+	want := radarr.Credit{ID: 5, PersonName: "Actor"}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/credit/5", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetCreditByID(context.Background(), 5)
+	if err != nil {
+		t.Fatalf("GetCreditByID: %v", err)
+	}
+	if got.ID != 5 {
+		t.Errorf("ID = %d, want 5", got.ID)
+	}
+}
+
+func TestGetDownloadClientConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.DownloadClientConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/downloadclient/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetDownloadClientConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetDownloadClientConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetHostConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.HostConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/host/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetHostConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetHostConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetImportListConfigByID(t *testing.T) {
+	t.Parallel()
+	want := radarr.ImportListConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/importlist/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetImportListConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetIndexerConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.IndexerConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/indexer/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetIndexerConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetIndexerConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetMediaManagementConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.MediaManagementConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/mediamanagement/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetMediaManagementConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetMediaManagementConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetNamingConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.NamingConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/naming/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetNamingConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetNamingConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetUIConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.UIConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/ui/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetUIConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetUIConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetExtraFiles(t *testing.T) {
+	t.Parallel()
+	want := []radarr.ExtraFileResource{{ID: 1, MovieID: 10}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/extrafile?movieId=10", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetExtraFiles(context.Background(), 10)
+	if err != nil {
+		t.Fatalf("GetExtraFiles: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+}
+
+func TestGetImportListExclusion(t *testing.T) {
+	t.Parallel()
+	want := radarr.ImportListExclusion{ID: 1, TmdbID: 123}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/exclusions/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListExclusion(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetImportListExclusion: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestCreateImportListExclusionsBulk(t *testing.T) {
+	t.Parallel()
+	want := []radarr.ImportListExclusion{{ID: 1}, {ID: 2}}
+	srv := newTestServer(t, http.MethodPost, "/api/v3/exclusions/bulk", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.CreateImportListExclusionsBulk(context.Background(), []radarr.ImportListExclusion{{TmdbID: 1}})
+	if err != nil {
+		t.Fatalf("CreateImportListExclusionsBulk: %v", err)
+	}
+	if len(got) != 2 {
+		t.Errorf("len = %d, want 2", len(got))
+	}
+}
+
+func TestUpdateImportListExclusion(t *testing.T) {
+	t.Parallel()
+	want := radarr.ImportListExclusion{ID: 1, TmdbID: 456}
+	srv := newTestServer(t, http.MethodPut, "/api/v3/exclusions/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateImportListExclusion(context.Background(), &radarr.ImportListExclusion{ID: 1, TmdbID: 456})
+	if err != nil {
+		t.Fatalf("UpdateImportListExclusion: %v", err)
+	}
+	if got.TmdbID != 456 {
+		t.Errorf("TmdbID = %d, want 456", got.TmdbID)
+	}
+}
+
+func TestGetImportListMovies(t *testing.T) {
+	t.Parallel()
+	want := []radarr.Movie{{ID: 1, Title: "Test"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/importlist/movie", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListMovies(context.Background())
+	if err != nil {
+		t.Fatalf("GetImportListMovies: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+}
+
+func TestCreateImportListMovies(t *testing.T) {
+	t.Parallel()
+	want := []radarr.Movie{{ID: 1, Title: "Test"}}
+	srv := newTestServer(t, http.MethodPost, "/api/v3/importlist/movie", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.CreateImportListMovies(context.Background(), []radarr.Movie{{Title: "Test"}})
+	if err != nil {
+		t.Fatalf("CreateImportListMovies: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+}
+
+func TestDownloadClientAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/downloadclient/action/testAction", nil)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.DownloadClientAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("DownloadClientAction: %v", err)
+	}
+}
+
+func TestImportListAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/importlist/action/testAction", nil)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.ImportListAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("ImportListAction: %v", err)
+	}
+}
+
+func TestIndexerAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/indexer/action/testAction", nil)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.IndexerAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("IndexerAction: %v", err)
+	}
+}
+
+func TestMetadataAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/metadata/action/testAction", nil)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.MetadataAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("MetadataAction: %v", err)
+	}
+}
+
+func TestNotificationAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/notification/action/testAction", nil)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.NotificationAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("NotificationAction: %v", err)
+	}
+}
+
+func TestGetLocalizationLanguages(t *testing.T) {
+	t.Parallel()
+	want := []radarr.LocalizationLanguageResource{{Identifier: "en"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/localization/language", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetLocalizationLanguages(context.Background())
+	if err != nil {
+		t.Fatalf("GetLocalizationLanguages: %v", err)
+	}
+	if len(got) != 1 || got[0].Identifier != "en" {
+		t.Errorf("unexpected result: %v", got)
+	}
+}
+
+func TestGetMetadataConfig(t *testing.T) {
+	t.Parallel()
+	want := radarr.MetadataConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/metadata", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetMetadataConfig(context.Background())
+	if err != nil {
+		t.Fatalf("GetMetadataConfig: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetMetadataConfigByID(t *testing.T) {
+	t.Parallel()
+	want := radarr.MetadataConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/metadata/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetMetadataConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetMetadataConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestUpdateMetadataConfig(t *testing.T) {
+	t.Parallel()
+	want := radarr.MetadataConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodPut, "/api/v3/config/metadata/1", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateMetadataConfig(context.Background(), &radarr.MetadataConfigResource{ID: 1})
+	if err != nil {
+		t.Fatalf("UpdateMetadataConfig: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestUpdateMovieFilesBulk(t *testing.T) {
+	t.Parallel()
+	want := []radarr.MovieFile{{ID: 1}, {ID: 2}}
+	srv := newTestServer(t, http.MethodPut, "/api/v3/moviefile/bulk", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.UpdateMovieFilesBulk(context.Background(), &radarr.MovieFileEditorResource{
+		MovieFileIDs: []int{1, 2},
+	})
+	if err != nil {
+		t.Fatalf("UpdateMovieFilesBulk: %v", err)
+	}
+	if len(got) != 2 {
+		t.Errorf("len = %d, want 2", len(got))
+	}
+}
+
+func TestGetMovieFolder(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodGet, "/api/v3/movie/5/folder", nil)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.GetMovieFolder(context.Background(), 5); err != nil {
+		t.Fatalf("GetMovieFolder: %v", err)
+	}
+}
+
+func TestGetNamingExamples(t *testing.T) {
+	t.Parallel()
+	want := arr.NamingConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/naming/examples", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetNamingExamples(context.Background())
+	if err != nil {
+		t.Fatalf("GetNamingExamples: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetQualityDefinitionLimits(t *testing.T) {
+	t.Parallel()
+	want := radarr.QualityDefinitionLimitsResource{Min: 1, Max: 400}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/qualitydefinition/limits", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetQualityDefinitionLimits(context.Background())
+	if err != nil {
+		t.Fatalf("GetQualityDefinitionLimits: %v", err)
+	}
+	if got.Min != 1 || got.Max != 400 {
+		t.Errorf("got Min=%d Max=%d, want 1/400", got.Min, got.Max)
+	}
+}
+
+func TestGetSystemRoutesDuplicate(t *testing.T) {
+	t.Parallel()
+	want := []arr.SystemRouteResource{{Path: "/test", Method: "GET"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/system/routes/duplicate", want)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetSystemRoutesDuplicate(context.Background())
+	if err != nil {
+		t.Fatalf("GetSystemRoutesDuplicate: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d, want 1", len(got))
+	}
+}
+
+func TestGetUpdateLogFileContent(t *testing.T) {
+	t.Parallel()
+	srv := newRawTestServer(t, http.MethodGet, "/api/v3/log/file/update/update.txt", "log content")
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetUpdateLogFileContent(context.Background(), "update.txt")
+	if err != nil {
+		t.Fatalf("GetUpdateLogFileContent: %v", err)
+	}
+	if got != "log content" {
+		t.Errorf("content = %q, want %q", got, "log content")
+	}
+}
+
+func TestGetLogFileContent(t *testing.T) {
+	t.Parallel()
+	srv := newRawTestServer(t, http.MethodGet, "/api/v3/log/file/radarr.txt", "log line 1\nlog line 2")
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	got, err := c.GetLogFileContent(context.Background(), "radarr.txt")
+	if err != nil {
+		t.Fatalf("GetLogFileContent: %v", err)
+	}
+	if got != "log line 1\nlog line 2" {
+		t.Errorf("content = %q, want %q", got, "log line 1\nlog line 2")
+	}
+}
+
+func TestHeadPing(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodHead, "/ping", nil)
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.HeadPing(context.Background()); err != nil {
+		t.Fatalf("HeadPing: %v", err)
+	}
+}
+
+func TestUploadBackup(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		if r.Header.Get("X-Api-Key") == "" {
+			t.Error("missing X-Api-Key header")
+		}
+		ct := r.Header.Get("Content-Type")
+		if !strings.HasPrefix(ct, "multipart/form-data") {
+			t.Errorf("Content-Type = %q, want multipart/form-data", ct)
+		}
+		f, fh, err := r.FormFile("file")
+		if err != nil {
+			t.Fatalf("FormFile: %v", err)
+		}
+		defer f.Close()
+		if fh.Filename != "backup.zip" {
+			t.Errorf("filename = %q, want %q", fh.Filename, "backup.zip")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+	c, _ := radarr.New(srv.URL, "test-key")
+	if err := c.UploadBackup(context.Background(), "backup.zip", strings.NewReader("fake-backup-data")); err != nil {
+		t.Fatalf("UploadBackup: %v", err)
 	}
 }

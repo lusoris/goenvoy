@@ -326,3 +326,251 @@ type Token struct {
 	Scope        string `json:"scope"`
 	CreatedAt    int64  `json:"created_at"`
 }
+
+// SyncItems is the request/response body for sync operations (watchlist, collection, history, ratings).
+type SyncItems struct {
+	Movies   []SyncMovie   `json:"movies,omitempty"`
+	Shows    []SyncShow    `json:"shows,omitempty"`
+	Episodes []SyncEpisode `json:"episodes,omitempty"`
+	Seasons  []SyncSeason  `json:"seasons,omitempty"`
+}
+
+// SyncMovie is a movie reference for sync operations.
+type SyncMovie struct {
+	IDs       IDs    `json:"ids"`
+	Title     string `json:"title,omitempty"`
+	Year      int    `json:"year,omitempty"`
+	Rating    int    `json:"rating,omitempty"`
+	RatedAt   string `json:"rated_at,omitempty"`
+	WatchedAt string `json:"watched_at,omitempty"`
+}
+
+// SyncShow is a show reference for sync operations.
+type SyncShow struct {
+	IDs       IDs          `json:"ids"`
+	Title     string       `json:"title,omitempty"`
+	Year      int          `json:"year,omitempty"`
+	Rating    int          `json:"rating,omitempty"`
+	RatedAt   string       `json:"rated_at,omitempty"`
+	WatchedAt string       `json:"watched_at,omitempty"`
+	Seasons   []SyncSeason `json:"seasons,omitempty"`
+}
+
+// SyncSeason is a season reference for sync operations.
+type SyncSeason struct {
+	Number   int           `json:"number"`
+	Episodes []SyncEpisode `json:"episodes,omitempty"`
+	Rating   int           `json:"rating,omitempty"`
+	RatedAt  string        `json:"rated_at,omitempty"`
+}
+
+// SyncEpisode is an episode reference for sync operations.
+type SyncEpisode struct {
+	IDs       IDs    `json:"ids"`
+	Rating    int    `json:"rating,omitempty"`
+	RatedAt   string `json:"rated_at,omitempty"`
+	WatchedAt string `json:"watched_at,omitempty"`
+}
+
+// SyncResponse is the response from sync add/remove operations.
+type SyncResponse struct {
+	Added    *SyncCount `json:"added,omitempty"`
+	Deleted  *SyncCount `json:"deleted,omitempty"`
+	Existing *SyncCount `json:"existing,omitempty"`
+	NotFound *SyncItems `json:"not_found,omitempty"`
+}
+
+// SyncCount holds counts per media type from a sync operation.
+type SyncCount struct {
+	Movies   int `json:"movies"`
+	Shows    int `json:"shows"`
+	Seasons  int `json:"seasons"`
+	Episodes int `json:"episodes"`
+}
+
+// WatchlistItem is an item on a user's watchlist.
+type WatchlistItem struct {
+	Rank     int      `json:"rank"`
+	ListedAt string   `json:"listed_at"`
+	Type     string   `json:"type"`
+	Movie    *Movie   `json:"movie,omitempty"`
+	Show     *Show    `json:"show,omitempty"`
+	Episode  *Episode `json:"episode,omitempty"`
+	Season   *Season  `json:"season,omitempty"`
+}
+
+// CollectionItem is a collected media item.
+type CollectionItem struct {
+	CollectedAt string   `json:"collected_at"`
+	UpdatedAt   string   `json:"updated_at"`
+	Movie       *Movie   `json:"movie,omitempty"`
+	Show        *Show    `json:"show,omitempty"`
+	Seasons     []Season `json:"seasons,omitempty"`
+}
+
+// HistoryItem is a watched history entry.
+type HistoryItem struct {
+	ID        int64    `json:"id"`
+	WatchedAt string   `json:"watched_at"`
+	Action    string   `json:"action"`
+	Type      string   `json:"type"`
+	Movie     *Movie   `json:"movie,omitempty"`
+	Show      *Show    `json:"show,omitempty"`
+	Episode   *Episode `json:"episode,omitempty"`
+}
+
+// RatedItem is a rated media item.
+type RatedItem struct {
+	RatedAt string   `json:"rated_at"`
+	Rating  int      `json:"rating"`
+	Type    string   `json:"type"`
+	Movie   *Movie   `json:"movie,omitempty"`
+	Show    *Show    `json:"show,omitempty"`
+	Episode *Episode `json:"episode,omitempty"`
+	Season  *Season  `json:"season,omitempty"`
+}
+
+// UserProfile contains user profile information.
+type UserProfile struct {
+	Username string `json:"username"`
+	Private  bool   `json:"private"`
+	Name     string `json:"name"`
+	VIP      bool   `json:"vip"`
+	IDs      IDs    `json:"ids"`
+	JoinedAt string `json:"joined_at"`
+	Location string `json:"location,omitempty"`
+	About    string `json:"about,omitempty"`
+	Gender   string `json:"gender,omitempty"`
+	Age      int    `json:"age,omitempty"`
+}
+
+// UserStats contains viewing statistics for a user.
+type UserStats struct {
+	Movies   UserMovieStats   `json:"movies"`
+	Shows    UserShowStats    `json:"shows"`
+	Seasons  UserSeasonStats  `json:"seasons"`
+	Episodes UserEpisodeStats `json:"episodes"`
+	Network  UserNetworkStats `json:"network"`
+	Ratings  UserRatingStats  `json:"ratings"`
+}
+
+// UserMovieStats contains movie-specific stats.
+type UserMovieStats struct {
+	Plays     int `json:"plays"`
+	Watched   int `json:"watched"`
+	Minutes   int `json:"minutes"`
+	Collected int `json:"collected"`
+	Ratings   int `json:"ratings"`
+	Comments  int `json:"comments"`
+}
+
+// UserShowStats contains show-specific stats.
+type UserShowStats struct {
+	Watched   int `json:"watched"`
+	Collected int `json:"collected"`
+	Ratings   int `json:"ratings"`
+	Comments  int `json:"comments"`
+}
+
+// UserSeasonStats contains season-specific stats.
+type UserSeasonStats struct {
+	Ratings  int `json:"ratings"`
+	Comments int `json:"comments"`
+}
+
+// UserEpisodeStats contains episode-specific stats.
+type UserEpisodeStats struct {
+	Plays     int `json:"plays"`
+	Watched   int `json:"watched"`
+	Minutes   int `json:"minutes"`
+	Collected int `json:"collected"`
+	Ratings   int `json:"ratings"`
+	Comments  int `json:"comments"`
+}
+
+// UserNetworkStats contains social network stats.
+type UserNetworkStats struct {
+	Friends   int `json:"friends"`
+	Followers int `json:"followers"`
+	Following int `json:"following"`
+}
+
+// UserRatingStats contains rating distribution stats.
+type UserRatingStats struct {
+	Total        int          `json:"total"`
+	Distribution Distribution `json:"distribution"`
+}
+
+// UserList is a custom list created by a user.
+type UserList struct {
+	Name           string `json:"name"`
+	Description    string `json:"description,omitempty"`
+	Privacy        string `json:"privacy,omitempty"`
+	DisplayNumbers bool   `json:"display_numbers,omitempty"`
+	AllowComments  bool   `json:"allow_comments,omitempty"`
+	SortBy         string `json:"sort_by,omitempty"`
+	SortHow        string `json:"sort_how,omitempty"`
+	CreatedAt      string `json:"created_at,omitempty"`
+	UpdatedAt      string `json:"updated_at,omitempty"`
+	ItemCount      int    `json:"item_count,omitempty"`
+	Likes          int    `json:"likes,omitempty"`
+	IDs            IDs    `json:"ids,omitempty"`
+}
+
+// ListItem is an item in a user list.
+type ListItem struct {
+	Rank     int      `json:"rank"`
+	ListedAt string   `json:"listed_at"`
+	Type     string   `json:"type"`
+	Movie    *Movie   `json:"movie,omitempty"`
+	Show     *Show    `json:"show,omitempty"`
+	Episode  *Episode `json:"episode,omitempty"`
+	Season   *Season  `json:"season,omitempty"`
+	Person   *Person  `json:"person,omitempty"`
+}
+
+// ScrobbleRequest is the body for scrobble start/pause/stop.
+type ScrobbleRequest struct {
+	Movie    *SyncMovie   `json:"movie,omitempty"`
+	Show     *SyncShow    `json:"show,omitempty"`
+	Episode  *SyncEpisode `json:"episode,omitempty"`
+	Progress float64      `json:"progress"`
+}
+
+// ScrobbleResponse is the response from a scrobble operation.
+type ScrobbleResponse struct {
+	ID      int64    `json:"id"`
+	Action  string   `json:"action"`
+	Movie   *Movie   `json:"movie,omitempty"`
+	Show    *Show    `json:"show,omitempty"`
+	Episode *Episode `json:"episode,omitempty"`
+}
+
+// CheckinRequest is the body for a checkin.
+type CheckinRequest struct {
+	Movie   *SyncMovie   `json:"movie,omitempty"`
+	Show    *SyncShow    `json:"show,omitempty"`
+	Episode *SyncEpisode `json:"episode,omitempty"`
+	Message string       `json:"message,omitempty"`
+}
+
+// CheckinResponse is returned from a successful checkin.
+type CheckinResponse struct {
+	ID        int64    `json:"id"`
+	WatchedAt string   `json:"watched_at"`
+	Movie     *Movie   `json:"movie,omitempty"`
+	Show      *Show    `json:"show,omitempty"`
+	Episode   *Episode `json:"episode,omitempty"`
+}
+
+// UpdatedMovie is a movie with its update timestamp.
+type UpdatedMovie struct {
+	UpdatedAt string `json:"updated_at"`
+	Movie     Movie  `json:"movie"`
+}
+
+// UpdatedShow is a show with its update timestamp.
+type UpdatedShow struct {
+	UpdatedAt string `json:"updated_at"`
+	Show      Show   `json:"show"`
+}

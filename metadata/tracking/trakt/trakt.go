@@ -697,6 +697,309 @@ func (c *Client) Networks(ctx context.Context) ([]Network, error) {
 	return out, nil
 }
 
+// Recently updated.
+
+// GetUpdatedMovies returns movies updated since the given date (YYYY-MM-DD).
+func (c *Client) GetUpdatedMovies(ctx context.Context, startDate string, page, limit int) ([]UpdatedMovie, *PaginationHeaders, error) {
+	var out []UpdatedMovie
+	pg, err := c.get(ctx, "/movies/updates/"+url.PathEscape(startDate), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetUpdatedShows returns shows updated since the given date (YYYY-MM-DD).
+func (c *Client) GetUpdatedShows(ctx context.Context, startDate string, page, limit int) ([]UpdatedShow, *PaginationHeaders, error) {
+	var out []UpdatedShow
+	pg, err := c.get(ctx, "/shows/updates/"+url.PathEscape(startDate), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// User profile (authenticated).
+
+// GetProfile returns the authenticated user's profile.
+func (c *Client) GetProfile(ctx context.Context) (*UserProfile, error) {
+	var out UserProfile
+	_, err := c.get(ctx, "/users/me", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetUserStats returns the authenticated user's stats.
+func (c *Client) GetUserStats(ctx context.Context) (*UserStats, error) {
+	var out UserStats
+	_, err := c.get(ctx, "/users/me/stats", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Watchlist (authenticated).
+
+// GetWatchlist returns the user's watchlist items filtered by type.
+// Pass an empty mediaType for all items.
+func (c *Client) GetWatchlist(ctx context.Context, mediaType string, page, limit int) ([]WatchlistItem, *PaginationHeaders, error) {
+	path := "/sync/watchlist"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []WatchlistItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddToWatchlist adds items to the user's watchlist.
+func (c *Client) AddToWatchlist(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/watchlist", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromWatchlist removes items from the user's watchlist.
+func (c *Client) RemoveFromWatchlist(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/watchlist/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Collection (authenticated).
+
+// GetCollection returns the user's collection filtered by type ("movies" or "shows").
+func (c *Client) GetCollection(ctx context.Context, mediaType string, page, limit int) ([]CollectionItem, *PaginationHeaders, error) {
+	var out []CollectionItem
+	pg, err := c.get(ctx, "/sync/collection/"+url.PathEscape(mediaType), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddToCollection adds items to the user's collection.
+func (c *Client) AddToCollection(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/collection", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromCollection removes items from the user's collection.
+func (c *Client) RemoveFromCollection(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/collection/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// History (authenticated).
+
+// GetHistory returns the user's watch history filtered by type.
+func (c *Client) GetHistory(ctx context.Context, mediaType string, page, limit int) ([]HistoryItem, *PaginationHeaders, error) {
+	path := "/sync/history"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []HistoryItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddToHistory adds items to the user's watch history.
+func (c *Client) AddToHistory(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/history", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromHistory removes items from the user's watch history.
+func (c *Client) RemoveFromHistory(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/history/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Ratings (authenticated).
+
+// GetRatings returns the user's ratings filtered by type.
+func (c *Client) GetRatings(ctx context.Context, mediaType string) ([]RatedItem, error) {
+	path := "/sync/ratings"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []RatedItem
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AddRatings adds ratings for items.
+func (c *Client) AddRatings(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/ratings", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveRatings removes ratings for items.
+func (c *Client) RemoveRatings(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/ratings/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// User lists (authenticated).
+
+// GetUserLists returns all custom lists for the authenticated user.
+func (c *Client) GetUserLists(ctx context.Context) ([]UserList, error) {
+	var out []UserList
+	_, err := c.get(ctx, "/users/me/lists", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CreateList creates a new custom list.
+func (c *Client) CreateList(ctx context.Context, list *UserList) (*UserList, error) {
+	var out UserList
+	if err := c.post(ctx, "/users/me/lists", list, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdateList updates an existing custom list.
+func (c *Client) UpdateList(ctx context.Context, idOrSlug string, list *UserList) error {
+	return c.put(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug), list)
+}
+
+// DeleteList deletes a custom list.
+func (c *Client) DeleteList(ctx context.Context, idOrSlug string) error {
+	return c.del(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug))
+}
+
+// GetListItems returns all items in a custom list.
+func (c *Client) GetListItems(ctx context.Context, idOrSlug string, page, limit int) ([]ListItem, *PaginationHeaders, error) {
+	var out []ListItem
+	pg, err := c.get(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug)+"/items", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddListItems adds items to a custom list.
+func (c *Client) AddListItems(ctx context.Context, idOrSlug string, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug)+"/items", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveListItems removes items from a custom list.
+func (c *Client) RemoveListItems(ctx context.Context, idOrSlug string, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug)+"/items/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Scrobble (authenticated).
+
+// ScrobbleStart starts watching an item.
+func (c *Client) ScrobbleStart(ctx context.Context, req *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/start", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ScrobblePause pauses watching an item.
+func (c *Client) ScrobblePause(ctx context.Context, req *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/pause", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ScrobbleStop stops watching an item.
+func (c *Client) ScrobbleStop(ctx context.Context, req *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/stop", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Checkin (authenticated).
+
+// Checkin checks in to a movie or episode.
+func (c *Client) Checkin(ctx context.Context, req *CheckinRequest) (*CheckinResponse, error) {
+	var out CheckinResponse
+	if err := c.post(ctx, "/checkin", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// CancelCheckin cancels the active checkin.
+func (c *Client) CancelCheckin(ctx context.Context) error {
+	return c.del(ctx, "/checkin")
+}
+
+// Recommendations (authenticated).
+
+// GetMovieRecommendations returns personalized movie recommendations for the user.
+func (c *Client) GetMovieRecommendations(ctx context.Context, page, limit int) ([]Movie, *PaginationHeaders, error) {
+	var out []Movie
+	pg, err := c.get(ctx, "/recommendations/movies", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetShowRecommendations returns personalized show recommendations for the user.
+func (c *Client) GetShowRecommendations(ctx context.Context, page, limit int) ([]Show, *PaginationHeaders, error) {
+	var out []Show
+	pg, err := c.get(ctx, "/recommendations/shows", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
 // OAuth2.
 
 func (c *Client) post(ctx context.Context, path string, body, dst any) error {
@@ -715,6 +1018,13 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 	req.Header.Set("trakt-api-key", c.clientID)
 	req.Header.Set("trakt-api-version", apiVersion)
 	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -739,6 +1049,90 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 		if err := json.Unmarshal(respBody, dst); err != nil {
 			return fmt.Errorf("trakt: decode response: %w", err)
 		}
+	}
+	return nil
+}
+
+func (c *Client) del(ctx context.Context, path string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.rawBaseURL+path, http.NoBody)
+	if err != nil {
+		return fmt.Errorf("trakt: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("trakt-api-key", c.clientID)
+	req.Header.Set("trakt-api-version", apiVersion)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("trakt: DELETE %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("trakt: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(body, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(body)
+		}
+		return apiErr
+	}
+	return nil
+}
+
+func (c *Client) put(ctx context.Context, path string, body any) error {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("trakt: marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.rawBaseURL+path, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("trakt: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("trakt-api-key", c.clientID)
+	req.Header.Set("trakt-api-version", apiVersion)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("trakt: PUT %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("trakt: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(respBody, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(respBody)
+		}
+		return apiErr
 	}
 	return nil
 }

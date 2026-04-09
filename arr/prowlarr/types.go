@@ -205,3 +205,61 @@ type DownloadClientResource struct {
 	Protocol           string  `json:"protocol,omitempty"`
 	Priority           int     `json:"priority"`
 }
+
+// DevelopmentConfigResource represents Prowlarr development configuration.
+type DevelopmentConfigResource struct {
+	ID                 int    `json:"id"`
+	ConsoleLogLevel    string `json:"consoleLogLevel,omitempty"`
+	LogSql             bool   `json:"logSql"`
+	LogIndexerResponse bool   `json:"logIndexerResponse"`
+	LogRotate          int    `json:"logRotate"`
+	FilterSentryEvents bool   `json:"filterSentryEvents"`
+}
+
+// IndexerProxyResource represents a configured indexer proxy in Prowlarr.
+type IndexerProxyResource struct {
+	ID                    int                    `json:"id"`
+	Name                  string                 `json:"name,omitempty"`
+	Fields                []Field                `json:"fields,omitempty"`
+	ImplementationName    string                 `json:"implementationName,omitempty"`
+	Implementation        string                 `json:"implementation,omitempty"`
+	ConfigContract        string                 `json:"configContract,omitempty"`
+	InfoLink              string                 `json:"infoLink,omitempty"`
+	Message               *ProviderMessage       `json:"message,omitempty"`
+	Tags                  []int                  `json:"tags,omitempty"`
+	Presets               []IndexerProxyResource `json:"presets,omitempty"`
+	Link                  string                 `json:"link,omitempty"`
+	OnHealthIssue         bool                   `json:"onHealthIssue"`
+	SupportsOnHealthIssue bool                   `json:"supportsOnHealthIssue"`
+	IncludeHealthWarnings bool                   `json:"includeHealthWarnings"`
+	TestCommand           string                 `json:"testCommand,omitempty"`
+}
+
+// LocalizationOption represents a localization language option.
+type LocalizationOption struct {
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
+}
+
+// ApplicationBulkResource represents a bulk update for applications.
+type ApplicationBulkResource struct {
+	IDs       []int  `json:"ids,omitempty"`
+	Tags      []int  `json:"tags,omitempty"`
+	ApplyTags string `json:"applyTags,omitempty"`
+	SyncLevel string `json:"syncLevel,omitempty"`
+}
+
+// IndexerBulkResource represents a bulk update for indexers.
+type IndexerBulkResource struct {
+	IDs             []int    `json:"ids,omitempty"`
+	Tags            []int    `json:"tags,omitempty"`
+	ApplyTags       string   `json:"applyTags,omitempty"`
+	Enable          *bool    `json:"enable,omitempty"`
+	AppProfileID    *int     `json:"appProfileId,omitempty"`
+	Priority        *int     `json:"priority,omitempty"`
+	MinimumSeeders  *int     `json:"minimumSeeders,omitempty"`
+	SeedRatio       *float64 `json:"seedRatio,omitempty"`
+	SeedTime        *int     `json:"seedTime,omitempty"`
+	PackSeedTime    *int     `json:"packSeedTime,omitempty"`
+	PreferMagnetURL *bool    `json:"preferMagnetUrl,omitempty"`
+}

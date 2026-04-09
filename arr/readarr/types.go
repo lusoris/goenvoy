@@ -268,3 +268,94 @@ type MetadataProfile struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
+
+// DevelopmentConfigResource holds development configuration.
+type DevelopmentConfigResource struct {
+	ID                 int    `json:"id"`
+	MetadataSource     string `json:"metadataSource,omitempty"`
+	ConsoleLogLevel    string `json:"consoleLogLevel,omitempty"`
+	LogSQL             bool   `json:"logSql"`
+	LogRotate          int    `json:"logRotate"`
+	FilterSentryEvents bool   `json:"filterSentryEvents"`
+}
+
+// MetadataProviderConfigResource holds metadata provider configuration.
+type MetadataProviderConfigResource struct {
+	ID             int    `json:"id"`
+	WriteAudioTags string `json:"writeAudioTags,omitempty"`
+	ScrubAudioTags bool   `json:"scrubAudioTags"`
+	WriteBookTags  string `json:"writeBookTags,omitempty"`
+	UpdateCovers   bool   `json:"updateCovers"`
+	EmbedMetadata  bool   `json:"embedMetadata"`
+}
+
+// BookshelfResource is the request body for the bookshelf endpoint.
+type BookshelfResource struct {
+	Authors           []BookshelfAuthorResource `json:"authors,omitempty"`
+	MonitoringOptions MonitoringOptions         `json:"monitoringOptions"`
+	MonitorNewItems   string                    `json:"monitorNewItems,omitempty"`
+}
+
+// BookshelfAuthorResource is an author entry in a bookshelf request.
+type BookshelfAuthorResource struct {
+	ID        int    `json:"id"`
+	Monitored *bool  `json:"monitored,omitempty"`
+	Books     []Book `json:"books,omitempty"`
+}
+
+// MonitoringOptions controls what to monitor when adding or updating.
+type MonitoringOptions struct {
+	Monitor        string   `json:"monitor,omitempty"`
+	BooksToMonitor []string `json:"booksToMonitor,omitempty"`
+	Monitored      bool     `json:"monitored"`
+}
+
+// RenameBookResource represents a rename preview for a book file.
+type RenameBookResource struct {
+	ID           int    `json:"id"`
+	AuthorID     int    `json:"authorId"`
+	BookID       int    `json:"bookId"`
+	BookFileID   int    `json:"bookFileId"`
+	ExistingPath string `json:"existingPath,omitempty"`
+	NewPath      string `json:"newPath,omitempty"`
+}
+
+// RetagBookResource represents a retag preview for a book file.
+type RetagBookResource struct {
+	ID           int             `json:"id"`
+	AuthorID     int             `json:"authorId"`
+	BookID       int             `json:"bookId"`
+	TrackNumbers []int           `json:"trackNumbers,omitempty"`
+	BookFileID   int             `json:"bookFileId"`
+	Path         string          `json:"path,omitempty"`
+	Changes      []TagDifference `json:"changes,omitempty"`
+}
+
+// TagDifference represents a single tag change.
+type TagDifference struct {
+	Field    string `json:"field,omitempty"`
+	OldValue string `json:"oldValue,omitempty"`
+	NewValue string `json:"newValue,omitempty"`
+}
+
+// FileSystemResource represents a filesystem browse response.
+type FileSystemResource struct {
+	Directories []FileSystemEntry `json:"directories,omitempty"`
+	Files       []FileSystemEntry `json:"files,omitempty"`
+	Parent      string            `json:"parent,omitempty"`
+}
+
+// FileSystemEntry represents a single directory or file entry.
+type FileSystemEntry struct {
+	Type         string `json:"type,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Path         string `json:"path,omitempty"`
+	Size         int64  `json:"size,omitempty"`
+	LastModified string `json:"lastModified,omitempty"`
+}
+
+// LocalizationResource represents localization string data.
+type LocalizationResource struct {
+	ID      int               `json:"id"`
+	Strings map[string]string `json:"strings,omitempty"`
+}

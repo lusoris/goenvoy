@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -91,6 +92,130 @@ func (c *BaseClient) Delete(ctx context.Context, path string, body, dst any) err
 // Patch performs an authenticated PATCH request with a JSON body and decodes the response into dst.
 func (c *BaseClient) Patch(ctx context.Context, path string, body, dst any) error {
 	return c.do(ctx, http.MethodPatch, path, body, dst)
+}
+
+// Head performs an authenticated HEAD request and returns nil on a 2xx status.
+func (c *BaseClient) Head(ctx context.Context, path string) error {
+	ref, err := url.Parse(path)
+	if err != nil {
+		return fmt.Errorf("arr: parse path: %w", err)
+	}
+	u := c.baseURL.ResolveReference(ref)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, u.String(), http.NoBody)
+	if err != nil {
+		return fmt.Errorf("arr: create request: %w", err)
+	}
+
+	req.Header.Set("X-Api-Key", c.apiKey)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("arr: HEAD %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return &APIError{
+			StatusCode: resp.StatusCode,
+			Method:     http.MethodHead,
+			Path:       path,
+		}
+	}
+	return nil
+}
+
+// GetRaw performs an authenticated GET request and returns the raw response body as bytes.
+// Use this for endpoints that return non-JSON content (e.g. plain text log files).
+func (c *BaseClient) GetRaw(ctx context.Context, path string) ([]byte, error) {
+	ref, err := url.Parse(path)
+	if err != nil {
+		return nil, fmt.Errorf("arr: parse path: %w", err)
+	}
+	u := c.baseURL.ResolveReference(ref)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), http.NoBody)
+	if err != nil {
+		return nil, fmt.Errorf("arr: create request: %w", err)
+	}
+
+	req.Header.Set("X-Api-Key", c.apiKey)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("arr: GET %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("arr: read response body: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, &APIError{
+			StatusCode: resp.StatusCode,
+			Method:     http.MethodGet,
+			Path:       path,
+			Body:       body,
+		}
+	}
+	return body, nil
+}
+
+// Upload performs an authenticated multipart file upload via POST.
+// The file content is sent as a form field with the given fieldName and fileName.
+func (c *BaseClient) Upload(ctx context.Context, path, fieldName, fileName string, fileData io.Reader) error {
+	ref, err := url.Parse(path)
+	if err != nil {
+		return fmt.Errorf("arr: parse path: %w", err)
+	}
+	u := c.baseURL.ResolveReference(ref)
+
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	part, err := w.CreateFormFile(fieldName, fileName)
+	if err != nil {
+		return fmt.Errorf("arr: create form file: %w", err)
+	}
+	if _, err := io.Copy(part, fileData); err != nil {
+		return fmt.Errorf("arr: copy file data: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("arr: close multipart writer: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buf)
+	if err != nil {
+		return fmt.Errorf("arr: create request: %w", err)
+	}
+
+	req.Header.Set("X-Api-Key", c.apiKey)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("arr: POST %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("arr: read response body: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return &APIError{
+			StatusCode: resp.StatusCode,
+			Method:     http.MethodPost,
+			Path:       path,
+			Body:       respBody,
+		}
+	}
+	return nil
 }
 
 // do is the internal method that executes every HTTP request.
