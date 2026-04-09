@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 
-A collection of Go client libraries for media automation, metadata, and download service APIs — **62 modules** covering 56+ services.
+A collection of Go client libraries for media automation, metadata, and download service APIs — **63 modules** covering 57+ services.
 
 Designed as a **multi-module monorepo** — import only what you need, from a single library to an entire category.
 
@@ -22,7 +22,7 @@ Designed as a **multi-module monorepo** — import only what you need, from a si
 | Category | Module | Services |
 |---|---|---|
 | **Arr Stack** | `github.com/lusoris/goenvoy/arr` | Sonarr, Radarr, Lidarr, Readarr, Whisparr (v2+v3), Prowlarr, Bazarr, Seerr, Autobrr, Mylar3, FlareSolverr, Jackett, NZBHydra2 |
-| **Metadata** | `github.com/lusoris/goenvoy/metadata` | TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, AniList, Kitsu, AniDB, MAL, Trakt, Simkl, MusicBrainz, StashBox, TPDB, OpenSubtitles, Last.fm, Discogs, TheAudioDB, Open Library, Google Books, Spotify, Deezer, ListenBrainz, IGDB, RAWG, Steam |
+| **Metadata** | `github.com/lusoris/goenvoy/metadata` | TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, Letterboxd, AniList, Kitsu, AniDB, MAL, Trakt, Simkl, MusicBrainz, StashBox, TPDB, OpenSubtitles, Last.fm, Discogs, TheAudioDB, Open Library, Google Books, Spotify, Deezer, ListenBrainz, IGDB, RAWG, Steam |
 | **Download Clients** | `github.com/lusoris/goenvoy/downloadclient` | qBittorrent, Transmission, Deluge, rTorrent, SABnzbd, NZBGet |
 | **Media Servers** | `github.com/lusoris/goenvoy/mediaserver` | Plex, Jellyfin, Emby, Tautulli, Audiobookshelf, Komga, Navidrome, Kavita, Stash, Tdarr |
 | **Anime** | `github.com/lusoris/goenvoy/anime` | Shoko Server |
@@ -101,7 +101,7 @@ goenvoy/
 │   ├── jackett/      # Jackett client
 │   └── nzbhydra/     # NZBHydra2 client
 ├── metadata/         # shared metadata types (Rating, Image, Person, ...)
-│   ├── movie/        # TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, OpenSubtitles
+│   ├── movie/        # TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, Letterboxd, OpenSubtitles
 │   ├── anime/        # AniList, Kitsu, AniDB, MAL
 │   ├── music/        # MusicBrainz, Last.fm, Discogs, TheAudioDB, Spotify, Deezer, ListenBrainz
 │   ├── tracking/     # Trakt, Simkl
@@ -135,7 +135,7 @@ goenvoy/
 Requires Go 1.26+. See [CONTRIBUTING.md](CONTRIBUTING.md) for full details.
 
 ```bash
-# Set up workspace (local dev, links all 62 modules)
+# Set up workspace (local dev, links all 63 modules)
 go work init && find . -name 'go.mod' -not -path './.workingdir/*' -exec dirname {} \; | xargs go work use
 
 # Run all tests
