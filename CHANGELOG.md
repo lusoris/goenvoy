@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Each module is versioned independently following [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.1.0] - 2026-04-09
+
+### Added
+- **Arr** (`arr/*`): `HeadPing`, `UploadBackup`, and `GetRaw` methods added to all 13 *arr packages.
+- **Trakt** (`metadata/tracking/trakt`): 140+ new methods — comments, notes, calendars, sync, lists, social, scrobble, users, people, certifications, countries, genres, languages, networks — with 171 tests.
+- **Google Books** (`metadata/book/googlebooks`): 18 new methods — bookshelves (list, get), volumes in shelf, annotations (list, insert, delete, update, summary), user library (add, remove, clear, mark reading), series (get, membership) — with 22 tests.
+- **Discogs** (`metadata/music/discogs`): 50+ new methods — release ratings, user identity/profile/submissions/contributions, user collection (folders, items, add/remove/rate), wantlist (add/remove), user lists, marketplace (listings, orders, fee, stats, price suggestions, inventory export) — with 59 tests.
+- **TMDb** (`metadata/movie/tmdb`): 80+ new methods — movie/TV extras (credits, images, videos, reviews, similar, recommendations, keywords, providers), TV seasons/episodes, person details, search (multi, keyword, company, collection), collections, account (lists, favorites, watchlist, ratings), lists (CRUD), certifications, watch providers, companies, keywords, changes, reviews, networks — with 121 tests.
+- **TVDB** (`metadata/movie/tvdb`): 70+ new methods — artwork (statuses, types), awards (categories), characters, companies (types), content ratings, countries, entity types, episodes, genders, genres, inspiration types, lists (extended, translations), movies (filter, slug, statuses, extended), people (types, extended, translations), search, seasons (types, extended, translations), series (filter, slug, statuses, episodes by language, extended, translations), source types, updates, user (info, favorites) — with 71 tests.
+- **Simkl** (`metadata/tracking/simkl`): 23 new methods — ratings (add/remove), scrobble (start/pause/stop/checkin), sync (history, ratings, add-to-list, remove, watched), users (stats, recently watched), movie genres, random search, best filters — with 56 total tests.
+
+### Changed
+- **TMDb** (`metadata/movie/tmdb`): Renamed `TMDbAvatar` → `UserAvatar` to avoid type-name stuttering.
+
+### Fixed
+- Lint fixes across 6 packages: godot (section comment formatting), gofmt, revive (comment format, stuttering names), gocritic (parameter type combining), unparam (constant parameters).
+
 ## [v1.0.0] - 2026-03-31
 
 ### Changed
