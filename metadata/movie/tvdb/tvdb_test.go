@@ -651,3 +651,755 @@ func TestTokenRefreshOn401LoginFails(t *testing.T) {
 		t.Fatal("expected error when re-login fails")
 	}
 }
+
+// newPostTestServer creates a test server that validates POST method, auth, and path.
+func newPostTestServer(t *testing.T, wantPath string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/login" {
+			loginHandler(w, r)
+			return
+		}
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		if auth := r.Header.Get("Authorization"); auth != "Bearer test-jwt-token" {
+			t.Errorf("Authorization = %q, want %q", auth, "Bearer test-jwt-token")
+		}
+		if wantPath != "" && r.URL.RequestURI() != wantPath {
+			t.Errorf("path = %q, want %q", r.URL.RequestURI(), wantPath)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"status": "success"})
+	}))
+}
+
+// --- Artwork ---
+
+func TestGetArtworkStatuses(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/artwork/statuses", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{`id`: 1, "name": "Low Quality"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetArtworkStatuses(context.Background())
+	if err != nil {
+		t.Fatalf("GetArtworkStatuses: %v", err)
+	}
+	if got[0].Name != "Low Quality" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Awards ---
+
+func TestGetAwards(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/awards", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Emmy"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetAwards(context.Background())
+	if err != nil {
+		t.Fatalf("GetAwards: %v", err)
+	}
+	if got[0].Name != "Emmy" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetAward(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/awards/1", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Oscar"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetAward(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetAward: %v", err)
+	}
+	if got.Name != "Oscar" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetAwardExtended(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/awards/1/extended", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Oscar", "categories": []any{}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetAwardExtended(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetAwardExtended: %v", err)
+	}
+	if got.Name != "Oscar" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetAwardCategory(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/awards/categories/1", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Best Picture"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetAwardCategory(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetAwardCategory: %v", err)
+	}
+	if got.Name != "Best Picture" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetAwardCategoryExtended(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/awards/categories/1/extended", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Best Picture", "nominees": []any{}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetAwardCategoryExtended(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetAwardCategoryExtended: %v", err)
+	}
+	if got.Name != "Best Picture" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+// --- Companies ---
+
+func TestGetCompanies(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/companies?page=0", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "HBO"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetCompanies(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetCompanies: %v", err)
+	}
+	if got[0].Name != "HBO" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetCompanyTypes(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/companies/types", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"companyTypeId": 1, "companyTypeName": "Network"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetCompanyTypes(context.Background())
+	if err != nil {
+		t.Fatalf("GetCompanyTypes: %v", err)
+	}
+	if got[0].Name != "Network" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetCompany(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/companies/1", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Netflix"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetCompany(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetCompany: %v", err)
+	}
+	if got.Name != "Netflix" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+// --- Countries ---
+
+func TestGetCountries(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/countries", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": "usa", "name": "United States"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetCountries(context.Background())
+	if err != nil {
+		t.Fatalf("GetCountries: %v", err)
+	}
+	if got[0].Name != "United States" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Entity Types ---
+
+func TestGetEntityTypes(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/entities", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Series"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetEntityTypes(context.Background())
+	if err != nil {
+		t.Fatalf("GetEntityTypes: %v", err)
+	}
+	if got[0].Name != "Series" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Episodes (paginated) ---
+
+func TestGetEpisodes(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/episodes?page=0", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Pilot"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetEpisodes(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetEpisodes: %v", err)
+	}
+	if got[0].Name != "Pilot" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Genders ---
+
+func TestGetGenders(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/genders", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Male"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetGenders(context.Background())
+	if err != nil {
+		t.Fatalf("GetGenders: %v", err)
+	}
+	if got[0].Name != "Male" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Genres ---
+
+func TestGetGenre(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/genres/1", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Drama", "slug": "drama"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetGenre(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetGenre: %v", err)
+	}
+	if got.Name != "Drama" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+// --- Inspiration Types ---
+
+func TestGetInspirationTypes(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/inspiration/types", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Book"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetInspirationTypes(context.Background())
+	if err != nil {
+		t.Fatalf("GetInspirationTypes: %v", err)
+	}
+	if got[0].Name != "Book" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Lists ---
+
+func TestGetLists(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/lists?page=0", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Top 10"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetLists(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetLists: %v", err)
+	}
+	if got[0].Name != "Top 10" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetList(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/lists/1", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "My List"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetList(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetList: %v", err)
+	}
+	if got.Name != "My List" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetListBySlug(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/lists/slug/top-ten", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Top Ten"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetListBySlug(context.Background(), "top-ten")
+	if err != nil {
+		t.Fatalf("GetListBySlug: %v", err)
+	}
+	if got.Name != "Top Ten" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetListExtended(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/lists/1/extended", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Extended List"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetListExtended(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetListExtended: %v", err)
+	}
+	if got.Name != "Extended List" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetListTranslation(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/lists/1/translations/eng", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"language": "eng", "name": "Top Lists"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetListTranslation(context.Background(), 1, "eng")
+	if err != nil {
+		t.Fatalf("GetListTranslation: %v", err)
+	}
+	if got.Name != "Top Lists" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+// --- Movies (paginated/filter/slug/statuses) ---
+
+func TestGetMovies(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/movies?page=0", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Movie One"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetMovies(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetMovies: %v", err)
+	}
+	if got[0].Name != "Movie One" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestFilterMovies(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/movies/filter?country=usa&lang=eng", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Filtered Movie"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).FilterMovies(context.Background(), &tvdb.FilterParams{Country: "usa", Language: "eng"})
+	if err != nil {
+		t.Fatalf("FilterMovies: %v", err)
+	}
+	if got[0].Name != "Filtered Movie" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetMovieBySlug(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/movies/slug/test-movie", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Test Movie", "slug": "test-movie"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetMovieBySlug(context.Background(), "test-movie")
+	if err != nil {
+		t.Fatalf("GetMovieBySlug: %v", err)
+	}
+	if got.Slug != "test-movie" {
+		t.Errorf("Slug = %q", got.Slug)
+	}
+}
+
+func TestGetMovieStatuses(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/movies/statuses", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"name": "Released"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetMovieStatuses(context.Background())
+	if err != nil {
+		t.Fatalf("GetMovieStatuses: %v", err)
+	}
+	if got[0].Name != "Released" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- People ---
+
+func TestGetPeople(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/people?page=0", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Actor A"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetPeople(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetPeople: %v", err)
+	}
+	if got[0].Name != "Actor A" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetPeopleTypes(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/people/types", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Actor"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetPeopleTypes(context.Background())
+	if err != nil {
+		t.Fatalf("GetPeopleTypes: %v", err)
+	}
+	if got[0].Name != "Actor" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Seasons ---
+
+func TestGetSeasons(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/seasons?page=0", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Season 1"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeasons(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetSeasons: %v", err)
+	}
+	if got[0].Name != "Season 1" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetSeasonTypes(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/seasons/types", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Aired Order", "type": "official"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeasonTypes(context.Background())
+	if err != nil {
+		t.Fatalf("GetSeasonTypes: %v", err)
+	}
+	if got[0].Name != "Aired Order" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Series ---
+
+func TestGetAllSeries(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/series?page=0", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Series One"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetAllSeries(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetAllSeries: %v", err)
+	}
+	if got[0].Name != "Series One" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetSeriesEpisodesWithLang(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/series/1/episodes/default/eng?page=0", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"series": map[string]any{"id": 1, "name": "Test"}, "episodes": []any{}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeriesEpisodesWithLang(context.Background(), 1, "default", "eng", 0)
+	if err != nil {
+		t.Fatalf("GetSeriesEpisodesWithLang: %v", err)
+	}
+	if got.Series.Name != "Test" {
+		t.Errorf("Name = %q", got.Series.Name)
+	}
+}
+
+func TestFilterSeries(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/series/filter?country=usa&lang=eng", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "Filtered Series"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).FilterSeries(context.Background(), &tvdb.FilterParams{Country: "usa", Language: "eng"})
+	if err != nil {
+		t.Fatalf("FilterSeries: %v", err)
+	}
+	if got[0].Name != "Filtered Series" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+func TestGetSeriesBySlug(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/series/slug/breaking-bad", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Breaking Bad", "slug": "breaking-bad"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeriesBySlug(context.Background(), "breaking-bad")
+	if err != nil {
+		t.Fatalf("GetSeriesBySlug: %v", err)
+	}
+	if got.Slug != "breaking-bad" {
+		t.Errorf("Slug = %q", got.Slug)
+	}
+}
+
+func TestGetSeriesStatuses(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/series/statuses", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"name": "Continuing"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeriesStatuses(context.Background())
+	if err != nil {
+		t.Fatalf("GetSeriesStatuses: %v", err)
+	}
+	if got[0].Name != "Continuing" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- Source Types ---
+
+func TestGetSourceTypes(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/sources/types", map[string]any{
+		"status": "success",
+		"data":   []map[string]any{{"id": 1, "name": "IMDB", "slug": "imdb"}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSourceTypes(context.Background())
+	if err != nil {
+		t.Fatalf("GetSourceTypes: %v", err)
+	}
+	if got[0].Name != "IMDB" {
+		t.Errorf("Name = %q", got[0].Name)
+	}
+}
+
+// --- User ---
+
+func TestGetUserInfo(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/user", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "testuser"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetUserInfo(context.Background())
+	if err != nil {
+		t.Fatalf("GetUserInfo: %v", err)
+	}
+	if got.Name != "testuser" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetUserByID(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/user/1", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "user1"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetUserByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetUserByID: %v", err)
+	}
+	if got.Name != "user1" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetUserFavorites(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/user/favorites", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"series": []any{1, 2, 3}},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetUserFavorites(context.Background())
+	if err != nil {
+		t.Fatalf("GetUserFavorites: %v", err)
+	}
+	if len(got.Series) != 3 {
+		t.Errorf("len(Series) = %d, want 3", len(got.Series))
+	}
+}
+
+func TestAddUserFavorites(t *testing.T) {
+	t.Parallel()
+	srv := newPostTestServer(t, "/user/favorites")
+	defer srv.Close()
+	err := newClient(t, srv).AddUserFavorites(context.Background(), &tvdb.FavoriteRecord{Series: 123})
+	if err != nil {
+		t.Fatalf("AddUserFavorites: %v", err)
+	}
+}
+
+func TestGetSeriesArtworks(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/series/1/artworks", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Test Series"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeriesArtworks(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetSeriesArtworks: %v", err)
+	}
+	if got.Name != "Test Series" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetSeriesNextAired(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/series/1/nextAired", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "name": "Test", "nextAired": "2024-01-01"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeriesNextAired(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetSeriesNextAired: %v", err)
+	}
+	if got.NextAired != "2024-01-01" {
+		t.Errorf("NextAired = %q", got.NextAired)
+	}
+}
+
+func TestGetArtworkExtended(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/artwork/1/extended", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"id": 1, "image": "https://example.com/img.jpg"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetArtworkExtended(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetArtworkExtended: %v", err)
+	}
+	if got.Image != "https://example.com/img.jpg" {
+		t.Errorf("Image = %q", got.Image)
+	}
+}
+
+func TestGetEpisodeTranslation(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/episodes/1/translations/eng", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"language": "eng", "name": "Episode Title"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetEpisodeTranslation(context.Background(), 1, "eng")
+	if err != nil {
+		t.Fatalf("GetEpisodeTranslation: %v", err)
+	}
+	if got.Name != "Episode Title" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetSeasonTranslation(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/seasons/1/translations/eng", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"language": "eng", "name": "Season 1"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetSeasonTranslation(context.Background(), 1, "eng")
+	if err != nil {
+		t.Fatalf("GetSeasonTranslation: %v", err)
+	}
+	if got.Name != "Season 1" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
+
+func TestGetPersonTranslation(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, "/people/1/translations/eng", map[string]any{
+		"status": "success",
+		"data":   map[string]any{"language": "eng", "name": "Person Name"},
+	})
+	defer srv.Close()
+	got, err := newClient(t, srv).GetPersonTranslation(context.Background(), 1, "eng")
+	if err != nil {
+		t.Fatalf("GetPersonTranslation: %v", err)
+	}
+	if got.Name != "Person Name" {
+		t.Errorf("Name = %q", got.Name)
+	}
+}
