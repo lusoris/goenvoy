@@ -229,3 +229,29 @@ type ListOptions struct {
 	Offset   int    `json:"offset,omitempty"`
 	Hashes   string `json:"hashes,omitempty"`
 }
+
+// SyncTorrentPeers holds the response from the sync/torrentPeers endpoint.
+type SyncTorrentPeers struct {
+	RID      int                  `json:"rid"`
+	FullData bool                 `json:"full_update"`
+	Peers    map[string]*PeerInfo `json:"peers"`
+	Removed  []string             `json:"peers_removed"`
+}
+
+// PeerInfo holds information about a connected peer.
+type PeerInfo struct {
+	IP          string  `json:"ip"`
+	Port        int     `json:"port"`
+	Client      string  `json:"client"`
+	Progress    float64 `json:"progress"`
+	DlSpeed     int64   `json:"dl_speed"`
+	UpSpeed     int64   `json:"up_speed"`
+	Downloaded  int64   `json:"downloaded"`
+	Uploaded    int64   `json:"uploaded"`
+	Connection  string  `json:"connection"`
+	Flags       string  `json:"flags"`
+	FlagsDesc   string  `json:"flags_desc"`
+	Relevance   float64 `json:"relevance"`
+	Country     string  `json:"country"`
+	CountryCode string  `json:"country_code"`
+}

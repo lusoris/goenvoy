@@ -292,3 +292,99 @@ type MetadataProfile struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
+
+// LocalizationResource represents localization strings.
+type LocalizationResource struct {
+	ID      int               `json:"id"`
+	Strings map[string]string `json:"strings"`
+}
+
+// FileSystemResource represents the result of a filesystem browse.
+type FileSystemResource struct {
+	Directories []FileSystemEntry `json:"directories"`
+	Files       []FileSystemEntry `json:"files"`
+}
+
+// FileSystemEntry is a single directory or file entry.
+type FileSystemEntry struct {
+	Path         string `json:"path"`
+	RelativePath string `json:"relativePath,omitempty"`
+	Name         string `json:"name"`
+	Size         int64  `json:"size,omitempty"`
+}
+
+// TrackFileEditorResource is the request body for bulk updating track file properties.
+type TrackFileEditorResource struct {
+	TrackFileIDs []int         `json:"trackFileIds"`
+	Quality      *QualityModel `json:"quality,omitempty"`
+}
+
+// AlbumStudioResource is used for batch monitoring of artists and albums.
+type AlbumStudioResource struct {
+	Artist            []AlbumStudioArtistResource `json:"artist,omitempty"`
+	MonitoringOptions *MonitoringOptions          `json:"monitoringOptions,omitempty"`
+	MonitorNewItems   string                      `json:"monitorNewItems,omitempty"`
+}
+
+// AlbumStudioArtistResource is a single artist entry in an album studio request.
+type AlbumStudioArtistResource struct {
+	ID        int   `json:"id"`
+	Monitored *bool `json:"monitored,omitempty"`
+}
+
+// MonitoringOptions controls how albums are monitored.
+type MonitoringOptions struct {
+	Monitor string `json:"monitor,omitempty"`
+}
+
+// RetagResource represents a retag preview for a track file.
+type RetagResource struct {
+	ID           int             `json:"id"`
+	ArtistID     int             `json:"artistId"`
+	AlbumID      int             `json:"albumId"`
+	TrackNumbers []int           `json:"trackNumbers,omitempty"`
+	TrackFileID  int             `json:"trackFileId"`
+	RelativePath string          `json:"relativePath,omitempty"`
+	Changes      []TagDifference `json:"changes,omitempty"`
+}
+
+// TagDifference represents a single tag change.
+type TagDifference struct {
+	Field    string `json:"field"`
+	OldValue string `json:"oldValue"`
+	NewValue string `json:"newValue"`
+}
+
+// RenameTrackResource represents a rename preview for a track file.
+type RenameTrackResource struct {
+	ID           int    `json:"id"`
+	ArtistID     int    `json:"artistId"`
+	AlbumID      int    `json:"albumId"`
+	TrackFileID  int    `json:"trackFileId"`
+	ExistingPath string `json:"existingPath"`
+	NewPath      string `json:"newPath"`
+}
+
+// ImportListConfigResource holds import list global configuration.
+type ImportListConfigResource struct {
+	ID            int    `json:"id"`
+	ListSyncLevel string `json:"listSyncLevel"`
+	ListSyncTag   int    `json:"listSyncTag"`
+}
+
+// MetadataProviderConfigResource holds metadata provider configuration.
+type MetadataProviderConfigResource struct {
+	ID               int    `json:"id"`
+	MetadataSource   string `json:"metadataSource,omitempty"`
+	WriteAudioTags   string `json:"writeAudioTags,omitempty"`
+	ScrubAudioTags   bool   `json:"scrubAudioTags"`
+	EmbedMetadata    bool   `json:"embedMetadata"`
+	UpdateCovers     bool   `json:"updateCovers"`
+	SetPermissions   bool   `json:"setPermissions"`
+	ChmodFolder      string `json:"chmodFolder,omitempty"`
+	ChownGroup       string `json:"chownGroup,omitempty"`
+	SkipRetagging    bool   `json:"skipRetagging"`
+	MinimumFreeSpace int    `json:"minimumFreeSpace"`
+	RecycleBin       string `json:"recycleBin,omitempty"`
+	RecycleBinDays   int    `json:"recycleBinDays"`
+}

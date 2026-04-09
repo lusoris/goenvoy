@@ -513,3 +513,426 @@ func (c *Client) GetCharacter(ctx context.Context, id int) (*Character, error) {
 	}
 	return &out.Data, nil
 }
+
+// Artwork.
+
+// GetArtworkStatuses returns all artwork status records.
+func (c *Client) GetArtworkStatuses(ctx context.Context) ([]ArtworkStatus, error) {
+	var out response[[]ArtworkStatus]
+	if err := c.get(ctx, "/artwork/statuses", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Awards.
+
+// GetAwards returns all award base records.
+func (c *Client) GetAwards(ctx context.Context) ([]AwardBase, error) {
+	var out response[[]AwardBase]
+	if err := c.get(ctx, "/awards", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetAward returns an award base record by ID.
+func (c *Client) GetAward(ctx context.Context, id int) (*AwardBase, error) {
+	var out response[AwardBase]
+	if err := c.get(ctx, "/awards/"+strconv.Itoa(id), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetAwardExtended returns an award extended record.
+func (c *Client) GetAwardExtended(ctx context.Context, id int) (*AwardExtended, error) {
+	var out response[AwardExtended]
+	if err := c.get(ctx, "/awards/"+strconv.Itoa(id)+"/extended", &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetAwardCategory returns an award category base record.
+func (c *Client) GetAwardCategory(ctx context.Context, id int) (*AwardCategory, error) {
+	var out response[AwardCategory]
+	if err := c.get(ctx, "/awards/categories/"+strconv.Itoa(id), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetAwardCategoryExtended returns an award category extended record.
+func (c *Client) GetAwardCategoryExtended(ctx context.Context, id int) (*AwardCategoryExtended, error) {
+	var out response[AwardCategoryExtended]
+	if err := c.get(ctx, "/awards/categories/"+strconv.Itoa(id)+"/extended", &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// Companies.
+
+// GetCompanies returns a paginated list of company records.
+func (c *Client) GetCompanies(ctx context.Context, page int) ([]Company, error) {
+	var out response[[]Company]
+	if err := c.get(ctx, "/companies?page="+strconv.Itoa(page), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetCompanyTypes returns all company type records.
+func (c *Client) GetCompanyTypes(ctx context.Context) ([]CompanyType, error) {
+	var out response[[]CompanyType]
+	if err := c.get(ctx, "/companies/types", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetCompany returns a company record by ID.
+func (c *Client) GetCompany(ctx context.Context, id int) (*Company, error) {
+	var out response[Company]
+	if err := c.get(ctx, "/companies/"+strconv.Itoa(id), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// Countries.
+
+// GetCountries returns all country records.
+func (c *Client) GetCountries(ctx context.Context) ([]Country, error) {
+	var out response[[]Country]
+	if err := c.get(ctx, "/countries", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Entity Types.
+
+// GetEntityTypes returns all entity type records.
+func (c *Client) GetEntityTypes(ctx context.Context) ([]EntityType, error) {
+	var out response[[]EntityType]
+	if err := c.get(ctx, "/entities", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Episodes (paginated).
+
+// GetEpisodes returns a paginated list of episodes.
+func (c *Client) GetEpisodes(ctx context.Context, page int) ([]EpisodeBase, error) {
+	var out response[[]EpisodeBase]
+	if err := c.get(ctx, "/episodes?page="+strconv.Itoa(page), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Genders.
+
+// GetGenders returns all gender records.
+func (c *Client) GetGenders(ctx context.Context) ([]Gender, error) {
+	var out response[[]Gender]
+	if err := c.get(ctx, "/genders", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Genres.
+
+// GetGenre returns a single genre record by ID.
+func (c *Client) GetGenre(ctx context.Context, id int) (*Genre, error) {
+	var out response[Genre]
+	if err := c.get(ctx, "/genres/"+strconv.Itoa(id), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// Inspiration Types.
+
+// GetInspirationTypes returns all inspiration type records.
+func (c *Client) GetInspirationTypes(ctx context.Context) ([]InspirationType, error) {
+	var out response[[]InspirationType]
+	if err := c.get(ctx, "/inspiration/types", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Lists.
+
+// GetLists returns a paginated list of list records.
+func (c *Client) GetLists(ctx context.Context, page int) ([]ListBase, error) {
+	var out response[[]ListBase]
+	if err := c.get(ctx, "/lists?page="+strconv.Itoa(page), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetList returns a list record by ID.
+func (c *Client) GetList(ctx context.Context, id int) (*ListBase, error) {
+	var out response[ListBase]
+	if err := c.get(ctx, "/lists/"+strconv.Itoa(id), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetListBySlug returns a list record by slug.
+func (c *Client) GetListBySlug(ctx context.Context, slug string) (*ListBase, error) {
+	var out response[ListBase]
+	if err := c.get(ctx, "/lists/slug/"+url.PathEscape(slug), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetListExtended returns a list extended record.
+func (c *Client) GetListExtended(ctx context.Context, id int) (*ListExtended, error) {
+	var out response[ListExtended]
+	if err := c.get(ctx, "/lists/"+strconv.Itoa(id)+"/extended", &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetListTranslation returns a list translation for the given language.
+func (c *Client) GetListTranslation(ctx context.Context, id int, language string) (*Translation, error) {
+	var out response[Translation]
+	path := "/lists/" + strconv.Itoa(id) + "/translations/" + url.PathEscape(language)
+	if err := c.get(ctx, path, &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// Movies (paginated, filter, slug, statuses).
+
+// GetMovies returns a paginated list of movies.
+func (c *Client) GetMovies(ctx context.Context, page int) ([]MovieBase, error) {
+	var out response[[]MovieBase]
+	if err := c.get(ctx, "/movies?page="+strconv.Itoa(page), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// FilterMovies returns movies matching the given filter parameters.
+func (c *Client) FilterMovies(ctx context.Context, params *FilterParams) ([]MovieBase, error) {
+	var out response[[]MovieBase]
+	if err := c.get(ctx, "/movies/filter?"+params.encode(), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetMovieBySlug returns a movie record by slug.
+func (c *Client) GetMovieBySlug(ctx context.Context, slug string) (*MovieBase, error) {
+	var out response[MovieBase]
+	if err := c.get(ctx, "/movies/slug/"+url.PathEscape(slug), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetMovieStatuses returns all movie status records.
+func (c *Client) GetMovieStatuses(ctx context.Context) ([]Status, error) {
+	var out response[[]Status]
+	if err := c.get(ctx, "/movies/statuses", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// People (paginated, types).
+
+// GetPeople returns a paginated list of people.
+func (c *Client) GetPeople(ctx context.Context, page int) ([]PersonBase, error) {
+	var out response[[]PersonBase]
+	if err := c.get(ctx, "/people?page="+strconv.Itoa(page), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetPeopleTypes returns all people type records.
+func (c *Client) GetPeopleTypes(ctx context.Context) ([]PeopleType, error) {
+	var out response[[]PeopleType]
+	if err := c.get(ctx, "/people/types", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Seasons (paginated, types).
+
+// GetSeasons returns a paginated list of seasons.
+func (c *Client) GetSeasons(ctx context.Context, page int) ([]SeasonBase, error) {
+	var out response[[]SeasonBase]
+	if err := c.get(ctx, "/seasons?page="+strconv.Itoa(page), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetSeasonTypes returns all season type records.
+func (c *Client) GetSeasonTypes(ctx context.Context) ([]SeasonType, error) {
+	var out response[[]SeasonType]
+	if err := c.get(ctx, "/seasons/types", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Series (paginated, filter, slug, statuses, episodes+lang).
+
+// GetAllSeries returns a paginated list of series.
+func (c *Client) GetAllSeries(ctx context.Context, page int) ([]SeriesBase, error) {
+	var out response[[]SeriesBase]
+	if err := c.get(ctx, "/series?page="+strconv.Itoa(page), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetSeriesEpisodesWithLang returns translated episodes for a series by season type and language.
+func (c *Client) GetSeriesEpisodesWithLang(ctx context.Context, id int, seasonType, language string, page int) (*SeriesEpisodesResult, error) {
+	var out response[SeriesEpisodesResult]
+	path := fmt.Sprintf("/series/%d/episodes/%s/%s?page=%d", id, url.PathEscape(seasonType), url.PathEscape(language), page)
+	if err := c.get(ctx, path, &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// FilterSeries returns series matching the given filter parameters.
+func (c *Client) FilterSeries(ctx context.Context, params *FilterParams) ([]SeriesBase, error) {
+	var out response[[]SeriesBase]
+	if err := c.get(ctx, "/series/filter?"+params.encode(), &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// GetSeriesBySlug returns a series record by slug.
+func (c *Client) GetSeriesBySlug(ctx context.Context, slug string) (*SeriesBase, error) {
+	var out response[SeriesBase]
+	if err := c.get(ctx, "/series/slug/"+url.PathEscape(slug), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetSeriesStatuses returns all series status records.
+func (c *Client) GetSeriesStatuses(ctx context.Context) ([]Status, error) {
+	var out response[[]Status]
+	if err := c.get(ctx, "/series/statuses", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// Source Types.
+
+// GetSourceTypes returns all source type records.
+func (c *Client) GetSourceTypes(ctx context.Context) ([]SourceType, error) {
+	var out response[[]SourceType]
+	if err := c.get(ctx, "/sources/types", &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}
+
+// User.
+
+// GetUserInfo returns the current user's info.
+func (c *Client) GetUserInfo(ctx context.Context) (*UserInfo, error) {
+	var out response[UserInfo]
+	if err := c.get(ctx, "/user", &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetUserByID returns a user's info by their ID.
+func (c *Client) GetUserByID(ctx context.Context, id int) (*UserInfo, error) {
+	var out response[UserInfo]
+	if err := c.get(ctx, "/user/"+strconv.Itoa(id), &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// GetUserFavorites returns the current user's favorites.
+func (c *Client) GetUserFavorites(ctx context.Context) (*Favorites, error) {
+	var out response[Favorites]
+	if err := c.get(ctx, "/user/favorites", &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// AddUserFavorites adds items to the current user's favorites.
+func (c *Client) AddUserFavorites(ctx context.Context, record *FavoriteRecord) error {
+	return c.post(ctx, "/user/favorites", record)
+}
+
+// post is a helper for POST requests.
+func (c *Client) post(ctx context.Context, path string, body any) error {
+	if err := c.ensureToken(ctx); err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("tvdb: marshal body: %w", err)
+	}
+
+	u, err := url.Parse(c.rawBaseURL + path)
+	if err != nil {
+		return fmt.Errorf("tvdb: parse URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("tvdb: create request: %w", err)
+	}
+
+	c.mu.Lock()
+	token := c.token
+	c.mu.Unlock()
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("tvdb: POST %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("tvdb: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if err := json.Unmarshal(respBody, apiErr); err != nil {
+			apiErr.RawBody = string(respBody)
+		}
+		return apiErr
+	}
+	return nil
+}

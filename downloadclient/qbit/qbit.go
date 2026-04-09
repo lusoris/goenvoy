@@ -519,3 +519,274 @@ func (c *Client) GetPeerLog(ctx context.Context, lastKnownID int) ([]PeerLogEntr
 	}
 	return out, nil
 }
+
+// Application (continued).
+
+// SetPreferences updates qBittorrent preferences.
+// Pass a JSON-serialisable map or struct with the preferences to change.
+func (c *Client) SetPreferences(ctx context.Context, prefs any) error {
+	data, err := json.Marshal(prefs)
+	if err != nil {
+		return fmt.Errorf("qbit: encode preferences: %w", err)
+	}
+	form := url.Values{}
+	form.Set("json", string(data))
+	return c.post(ctx, "/api/v2/app/setPreferences", form)
+}
+
+// Shutdown shuts down the qBittorrent application.
+func (c *Client) Shutdown(ctx context.Context) error {
+	return c.post(ctx, "/api/v2/app/shutdown", nil)
+}
+
+// Transfer (continued).
+
+// GetSpeedLimitsMode returns whether alternative speed limits are enabled.
+// Returns true if alternative speed limits are active.
+func (c *Client) GetSpeedLimitsMode(ctx context.Context) (bool, error) {
+	raw, err := c.getRaw(ctx, "/api/v2/transfer/speedLimitsMode")
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(raw) == "1", nil
+}
+
+// ToggleSpeedLimitsMode toggles alternative speed limits on or off.
+func (c *Client) ToggleSpeedLimitsMode(ctx context.Context) error {
+	return c.post(ctx, "/api/v2/transfer/toggleSpeedLimitsMode", nil)
+}
+
+// BanPeers bans one or more peers. Each peer should be in "host:port" format.
+func (c *Client) BanPeers(ctx context.Context, peers []string) error {
+	form := url.Values{}
+	form.Set("peers", strings.Join(peers, "|"))
+	return c.post(ctx, "/api/v2/transfer/banPeers", form)
+}
+
+// Sync (continued).
+
+// GetSyncTorrentPeers returns peer data for a specific torrent.
+// Pass rid=0 for a full update, or the previous rid for incremental updates.
+func (c *Client) GetSyncTorrentPeers(ctx context.Context, hash string, rid int) (*SyncTorrentPeers, error) {
+	var out SyncTorrentPeers
+	p := url.Values{}
+	p.Set("hash", hash)
+	p.Set("rid", strconv.Itoa(rid))
+	if err := c.get(ctx, "/api/v2/sync/torrentPeers", p, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Torrent management (continued).
+
+// GetTorrentPieceStates returns piece states for a torrent.
+// Each value is: 0 = not downloaded, 1 = downloading, 2 = downloaded.
+func (c *Client) GetTorrentPieceStates(ctx context.Context, hash string) ([]int, error) {
+	var out []int
+	p := url.Values{}
+	p.Set("hash", hash)
+	if err := c.get(ctx, "/api/v2/torrents/pieceStates", p, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetTorrentPieceHashes returns piece hashes for a torrent.
+func (c *Client) GetTorrentPieceHashes(ctx context.Context, hash string) ([]string, error) {
+	var out []string
+	p := url.Values{}
+	p.Set("hash", hash)
+	if err := c.get(ctx, "/api/v2/torrents/pieceHashes", p, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SetFilePriority sets the priority of specific files within a torrent.
+// File IDs correspond to the index field in [TorrentFile].
+// Priority values: 0 = do not download, 1 = normal, 6 = high, 7 = maximum.
+func (c *Client) SetFilePriority(ctx context.Context, hash string, fileIDs []int, priority int) error {
+	ids := make([]string, len(fileIDs))
+	for i, id := range fileIDs {
+		ids[i] = strconv.Itoa(id)
+	}
+	form := url.Values{}
+	form.Set("hash", hash)
+	form.Set("id", strings.Join(ids, "|"))
+	form.Set("priority", strconv.Itoa(priority))
+	return c.post(ctx, "/api/v2/torrents/filePrio", form)
+}
+
+// SetTorrentDownloadLimit sets download speed limits for specific torrents (bytes/second).
+func (c *Client) SetTorrentDownloadLimit(ctx context.Context, hashes []string, limit int64) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	form.Set("limit", strconv.FormatInt(limit, 10))
+	return c.post(ctx, "/api/v2/torrents/setDownloadLimit", form)
+}
+
+// SetTorrentUploadLimit sets upload speed limits for specific torrents (bytes/second).
+func (c *Client) SetTorrentUploadLimit(ctx context.Context, hashes []string, limit int64) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	form.Set("limit", strconv.FormatInt(limit, 10))
+	return c.post(ctx, "/api/v2/torrents/setUploadLimit", form)
+}
+
+// SetShareLimits sets the share ratio and seeding time limits for specific torrents.
+// Use -1 for ratioLimit/seedingTimeLimit to use global values, -2 for no limit.
+func (c *Client) SetShareLimits(ctx context.Context, hashes []string, ratioLimit float64, seedingTimeLimit, inactiveSeedingTimeLimit int64) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	form.Set("ratioLimit", strconv.FormatFloat(ratioLimit, 'f', -1, 64))
+	form.Set("seedingTimeLimit", strconv.FormatInt(seedingTimeLimit, 10))
+	form.Set("inactiveSeedingTimeLimit", strconv.FormatInt(inactiveSeedingTimeLimit, 10))
+	return c.post(ctx, "/api/v2/torrents/setShareLimits", form)
+}
+
+// IncreasePriority increases the priority of torrents in the queue.
+func (c *Client) IncreasePriority(ctx context.Context, hashes []string) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	return c.post(ctx, "/api/v2/torrents/increasePrio", form)
+}
+
+// DecreasePriority decreases the priority of torrents in the queue.
+func (c *Client) DecreasePriority(ctx context.Context, hashes []string) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	return c.post(ctx, "/api/v2/torrents/decreasePrio", form)
+}
+
+// TopPriority moves torrents to the top of the queue.
+func (c *Client) TopPriority(ctx context.Context, hashes []string) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	return c.post(ctx, "/api/v2/torrents/topPrio", form)
+}
+
+// BottomPriority moves torrents to the bottom of the queue.
+func (c *Client) BottomPriority(ctx context.Context, hashes []string) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	return c.post(ctx, "/api/v2/torrents/bottomPrio", form)
+}
+
+// SetForceStart enables or disables force-start for torrents.
+func (c *Client) SetForceStart(ctx context.Context, hashes []string, value bool) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	form.Set("value", strconv.FormatBool(value))
+	return c.post(ctx, "/api/v2/torrents/setForceStart", form)
+}
+
+// SetSuperSeeding enables or disables super-seeding for torrents.
+func (c *Client) SetSuperSeeding(ctx context.Context, hashes []string, value bool) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	form.Set("value", strconv.FormatBool(value))
+	return c.post(ctx, "/api/v2/torrents/setSuperSeeding", form)
+}
+
+// SetAutoManagement enables or disables automatic torrent management for torrents.
+func (c *Client) SetAutoManagement(ctx context.Context, hashes []string, enable bool) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	form.Set("enable", strconv.FormatBool(enable))
+	return c.post(ctx, "/api/v2/torrents/setAutoManagement", form)
+}
+
+// ToggleSequentialDownload toggles sequential download for torrents.
+func (c *Client) ToggleSequentialDownload(ctx context.Context, hashes []string) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	return c.post(ctx, "/api/v2/torrents/toggleSequentialDownload", form)
+}
+
+// ToggleFirstLastPiecePrio toggles first/last piece priority for torrents.
+func (c *Client) ToggleFirstLastPiecePrio(ctx context.Context, hashes []string) error {
+	form := url.Values{}
+	form.Set("hashes", strings.Join(hashes, "|"))
+	return c.post(ctx, "/api/v2/torrents/toggleFirstLastPiecePrio", form)
+}
+
+// Tracker management.
+
+// AddTrackers adds trackers to a torrent.
+func (c *Client) AddTrackers(ctx context.Context, hash string, urls []string) error {
+	form := url.Values{}
+	form.Set("hash", hash)
+	form.Set("urls", strings.Join(urls, "\n"))
+	return c.post(ctx, "/api/v2/torrents/addTrackers", form)
+}
+
+// EditTracker replaces a tracker URL for a torrent.
+func (c *Client) EditTracker(ctx context.Context, hash, origURL, newURL string) error {
+	form := url.Values{}
+	form.Set("hash", hash)
+	form.Set("origUrl", origURL)
+	form.Set("newUrl", newURL)
+	return c.post(ctx, "/api/v2/torrents/editTracker", form)
+}
+
+// RemoveTrackers removes trackers from a torrent.
+func (c *Client) RemoveTrackers(ctx context.Context, hash string, urls []string) error {
+	form := url.Values{}
+	form.Set("hash", hash)
+	form.Set("urls", strings.Join(urls, "|"))
+	return c.post(ctx, "/api/v2/torrents/removeTrackers", form)
+}
+
+// Category management (continued).
+
+// EditCategory edits an existing category.
+func (c *Client) EditCategory(ctx context.Context, name, savePath string) error {
+	form := url.Values{}
+	form.Set("category", name)
+	form.Set("savePath", savePath)
+	return c.post(ctx, "/api/v2/torrents/editCategory", form)
+}
+
+// RemoveCategories removes one or more categories.
+func (c *Client) RemoveCategories(ctx context.Context, categories []string) error {
+	form := url.Values{}
+	form.Set("categories", strings.Join(categories, "\n"))
+	return c.post(ctx, "/api/v2/torrents/removeCategories", form)
+}
+
+// Tag management (continued).
+
+// CreateTags creates new tags.
+func (c *Client) CreateTags(ctx context.Context, tags []string) error {
+	form := url.Values{}
+	form.Set("tags", strings.Join(tags, ","))
+	return c.post(ctx, "/api/v2/torrents/createTags", form)
+}
+
+// DeleteTags deletes tags.
+func (c *Client) DeleteTags(ctx context.Context, tags []string) error {
+	form := url.Values{}
+	form.Set("tags", strings.Join(tags, ","))
+	return c.post(ctx, "/api/v2/torrents/deleteTags", form)
+}
+
+// Content renaming.
+
+// RenameFile renames a file within a torrent.
+func (c *Client) RenameFile(ctx context.Context, hash, oldPath, newPath string) error {
+	form := url.Values{}
+	form.Set("hash", hash)
+	form.Set("oldPath", oldPath)
+	form.Set("newPath", newPath)
+	return c.post(ctx, "/api/v2/torrents/renameFile", form)
+}
+
+// RenameFolder renames a folder within a torrent.
+func (c *Client) RenameFolder(ctx context.Context, hash, oldPath, newPath string) error {
+	form := url.Values{}
+	form.Set("hash", hash)
+	form.Set("oldPath", oldPath)
+	form.Set("newPath", newPath)
+	return c.post(ctx, "/api/v2/torrents/renameFolder", form)
+}

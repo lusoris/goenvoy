@@ -278,3 +278,82 @@ type SeasonPassSeries struct {
 type MonitoringOptions struct {
 	Monitor string `json:"monitor"`
 }
+
+// SeriesEditorResource is the request body for batch series editing/deleting.
+type SeriesEditorResource struct {
+	SeriesIDs              []int  `json:"seriesIds"`
+	Monitored              *bool  `json:"monitored,omitempty"`
+	MonitorNewItems        string `json:"monitorNewItems,omitempty"`
+	QualityProfileID       *int   `json:"qualityProfileId,omitempty"`
+	SeriesType             string `json:"seriesType,omitempty"`
+	SeasonFolder           *bool  `json:"seasonFolder,omitempty"`
+	RootFolderPath         string `json:"rootFolderPath,omitempty"`
+	Tags                   []int  `json:"tags,omitempty"`
+	ApplyTags              string `json:"applyTags,omitempty"`
+	MoveFiles              bool   `json:"moveFiles,omitempty"`
+	DeleteFiles            bool   `json:"deleteFiles,omitempty"`
+	AddImportListExclusion bool   `json:"addImportListExclusion,omitempty"`
+}
+
+// EpisodeFileEditorResource is the request body for bulk updating episode file quality/language.
+type EpisodeFileEditorResource struct {
+	EpisodeFileIDs []int         `json:"episodeFileIds"`
+	Languages      []Language    `json:"languages,omitempty"`
+	Quality        *QualityModel `json:"quality,omitempty"`
+	SceneName      string        `json:"sceneName,omitempty"`
+	ReleaseGroup   string        `json:"releaseGroup,omitempty"`
+}
+
+// LocalizationResource represents localization strings.
+type LocalizationResource struct {
+	ID      int               `json:"id"`
+	Strings map[string]string `json:"strings"`
+}
+
+// FileSystemResource represents the result of a filesystem browse.
+type FileSystemResource struct {
+	Directories []FileSystemEntry `json:"directories"`
+	Files       []FileSystemEntry `json:"files"`
+}
+
+// FileSystemEntry is a single directory or file entry.
+type FileSystemEntry struct {
+	Path         string `json:"path"`
+	RelativePath string `json:"relativePath,omitempty"`
+	Name         string `json:"name"`
+	Size         int64  `json:"size,omitempty"`
+}
+
+// ImportListConfigResource holds import list global configuration.
+type ImportListConfigResource struct {
+	ID            int    `json:"id"`
+	ListSyncLevel string `json:"listSyncLevel"`
+	ListSyncTag   int    `json:"listSyncTag"`
+}
+
+// LanguageProfileResource represents a language profile.
+type LanguageProfileResource struct {
+	ID             int                           `json:"id"`
+	Name           string                        `json:"name"`
+	UpgradeAllowed bool                          `json:"upgradeAllowed"`
+	Cutoff         *Language                     `json:"cutoff,omitempty"`
+	Languages      []LanguageProfileItemResource `json:"languages,omitempty"`
+}
+
+// LanguageProfileItemResource represents an item in a language profile.
+type LanguageProfileItemResource struct {
+	ID       int       `json:"id"`
+	Language *Language `json:"language,omitempty"`
+	Allowed  bool      `json:"allowed"`
+}
+
+// LocalizationLanguageResource represents a localization language identifier.
+type LocalizationLanguageResource struct {
+	Identifier string `json:"identifier"`
+}
+
+// QualityDefinitionLimitsResource holds min/max limits for quality definitions.
+type QualityDefinitionLimitsResource struct {
+	Min int `json:"min"`
+	Max int `json:"max"`
+}

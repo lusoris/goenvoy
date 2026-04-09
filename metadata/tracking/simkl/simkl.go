@@ -509,6 +509,13 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 	req.Header.Set("simkl-api-key", c.clientID)
 	req.Header.Set("User-Agent", c.userAgent)
 
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("simkl: POST %s: %w", path, err)
@@ -622,4 +629,375 @@ func (c *Client) ExchangeCode(ctx context.Context, code, redirectURI string) (st
 		c.onToken(result.AccessToken)
 	}
 	return result.AccessToken, nil
+}
+
+func (c *Client) del(ctx context.Context, path string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.rawBaseURL+path, http.NoBody)
+	if err != nil {
+		return fmt.Errorf("simkl: create request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("simkl-api-key", c.clientID)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("simkl: DELETE %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("simkl: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(body, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(body)
+		}
+		return apiErr
+	}
+	return nil
+}
+
+// Ratings.
+
+// GetRatingByID returns ratings for a movie, TV show, or anime by Simkl ID.
+// fields can include: "rank", "droprate", "simkl", "ext", "has_trailer", "reactions", "year".
+func (c *Client) GetRatingByID(ctx context.Context, simklID int, fields string) (*RatingInfo, error) {
+	p := url.Values{}
+	p.Set("simkl", strconv.Itoa(simklID))
+	if fields != "" {
+		p.Set("fields", fields)
+	}
+	var out RatingInfo
+	if err := c.get(ctx, "/ratings", p, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetWatchlistRatings returns ratings for items in a user's watchlist.
+// mediaType can be "tv", "anime", or "movies".
+// status can be "all", "watching", "plantowatch", "completed", "dropped", "hold".
+func (c *Client) GetWatchlistRatings(ctx context.Context, mediaType, status, fields string) ([]RatingInfo, error) {
+	p := url.Values{}
+	if status != "" {
+		p.Set("user_watchlist", status)
+	}
+	if fields != "" {
+		p.Set("fields", fields)
+	}
+	var out []RatingInfo
+	path := "/ratings"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType) + "/"
+	}
+	if err := c.get(ctx, path, p, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Search (additional).
+
+// SearchRandom finds a random item based on filters.
+func (c *Client) SearchRandom(ctx context.Context, params *RandomSearchParams) (*RandomResult, error) {
+	var out RandomResult
+	if err := c.post(ctx, "/search/random", params, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Movie Genres.
+
+// MovieGenres returns movies filtered by genre and other criteria.
+func (c *Client) MovieGenres(ctx context.Context, genre string, page, limit int) ([]GenreItem, error) {
+	if genre == "" {
+		genre = defaultFilter
+	}
+	var out []GenreItem
+	if err := c.get(ctx, "/movies/genres/"+url.PathEscape(genre), pageParams(page, limit), &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Movie Best.
+
+// BestMovies returns the best of all movies.
+func (c *Client) BestMovies(ctx context.Context, filter string) ([]BestItem, error) {
+	if filter == "" {
+		filter = defaultFilter
+	}
+	var out []BestItem
+	if err := c.get(ctx, "/movies/best/"+url.PathEscape(filter), nil, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Scrobble.
+
+// ScrobbleStart starts a scrobble session for the given item.
+func (c *Client) ScrobbleStart(ctx context.Context, item *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/start", item, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ScrobblePause pauses the current scrobble session.
+func (c *Client) ScrobblePause(ctx context.Context, item *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/pause", item, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ScrobbleStop stops the current scrobble session.
+// If progress >= 80%, the item is marked as watched.
+func (c *Client) ScrobbleStop(ctx context.Context, item *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/stop", item, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ScrobbleCheckin checks in to an item without real-time tracking.
+func (c *Client) ScrobbleCheckin(ctx context.Context, item *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/checkin", item, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Sync.
+
+// GetLastActivity returns the user's last activity timestamps for efficient syncing.
+func (c *Client) GetLastActivity(ctx context.Context) (*LastActivity, error) {
+	var out LastActivity
+	if err := c.get(ctx, "/sync/activities", nil, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetAllItems returns all items in the user's watchlist.
+// mediaType can be empty, "shows", "movies", or "anime".
+// status can be empty, "watching", "plantowatch", "completed", "hold", or "dropped".
+// dateFrom is an optional ISO 8601 timestamp for incremental sync.
+func (c *Client) GetAllItems(ctx context.Context, mediaType, status, extended, dateFrom string) (*WatchlistResponse, error) {
+	path := "/sync/all-items/"
+	if mediaType != "" {
+		path += url.PathEscape(mediaType) + "/"
+	}
+	if status != "" {
+		path += url.PathEscape(status)
+	}
+	p := url.Values{}
+	if extended != "" {
+		p.Set("extended", extended)
+	}
+	if dateFrom != "" {
+		p.Set("date_from", dateFrom)
+	}
+	var out WatchlistResponse
+	if err := c.get(ctx, path, p, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// AddToHistory adds items to the user's watched history.
+func (c *Client) AddToHistory(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/history", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromHistory removes items from the user's watched history.
+func (c *Client) RemoveFromHistory(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/history/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetSyncRatings returns all user ratings, optionally filtered by type and rating.
+// mediaType: "", "shows", "movies", or "anime". rating: "" or "1" through "10".
+// dateFrom: optional ISO 8601 timestamp.
+func (c *Client) GetSyncRatings(ctx context.Context, mediaType, rating, dateFrom string) (*WatchlistResponse, error) {
+	path := "/sync/ratings/"
+	if mediaType != "" {
+		path += url.PathEscape(mediaType) + "/"
+	}
+	if rating != "" {
+		path += url.PathEscape(rating)
+	}
+	p := url.Values{}
+	if dateFrom != "" {
+		p.Set("date_from", dateFrom)
+	}
+	var out WatchlistResponse
+	if err := c.get(ctx, path, p, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// AddRatings adds ratings for movies and/or shows.
+func (c *Client) AddRatings(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/ratings", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveRatings removes ratings for movies and/or shows.
+func (c *Client) RemoveRatings(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/ratings/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// AddToList adds items to a specific Simkl watchlist (e.g., plantowatch, watching).
+func (c *Client) AddToList(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/add-to-list", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetPlaybacks retrieves paused playback sessions.
+// mediaType: "", "movies", or "episodes".
+func (c *Client) GetPlaybacks(ctx context.Context, mediaType string) ([]PlaybackSession, error) {
+	path := "/sync/playback/"
+	if mediaType != "" {
+		path += url.PathEscape(mediaType)
+	}
+	var out []PlaybackSession
+	if err := c.get(ctx, path, nil, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DeletePlayback deletes a specific paused playback session by its ID.
+func (c *Client) DeletePlayback(ctx context.Context, id int64) error {
+	return c.del(ctx, "/sync/playback/"+strconv.FormatInt(id, 10))
+}
+
+// CheckIfWatched checks whether items have been watched by the user.
+func (c *Client) CheckIfWatched(ctx context.Context, items []WatchedCheckItem, extended string) ([]WatchedCheckResult, error) {
+	p := url.Values{}
+	if extended != "" {
+		p.Set("extended", extended)
+	}
+	u, err := url.Parse(c.rawBaseURL + "/sync/watched/")
+	if err != nil {
+		return nil, fmt.Errorf("simkl: parse URL: %w", err)
+	}
+	if len(p) > 0 {
+		u.RawQuery = p.Encode()
+	}
+
+	payload, err := json.Marshal(items)
+	if err != nil {
+		return nil, fmt.Errorf("simkl: marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("simkl: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("simkl-api-key", c.clientID)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("simkl: POST /sync/watched/: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("simkl: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(body, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(body)
+		}
+		return nil, apiErr
+	}
+
+	var out []WatchedCheckResult
+	if len(body) > 0 {
+		if err := json.Unmarshal(body, &out); err != nil {
+			return nil, fmt.Errorf("simkl: decode response: %w", err)
+		}
+	}
+	return out, nil
+}
+
+// Users.
+
+// GetUserStats returns watched statistics for a user.
+func (c *Client) GetUserStats(ctx context.Context, userID int) (*UserStats, error) {
+	var out UserStats
+	if err := c.get(ctx, fmt.Sprintf("/users/%d/stats", userID), nil, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetUserSettings returns the authenticated user's settings.
+func (c *Client) GetUserSettings(ctx context.Context) (*UserSettings, error) {
+	var out UserSettings
+	if err := c.get(ctx, "/users/settings", nil, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetLastWatchedArts returns images from a user's last watched item.
+func (c *Client) GetLastWatchedArts(ctx context.Context, userID int) (*LastWatchedArt, error) {
+	var out LastWatchedArt
+	if err := c.get(ctx, fmt.Sprintf("/users/recently-watched-background/%d", userID), nil, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }

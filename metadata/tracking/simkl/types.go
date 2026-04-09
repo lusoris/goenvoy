@@ -362,3 +362,250 @@ type CalendarMovie struct {
 	ReleaseDate string `json:"release_date,omitempty"`
 	IDs         IDs    `json:"ids"`
 }
+
+// RatingInfo represents rating data returned by the /ratings endpoint.
+type RatingInfo struct {
+	Title      string       `json:"title,omitempty"`
+	Year       int          `json:"year,omitempty"`
+	Type       string       `json:"type,omitempty"`
+	IDs        IDs          `json:"ids"`
+	Rank       int          `json:"rank,omitempty"`
+	DropRate   string       `json:"drop_rate,omitempty"`
+	Ratings    *Ratings     `json:"ratings,omitempty"`
+	HasTrailer bool         `json:"has_trailer,omitempty"`
+	Reactions  []Reaction   `json:"reactions,omitempty"`
+	Poster     string       `json:"poster,omitempty"`
+	URL        string       `json:"url,omitempty"`
+	SimklScore *RatingScore `json:"simkl_score,omitempty"`
+}
+
+// Reaction represents a viewer reaction on an item.
+type Reaction struct {
+	Type  string `json:"type"`
+	Count int    `json:"count"`
+}
+
+// RandomSearchParams contains parameters for the /search/random endpoint.
+type RandomSearchParams struct {
+	Type      string `json:"type,omitempty"`
+	Genre     string `json:"genre,omitempty"`
+	YearFrom  int    `json:"year_from,omitempty"`
+	YearTo    int    `json:"year_to,omitempty"`
+	Rating    string `json:"rating,omitempty"`
+	Watching  int    `json:"watching,omitempty"`
+	Completed int    `json:"completed,omitempty"`
+	Status    string `json:"status,omitempty"`
+	Limit     int    `json:"limit,omitempty"`
+}
+
+// RandomResult represents a random search result item.
+type RandomResult struct {
+	Title  string `json:"title"`
+	Year   int    `json:"year"`
+	Poster string `json:"poster,omitempty"`
+	Type   string `json:"type,omitempty"`
+	IDs    IDs    `json:"ids"`
+}
+
+// ScrobbleRequest represents a request to a scrobble endpoint.
+type ScrobbleRequest struct {
+	Movie   *ScrobbleMedia `json:"movie,omitempty"`
+	Show    *ScrobbleMedia `json:"show,omitempty"`
+	Episode *ScrobbleMedia `json:"episode,omitempty"`
+	Anime   *ScrobbleMedia `json:"anime,omitempty"`
+}
+
+// ScrobbleMedia represents a media item in a scrobble request.
+type ScrobbleMedia struct {
+	Title string `json:"title,omitempty"`
+	Year  int    `json:"year,omitempty"`
+	IDs   *IDs   `json:"ids,omitempty"`
+}
+
+// ScrobbleResponse represents the response from a scrobble endpoint.
+type ScrobbleResponse struct {
+	Action  string          `json:"action,omitempty"`
+	Result  string          `json:"result,omitempty"`
+	Message string          `json:"message,omitempty"`
+	Movie   *ScrobbleMedia  `json:"movie,omitempty"`
+	Show    *ScrobbleMedia  `json:"show,omitempty"`
+	Episode *EpisodeMinimal `json:"episode,omitempty"`
+	Anime   *ScrobbleMedia  `json:"anime,omitempty"`
+}
+
+// LastActivity contains timestamps for a user's last sync activities.
+type LastActivity struct {
+	TVShows  *ActivityTimestamps `json:"tv_shows,omitempty"`
+	Anime    *ActivityTimestamps `json:"anime,omitempty"`
+	Movies   *ActivityTimestamps `json:"movies,omitempty"`
+	AllItems string              `json:"all_items_at,omitempty"`
+	Ratings  string              `json:"ratings_at,omitempty"`
+}
+
+// ActivityTimestamps holds per-status timestamps for sync activity.
+type ActivityTimestamps struct {
+	All          string `json:"all,omitempty"`
+	RatedAt      string `json:"rated_at,omitempty"`
+	Watching     string `json:"watching,omitempty"`
+	PlanToWatch  string `json:"plantowatch,omitempty"`
+	Completed    string `json:"completed,omitempty"`
+	Hold         string `json:"hold,omitempty"`
+	Dropped      string `json:"dropped,omitempty"`
+	RemovedFrom  string `json:"removed_from_list,omitempty"`
+	MovedToOther string `json:"moved_to_other_list,omitempty"`
+}
+
+// WatchlistResponse represents the response from /sync/all-items or /sync/ratings.
+type WatchlistResponse struct {
+	Shows  []WatchlistItem `json:"shows,omitempty"`
+	Anime  []WatchlistItem `json:"anime,omitempty"`
+	Movies []WatchlistItem `json:"movies,omitempty"`
+}
+
+// WatchlistItem represents a single item in the user's watchlist.
+type WatchlistItem struct {
+	// Shared fields.
+	LastWatchedAt string `json:"last_watched_at,omitempty"`
+	UserRating    int    `json:"user_rating,omitempty"`
+	Status        string `json:"status,omitempty"`
+	WatchedDate   string `json:"watched_date,omitempty"`
+	AddedDate     string `json:"added_date,omitempty"`
+	ListSlug      string `json:"list_slug,omitempty"`
+
+	// Show/anime fields.
+	Show                 *ShowShort        `json:"show,omitempty"`
+	Seasons              []WatchlistSeason `json:"seasons,omitempty"`
+	TotalEpisodesCount   int               `json:"total_episodes_count,omitempty"`
+	WatchedEpisodesCount int               `json:"watched_episodes_count,omitempty"`
+
+	// Movie fields.
+	Movie *MovieShort `json:"movie,omitempty"`
+}
+
+// WatchlistSeason represents season progress in a watchlist entry.
+type WatchlistSeason struct {
+	Number   int                `json:"number"`
+	Episodes []WatchlistEpisode `json:"episodes,omitempty"`
+}
+
+// WatchlistEpisode represents episode progress in a watchlist season.
+type WatchlistEpisode struct {
+	Number int `json:"number"`
+}
+
+// SyncItems holds arrays of items for sync endpoints (history, ratings, add-to-list).
+type SyncItems struct {
+	Movies   []SyncItemEntry `json:"movies,omitempty"`
+	Shows    []SyncItemEntry `json:"shows,omitempty"`
+	Episodes []SyncItemEntry `json:"episodes,omitempty"`
+}
+
+// SyncItemEntry represents a single item in a sync request.
+type SyncItemEntry struct {
+	Title     string `json:"title,omitempty"`
+	Year      int    `json:"year,omitempty"`
+	IDs       *IDs   `json:"ids,omitempty"`
+	To        string `json:"to,omitempty"`
+	Rating    int    `json:"rating,omitempty"`
+	WatchedAt string `json:"watched_at,omitempty"`
+	Seasons   []struct {
+		Number   int `json:"number"`
+		Episodes []struct {
+			Number int `json:"number"`
+		} `json:"episodes,omitempty"`
+	} `json:"seasons,omitempty"`
+}
+
+// SyncResponse holds the response from add/remove sync endpoints.
+type SyncResponse struct {
+	Added    *SyncCount `json:"added,omitempty"`
+	Deleted  *SyncCount `json:"deleted,omitempty"`
+	NotFound *SyncCount `json:"not_found,omitempty"`
+}
+
+// SyncCount is a count breakdown for sync response.
+type SyncCount struct {
+	Movies   int `json:"movies,omitempty"`
+	Shows    int `json:"shows,omitempty"`
+	Episodes int `json:"episodes,omitempty"`
+}
+
+// PlaybackSession represents a paused playback session.
+type PlaybackSession struct {
+	ID       int64           `json:"id"`
+	Progress float64         `json:"progress"`
+	PausedAt string          `json:"paused_at,omitempty"`
+	Type     string          `json:"type,omitempty"`
+	Movie    *MovieShort     `json:"movie,omitempty"`
+	Show     *ShowShort      `json:"show,omitempty"`
+	Episode  *EpisodeMinimal `json:"episode,omitempty"`
+}
+
+// WatchedCheckItem represents an item in a /sync/watched request.
+type WatchedCheckItem struct {
+	Title string `json:"title,omitempty"`
+	Year  int    `json:"year,omitempty"`
+	IDs   *IDs   `json:"ids,omitempty"`
+}
+
+// WatchedCheckResult is a response element from /sync/watched.
+type WatchedCheckResult struct {
+	Title  string `json:"title,omitempty"`
+	Year   int    `json:"year,omitempty"`
+	Result bool   `json:"result"`
+	List   string `json:"list,omitempty"`
+	IDs    IDs    `json:"ids"`
+}
+
+// UserStats represents a user's watch statistics.
+type UserStats struct {
+	Total    *MediaStats `json:"total,omitempty"`
+	Movies   *MediaStats `json:"movies,omitempty"`
+	TV       *MediaStats `json:"tv,omitempty"`
+	Anime    *MediaStats `json:"anime,omitempty"`
+	Episodes *MediaStats `json:"episodes,omitempty"`
+}
+
+// MediaStats contains statistics for a media type.
+type MediaStats struct {
+	Watching    int `json:"watching,omitempty"`
+	PlanToWatch int `json:"plantowatch,omitempty"`
+	Completed   int `json:"completed,omitempty"`
+	Hold        int `json:"hold,omitempty"`
+	Dropped     int `json:"dropped,omitempty"`
+	Total       int `json:"total,omitempty"`
+}
+
+// UserSettings represents the authenticated user's settings.
+type UserSettings struct {
+	User    UserAccount    `json:"user"`
+	Account AccountDetails `json:"account"`
+}
+
+// UserAccount contains user profile information.
+type UserAccount struct {
+	Name   string `json:"name"`
+	JoinAt string `json:"joined_at,omitempty"`
+	Gender string `json:"gender,omitempty"`
+	Avatar string `json:"avatar,omitempty"`
+	Bio    string `json:"bio,omitempty"`
+	Age    string `json:"age,omitempty"`
+	Loc    string `json:"loc,omitempty"`
+	IDs    struct {
+		Simkl int `json:"simkl"`
+	} `json:"ids,omitempty"`
+}
+
+// AccountDetails contains account configuration.
+type AccountDetails struct {
+	ID       int    `json:"id,omitempty"`
+	Timezone string `json:"timezone,omitempty"`
+}
+
+// LastWatchedArt contains art/images from a user's last watched item.
+type LastWatchedArt struct {
+	Poster string `json:"poster,omitempty"`
+	Fanart string `json:"fanart,omitempty"`
+	Title  string `json:"title,omitempty"`
+	IDs    IDs    `json:"ids"`
+}

@@ -1,6 +1,9 @@
 package tvdb
 
-import "strconv"
+import (
+	"net/url"
+	"strconv"
+)
 
 // response is the standard TheTVDB v4 API envelope.
 type response[T any] struct {
@@ -564,4 +567,181 @@ func httpStatusText(code int) string {
 	default:
 		return strconv.Itoa(code)
 	}
+}
+
+// AwardNominee is an award nominee record.
+type AwardNominee struct {
+	ID        int          `json:"id"`
+	Name      string       `json:"name"`
+	Character *Character   `json:"character,omitempty"`
+	Details   string       `json:"details"`
+	Episode   *EpisodeBase `json:"episode,omitempty"`
+	Movie     *MovieBase   `json:"movie,omitempty"`
+	Series    *SeriesBase  `json:"series,omitempty"`
+	Year      string       `json:"year"`
+	Category  string       `json:"category"`
+	IsWinner  bool         `json:"isWinner"`
+}
+
+// AwardCategory is a base award category record.
+type AwardCategory struct {
+	ID              int64     `json:"id"`
+	Name            string    `json:"name"`
+	AllowCoNominees bool      `json:"allowCoNominees"`
+	ForSeries       bool      `json:"forSeries"`
+	ForMovies       bool      `json:"forMovies"`
+	Award           AwardBase `json:"award"`
+}
+
+// AwardCategoryExtended is the extended award category record.
+type AwardCategoryExtended struct {
+	AwardCategory
+	Nominees []AwardNominee `json:"nominees,omitempty"`
+}
+
+// AwardExtended is the extended award record.
+type AwardExtended struct {
+	AwardBase
+	Score      int             `json:"score"`
+	Categories []AwardCategory `json:"categories,omitempty"`
+}
+
+// CompanyType is a company type record.
+type CompanyType struct {
+	ID   int64  `json:"companyTypeId"`
+	Name string `json:"companyTypeName"`
+}
+
+// Country is a country record.
+type Country struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	ShortCode string `json:"shortCode"`
+}
+
+// EntityType is an entity type record.
+type EntityType struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	HasSpecials bool   `json:"hasSpecials"`
+}
+
+// Gender is a gender record.
+type Gender struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+// InspirationType is an inspiration type record.
+type InspirationType struct {
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	ReferenceURL string `json:"reference_url"`
+	URL          string `json:"url"`
+}
+
+// ListExtended is the extended record for a list.
+type ListExtended struct {
+	ListBase
+	Entities []ListEntity `json:"entities,omitempty"`
+}
+
+// ListEntity is an entity within a list.
+type ListEntity struct {
+	Order    int64 `json:"order"`
+	SeriesID int64 `json:"seriesId,omitempty"`
+	MovieID  int64 `json:"movieId,omitempty"`
+}
+
+// PeopleType is a people type record.
+type PeopleType struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+// SourceType is a source type record.
+type SourceType struct {
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Slug    string `json:"slug"`
+	Prefix  string `json:"prefix"`
+	PostFix string `json:"postfix"`
+	Sort    int    `json:"sort"`
+}
+
+// UserInfo contains authenticated user information.
+type UserInfo struct {
+	ID                   int    `json:"id"`
+	Name                 string `json:"name"`
+	Language             string `json:"language"`
+	FavoritesDisplayMode string `json:"favoritesDisplaymode"`
+}
+
+// Favorites is the user's favorites list.
+type Favorites struct {
+	Series   []int `json:"series,omitempty"`
+	Movies   []int `json:"movies,omitempty"`
+	Episodes []int `json:"episodes,omitempty"`
+	Artwork  []int `json:"artwork,omitempty"`
+	People   []int `json:"people,omitempty"`
+	Lists    []int `json:"lists,omitempty"`
+}
+
+// FavoriteRecord is used to add items to user favorites via POST.
+type FavoriteRecord struct {
+	Series   int `json:"series,omitempty"`
+	Movies   int `json:"movies,omitempty"`
+	Episodes int `json:"episodes,omitempty"`
+	Artwork  int `json:"artwork,omitempty"`
+	People   int `json:"people,omitempty"`
+	Lists    int `json:"lists,omitempty"`
+}
+
+// FilterParams holds optional query parameters for filter endpoints.
+type FilterParams struct {
+	Country       string
+	Language      string
+	Company       int
+	ContentRating int
+	Genre         int
+	Year          int
+	Sort          string
+	SortType      string
+	Status        int
+}
+
+func (p *FilterParams) encode() string {
+	if p == nil {
+		return ""
+	}
+	q := url.Values{}
+	if p.Country != "" {
+		q.Set("country", p.Country)
+	}
+	if p.Language != "" {
+		q.Set("lang", p.Language)
+	}
+	if p.Company > 0 {
+		q.Set("company", strconv.Itoa(p.Company))
+	}
+	if p.ContentRating > 0 {
+		q.Set("contentRating", strconv.Itoa(p.ContentRating))
+	}
+	if p.Genre > 0 {
+		q.Set("genre", strconv.Itoa(p.Genre))
+	}
+	if p.Year > 0 {
+		q.Set("year", strconv.Itoa(p.Year))
+	}
+	if p.Sort != "" {
+		q.Set("sort", p.Sort)
+	}
+	if p.SortType != "" {
+		q.Set("sortType", p.SortType)
+	}
+	if p.Status > 0 {
+		q.Set("status", strconv.Itoa(p.Status))
+	}
+	return q.Encode()
 }

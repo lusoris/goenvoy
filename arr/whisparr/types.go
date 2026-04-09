@@ -291,3 +291,117 @@ type ImportExclusion struct {
 	MovieYear  int    `json:"movieYear,omitempty"`
 	StashID    string `json:"stashId,omitempty"`
 }
+
+// ---------- V2 additional types ----------.
+
+// SeriesEditorResource is the request body for batch series editing/deleting.
+type SeriesEditorResource struct {
+	SeriesIDs        []int  `json:"seriesIds"`
+	Monitored        *bool  `json:"monitored,omitempty"`
+	QualityProfileID *int   `json:"qualityProfileId,omitempty"`
+	SeriesType       string `json:"seriesType,omitempty"`
+	SeasonFolder     *bool  `json:"seasonFolder,omitempty"`
+	RootFolderPath   string `json:"rootFolderPath,omitempty"`
+	Tags             []int  `json:"tags,omitempty"`
+	ApplyTags        string `json:"applyTags,omitempty"`
+	MoveFiles        bool   `json:"moveFiles,omitempty"`
+	DeleteFiles      bool   `json:"deleteFiles,omitempty"`
+}
+
+// EpisodesMonitoredResource is the payload for bulk episode monitoring updates.
+type EpisodesMonitoredResource struct {
+	EpisodeIDs []int `json:"episodeIds"`
+	Monitored  bool  `json:"monitored"`
+}
+
+// EpisodeFileEditorResource is the payload for bulk episode file editing.
+type EpisodeFileEditorResource struct {
+	EpisodeFileIDs []int  `json:"episodeFileIds"`
+	Languages      []int  `json:"languages,omitempty"`
+	Quality        any    `json:"quality,omitempty"`
+	SceneName      string `json:"sceneName,omitempty"`
+}
+
+// ImportListConfigResource holds import list global configuration.
+type ImportListConfigResource struct {
+	ID               int    `json:"id"`
+	ListSyncLevel    string `json:"listSyncLevel,omitempty"`
+	ListSyncTag      int    `json:"listSyncTag,omitempty"`
+	ListSyncInterval int    `json:"listSyncInterval,omitempty"`
+}
+
+// LanguageProfileResource represents a language profile.
+type LanguageProfileResource struct {
+	ID             int                           `json:"id"`
+	Name           string                        `json:"name"`
+	UpgradeAllowed bool                          `json:"upgradeAllowed"`
+	Cutoff         *Language                     `json:"cutoff,omitempty"`
+	Languages      []LanguageProfileItemResource `json:"languages,omitempty"`
+}
+
+// LanguageProfileItemResource represents an item in a language profile.
+type LanguageProfileItemResource struct {
+	Language Language `json:"language"`
+	Allowed  bool     `json:"allowed"`
+}
+
+// LocalizationLanguageResource is the current localization language.
+type LocalizationLanguageResource struct {
+	Identifier string `json:"identifier,omitempty"`
+}
+
+// QualityDefinitionLimitsResource holds quality definition limits.
+type QualityDefinitionLimitsResource struct {
+	Min int `json:"min"`
+	Max int `json:"max"`
+}
+
+// ---------- V3 additional types ----------.
+
+// AlternativeTitleResource represents an alternative title for a movie.
+type AlternativeTitleResource struct {
+	ID              int    `json:"id"`
+	SourceType      string `json:"sourceType,omitempty"`
+	MovieMetadataID int    `json:"movieMetadataId,omitempty"`
+	Title           string `json:"title,omitempty"`
+	CleanTitle      string `json:"cleanTitle,omitempty"`
+}
+
+// ExtraFileResource represents an extra file associated with a movie.
+type ExtraFileResource struct {
+	ID           int    `json:"id"`
+	MovieID      int    `json:"movieId"`
+	MovieFileID  int    `json:"movieFileId,omitempty"`
+	RelativePath string `json:"relativePath,omitempty"`
+	Extension    string `json:"extension,omitempty"`
+	Type         string `json:"type,omitempty"`
+}
+
+// PerformerEditorResource is the payload for bulk performer editing.
+type PerformerEditorResource struct {
+	PerformerIDs     []int  `json:"performerIds"`
+	Monitored        *bool  `json:"monitored,omitempty"`
+	QualityProfileID *int   `json:"qualityProfileId,omitempty"`
+	RootFolderPath   string `json:"rootFolderPath,omitempty"`
+	Tags             []int  `json:"tags,omitempty"`
+	ApplyTags        string `json:"applyTags,omitempty"`
+	MoveFiles        bool   `json:"moveFiles,omitempty"`
+}
+
+// StudioEditorResource is the payload for bulk studio editing.
+type StudioEditorResource struct {
+	StudioIDs        []int  `json:"studioIds"`
+	Monitored        *bool  `json:"monitored,omitempty"`
+	QualityProfileID *int   `json:"qualityProfileId,omitempty"`
+	RootFolderPath   string `json:"rootFolderPath,omitempty"`
+	Tags             []int  `json:"tags,omitempty"`
+	ApplyTags        string `json:"applyTags,omitempty"`
+	MoveFiles        bool   `json:"moveFiles,omitempty"`
+}
+
+// MovieFileEditorResource is the payload for bulk movie file editing.
+type MovieFileEditorResource struct {
+	MovieFileIDs []int `json:"movieFileIds"`
+	Languages    []int `json:"languages,omitempty"`
+	Quality      any   `json:"quality,omitempty"`
+}

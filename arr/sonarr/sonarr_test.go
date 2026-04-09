@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/lusoris/goenvoy/arr"
@@ -29,6 +31,24 @@ func newTestServer(t *testing.T, method, wantPath string, body any) *httptest.Se
 		if body != nil {
 			json.NewEncoder(w).Encode(body)
 		}
+	}))
+}
+
+func newRawTestServer(t *testing.T, method, wantPath, body string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			t.Errorf("method = %s, want %s", r.Method, method)
+		}
+		if r.Header.Get("X-Api-Key") == "" {
+			t.Error("missing X-Api-Key header")
+		}
+		if wantPath != "" && r.URL.RequestURI() != wantPath {
+			t.Errorf("path = %q, want %q", r.URL.RequestURI(), wantPath)
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, body)
 	}))
 }
 
@@ -765,5 +785,867 @@ func TestUpdateSeasonPass(t *testing.T) {
 	c, _ := sonarr.New(srv.URL, "test-key")
 	if err := c.UpdateSeasonPass(context.Background(), sonarr.SeasonPassResource{}); err != nil {
 		t.Fatalf("UpdateSeasonPass: %v", err)
+	}
+}
+
+func TestDeleteCommand(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/command/1", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DeleteCommand(context.Background(), 1); err != nil {
+		t.Fatalf("DeleteCommand: %v", err)
+	}
+}
+
+func TestUpdateEpisodeFile(t *testing.T) {
+	t.Parallel()
+
+	want := sonarr.EpisodeFile{ID: 1}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/episodefile/1", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateEpisodeFile(context.Background(), &sonarr.EpisodeFile{ID: 1})
+	if err != nil {
+		t.Fatalf("UpdateEpisodeFile: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestEditEpisodeFiles(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/episodefile/editor", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.EditEpisodeFiles(context.Background(), &sonarr.EpisodeFileEditorResource{
+		EpisodeFileIDs: []int{1, 2},
+	}); err != nil {
+		t.Fatalf("EditEpisodeFiles: %v", err)
+	}
+}
+
+func TestUpdateCustomFormatsBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.CustomFormatResource{{ID: 1, Name: "test"}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/customformat/bulk", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateCustomFormatsBulk(context.Background(), &arr.CustomFormatBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateCustomFormatsBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteCustomFormatsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/customformat/bulk", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DeleteCustomFormatsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteCustomFormatsBulk: %v", err)
+	}
+}
+
+func TestUpdateDownloadClientsBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.ProviderResource{{ID: 1}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/downloadclient/bulk", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateDownloadClientsBulk(context.Background(), &arr.ProviderBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateDownloadClientsBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteDownloadClientsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/downloadclient/bulk", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DeleteDownloadClientsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteDownloadClientsBulk: %v", err)
+	}
+}
+
+func TestTestAllDownloadClients(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/downloadclient/testall", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.TestAllDownloadClients(context.Background()); err != nil {
+		t.Fatalf("TestAllDownloadClients: %v", err)
+	}
+}
+
+func TestUpdateIndexersBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.ProviderResource{{ID: 1}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/indexer/bulk", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateIndexersBulk(context.Background(), &arr.ProviderBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateIndexersBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteIndexersBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/indexer/bulk", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DeleteIndexersBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteIndexersBulk: %v", err)
+	}
+}
+
+func TestTestAllIndexers(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/indexer/testall", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.TestAllIndexers(context.Background()); err != nil {
+		t.Fatalf("TestAllIndexers: %v", err)
+	}
+}
+
+func TestUpdateImportListsBulk(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.ProviderResource{{ID: 1}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/importlist/bulk", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateImportListsBulk(context.Background(), &arr.ProviderBulkResource{IDs: []int{1}})
+	if err != nil {
+		t.Fatalf("UpdateImportListsBulk: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestDeleteImportListsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/importlist/bulk", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DeleteImportListsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteImportListsBulk: %v", err)
+	}
+}
+
+func TestTestAllImportLists(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/importlist/testall", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.TestAllImportLists(context.Background()); err != nil {
+		t.Fatalf("TestAllImportLists: %v", err)
+	}
+}
+
+func TestGetImportListConfig(t *testing.T) {
+	t.Parallel()
+
+	want := sonarr.ImportListConfigResource{ID: 1, ListSyncLevel: "disabled"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/importlist", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListConfig(context.Background())
+	if err != nil {
+		t.Fatalf("GetImportListConfig: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestUpdateImportListConfig(t *testing.T) {
+	t.Parallel()
+
+	want := sonarr.ImportListConfigResource{ID: 1, ListSyncLevel: "logOnly"}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/config/importlist/1", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateImportListConfig(context.Background(), &sonarr.ImportListConfigResource{ID: 1, ListSyncLevel: "logOnly"})
+	if err != nil {
+		t.Fatalf("UpdateImportListConfig: %v", err)
+	}
+	if got.ListSyncLevel != "logOnly" {
+		t.Errorf("ListSyncLevel = %q, want logOnly", got.ListSyncLevel)
+	}
+}
+
+func TestGetImportListExclusionsPaged(t *testing.T) {
+	t.Parallel()
+
+	want := arr.PagingResource[arr.ImportListExclusionResource]{
+		Page:         1,
+		PageSize:     10,
+		TotalRecords: 1,
+		Records:      []arr.ImportListExclusionResource{{ID: 1, TvdbID: 123}},
+	}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/importlistexclusion/paged?page=1&pageSize=10", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListExclusionsPaged(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("GetImportListExclusionsPaged: %v", err)
+	}
+	if got.TotalRecords != 1 {
+		t.Errorf("TotalRecords = %d, want 1", got.TotalRecords)
+	}
+}
+
+func TestDeleteImportListExclusionsBulk(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/importlistexclusion/bulk", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DeleteImportListExclusionsBulk(context.Background(), []int{1, 2}); err != nil {
+		t.Fatalf("DeleteImportListExclusionsBulk: %v", err)
+	}
+}
+
+func TestTestAllNotifications(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/notification/testall", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.TestAllNotifications(context.Background()); err != nil {
+		t.Fatalf("TestAllNotifications: %v", err)
+	}
+}
+
+func TestTestAllMetadataConsumers(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodPost, "/api/v3/metadata/testall", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.TestAllMetadataConsumers(context.Background()); err != nil {
+		t.Fatalf("TestAllMetadataConsumers: %v", err)
+	}
+}
+
+func TestGetLanguage(t *testing.T) {
+	t.Parallel()
+
+	want := sonarr.Language{ID: 1, Name: "English"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/language/1", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLanguage(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetLanguage: %v", err)
+	}
+	if got.Name != "English" {
+		t.Errorf("Name = %q, want English", got.Name)
+	}
+}
+
+func TestGetLocalization(t *testing.T) {
+	t.Parallel()
+
+	want := sonarr.LocalizationResource{ID: 1, Strings: map[string]string{"key": "val"}}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/localization", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLocalization(context.Background())
+	if err != nil {
+		t.Fatalf("GetLocalization: %v", err)
+	}
+	if got.Strings["key"] != "val" {
+		t.Errorf("Strings[key] = %q, want val", got.Strings["key"])
+	}
+}
+
+func TestUpdateQualityDefinitions(t *testing.T) {
+	t.Parallel()
+
+	want := []arr.QualityDefinitionResource{{ID: 1, Title: "HDTV-720p"}}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/qualitydefinition/update", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateQualityDefinitions(context.Background(), []arr.QualityDefinitionResource{{ID: 1, Title: "HDTV-720p"}})
+	if err != nil {
+		t.Fatalf("UpdateQualityDefinitions: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d", len(got))
+	}
+}
+
+func TestGetQualityProfileSchema(t *testing.T) {
+	t.Parallel()
+
+	want := arr.QualityProfile{ID: 1, Name: "schema"}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/qualityprofile/schema", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetQualityProfileSchema(context.Background())
+	if err != nil {
+		t.Fatalf("GetQualityProfileSchema: %v", err)
+	}
+	if got.Name != "schema" {
+		t.Errorf("Name = %q, want schema", got.Name)
+	}
+}
+
+func TestUpdateRootFolder(t *testing.T) {
+	t.Parallel()
+
+	want := arr.RootFolder{ID: 1, Path: "/tv"}
+
+	srv := newTestServer(t, http.MethodPut, "/api/v3/rootfolder/1", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateRootFolder(context.Background(), &arr.RootFolder{ID: 1, Path: "/tv"})
+	if err != nil {
+		t.Fatalf("UpdateRootFolder: %v", err)
+	}
+	if got.Path != "/tv" {
+		t.Errorf("Path = %q, want /tv", got.Path)
+	}
+}
+
+func TestBrowseFileSystem(t *testing.T) {
+	t.Parallel()
+
+	want := sonarr.FileSystemResource{
+		Directories: []sonarr.FileSystemEntry{{Path: "/tv", Name: "tv"}},
+	}
+
+	srv := newTestServer(t, http.MethodGet, "/api/v3/filesystem?path=%2Ftv&includeFiles=true", want)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.BrowseFileSystem(context.Background(), "/tv", true)
+	if err != nil {
+		t.Fatalf("BrowseFileSystem: %v", err)
+	}
+	if len(got.Directories) != 1 {
+		t.Errorf("len(Directories) = %d", len(got.Directories))
+	}
+}
+
+func TestPing(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestServer(t, http.MethodGet, "/ping", nil)
+	defer srv.Close()
+
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.Ping(context.Background()); err != nil {
+		t.Fatalf("Ping: %v", err)
+	}
+}
+
+func TestGetCalendarByID(t *testing.T) {
+	t.Parallel()
+	want := sonarr.Episode{ID: 42, Title: "Pilot"}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/calendar/42", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetCalendarByID(context.Background(), 42)
+	if err != nil {
+		t.Fatalf("GetCalendarByID: %v", err)
+	}
+	if got.ID != 42 {
+		t.Errorf("ID = %d, want 42", got.ID)
+	}
+}
+
+func TestGetWantedCutoffByID(t *testing.T) {
+	t.Parallel()
+	want := sonarr.Episode{ID: 7, Title: "Cutoff"}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/wanted/cutoff/7", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetWantedCutoffByID(context.Background(), 7)
+	if err != nil {
+		t.Fatalf("GetWantedCutoffByID: %v", err)
+	}
+	if got.ID != 7 {
+		t.Errorf("ID = %d, want 7", got.ID)
+	}
+}
+
+func TestGetWantedMissingByID(t *testing.T) {
+	t.Parallel()
+	want := sonarr.Episode{ID: 3, Title: "Missing"}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/wanted/missing/3", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetWantedMissingByID(context.Background(), 3)
+	if err != nil {
+		t.Fatalf("GetWantedMissingByID: %v", err)
+	}
+	if got.ID != 3 {
+		t.Errorf("ID = %d, want 3", got.ID)
+	}
+}
+
+func TestGetDownloadClientConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.DownloadClientConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/downloadclient/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetDownloadClientConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetDownloadClientConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetHostConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.HostConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/host/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetHostConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetHostConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetImportListConfigByID(t *testing.T) {
+	t.Parallel()
+	want := sonarr.ImportListConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/importlist/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetImportListConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetImportListConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetIndexerConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.IndexerConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/indexer/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetIndexerConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetIndexerConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetMediaManagementConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.MediaManagementConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/mediamanagement/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetMediaManagementConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetMediaManagementConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetNamingConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.NamingConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/naming/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetNamingConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetNamingConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetUIConfigByID(t *testing.T) {
+	t.Parallel()
+	want := arr.UIConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/ui/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetUIConfigByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetUIConfigByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestDownloadClientAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/downloadclient/action/testAction", nil)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DownloadClientAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("DownloadClientAction: %v", err)
+	}
+}
+
+func TestImportListAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/importlist/action/testAction", nil)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.ImportListAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("ImportListAction: %v", err)
+	}
+}
+
+func TestIndexerAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/indexer/action/testAction", nil)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.IndexerAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("IndexerAction: %v", err)
+	}
+}
+
+func TestMetadataAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/metadata/action/testAction", nil)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.MetadataAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("MetadataAction: %v", err)
+	}
+}
+
+func TestNotificationAction(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodPost, "/api/v3/notification/action/testAction", nil)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.NotificationAction(context.Background(), "testAction", nil); err != nil {
+		t.Fatalf("NotificationAction: %v", err)
+	}
+}
+
+func TestGetLanguageProfiles(t *testing.T) {
+	t.Parallel()
+	want := []sonarr.LanguageProfileResource{{ID: 1, Name: "English"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/languageprofile", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLanguageProfiles(context.Background())
+	if err != nil {
+		t.Fatalf("GetLanguageProfiles: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+}
+
+func TestGetLanguageProfile(t *testing.T) {
+	t.Parallel()
+	want := sonarr.LanguageProfileResource{ID: 1, Name: "English"}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/languageprofile/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLanguageProfile(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetLanguageProfile: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestCreateLanguageProfile(t *testing.T) {
+	t.Parallel()
+	want := sonarr.LanguageProfileResource{ID: 1, Name: "English"}
+	srv := newTestServer(t, http.MethodPost, "/api/v3/languageprofile", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.CreateLanguageProfile(context.Background(), &sonarr.LanguageProfileResource{Name: "English"})
+	if err != nil {
+		t.Fatalf("CreateLanguageProfile: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestUpdateLanguageProfile(t *testing.T) {
+	t.Parallel()
+	want := sonarr.LanguageProfileResource{ID: 1, Name: "Updated"}
+	srv := newTestServer(t, http.MethodPut, "/api/v3/languageprofile/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateLanguageProfile(context.Background(), &sonarr.LanguageProfileResource{ID: 1, Name: "Updated"})
+	if err != nil {
+		t.Fatalf("UpdateLanguageProfile: %v", err)
+	}
+	if got.Name != "Updated" {
+		t.Errorf("Name = %q, want Updated", got.Name)
+	}
+}
+
+func TestDeleteLanguageProfile(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodDelete, "/api/v3/languageprofile/1", nil)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.DeleteLanguageProfile(context.Background(), 1); err != nil {
+		t.Fatalf("DeleteLanguageProfile: %v", err)
+	}
+}
+
+func TestGetLanguageProfileSchema(t *testing.T) {
+	t.Parallel()
+	want := sonarr.LanguageProfileResource{ID: 0, Name: "Schema"}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/languageprofile/schema", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLanguageProfileSchema(context.Background())
+	if err != nil {
+		t.Fatalf("GetLanguageProfileSchema: %v", err)
+	}
+	if got.Name != "Schema" {
+		t.Errorf("Name = %q, want Schema", got.Name)
+	}
+}
+
+func TestGetLocalizationByID(t *testing.T) {
+	t.Parallel()
+	want := sonarr.LocalizationResource{ID: 1, Strings: map[string]string{"hello": "world"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/localization/1", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLocalizationByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetLocalizationByID: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetLocalizationLanguages(t *testing.T) {
+	t.Parallel()
+	want := []sonarr.LocalizationLanguageResource{{Identifier: "en"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/localization/language", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLocalizationLanguages(context.Background())
+	if err != nil {
+		t.Fatalf("GetLocalizationLanguages: %v", err)
+	}
+	if len(got) != 1 || got[0].Identifier != "en" {
+		t.Errorf("unexpected result: %v", got)
+	}
+}
+
+func TestGetNamingExamples(t *testing.T) {
+	t.Parallel()
+	want := arr.NamingConfigResource{ID: 1}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/config/naming/examples", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetNamingExamples(context.Background())
+	if err != nil {
+		t.Fatalf("GetNamingExamples: %v", err)
+	}
+	if got.ID != 1 {
+		t.Errorf("ID = %d, want 1", got.ID)
+	}
+}
+
+func TestGetQualityDefinitionLimits(t *testing.T) {
+	t.Parallel()
+	want := sonarr.QualityDefinitionLimitsResource{Min: 1, Max: 400}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/qualitydefinition/limits", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetQualityDefinitionLimits(context.Background())
+	if err != nil {
+		t.Fatalf("GetQualityDefinitionLimits: %v", err)
+	}
+	if got.Min != 1 || got.Max != 400 {
+		t.Errorf("got Min=%d Max=%d, want 1/400", got.Min, got.Max)
+	}
+}
+
+func TestUpdateEpisodeFilesBulk(t *testing.T) {
+	t.Parallel()
+	want := []sonarr.EpisodeFile{{ID: 1}, {ID: 2}}
+	srv := newTestServer(t, http.MethodPut, "/api/v3/episodefile/bulk", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.UpdateEpisodeFilesBulk(context.Background(), &sonarr.EpisodeFileEditorResource{
+		EpisodeFileIDs: []int{1, 2},
+	})
+	if err != nil {
+		t.Fatalf("UpdateEpisodeFilesBulk: %v", err)
+	}
+	if len(got) != 2 {
+		t.Errorf("len = %d, want 2", len(got))
+	}
+}
+
+func TestGetUpdateLogFileContent(t *testing.T) {
+	t.Parallel()
+	srv := newRawTestServer(t, http.MethodGet, "/api/v3/log/file/update/update.txt", "log content")
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetUpdateLogFileContent(context.Background(), "update.txt")
+	if err != nil {
+		t.Fatalf("GetUpdateLogFileContent: %v", err)
+	}
+	if got != "log content" {
+		t.Errorf("content = %q, want %q", got, "log content")
+	}
+}
+
+func TestGetSystemRoutesDuplicate(t *testing.T) {
+	t.Parallel()
+	want := []arr.SystemRouteResource{{Path: "/api/v3/test", Method: "GET"}}
+	srv := newTestServer(t, http.MethodGet, "/api/v3/system/routes/duplicate", want)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetSystemRoutesDuplicate(context.Background())
+	if err != nil {
+		t.Fatalf("GetSystemRoutesDuplicate: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("len = %d, want 1", len(got))
+	}
+}
+
+func TestGetLogFileContent(t *testing.T) {
+	t.Parallel()
+	srv := newRawTestServer(t, http.MethodGet, "/api/v3/log/file/sonarr.txt", "log line 1\nlog line 2")
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	got, err := c.GetLogFileContent(context.Background(), "sonarr.txt")
+	if err != nil {
+		t.Fatalf("GetLogFileContent: %v", err)
+	}
+	if got != "log line 1\nlog line 2" {
+		t.Errorf("content = %q, want %q", got, "log line 1\nlog line 2")
+	}
+}
+
+func TestHeadPing(t *testing.T) {
+	t.Parallel()
+	srv := newTestServer(t, http.MethodHead, "/ping", nil)
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.HeadPing(context.Background()); err != nil {
+		t.Fatalf("HeadPing: %v", err)
+	}
+}
+
+func TestUploadBackup(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		if r.Header.Get("X-Api-Key") == "" {
+			t.Error("missing X-Api-Key header")
+		}
+		ct := r.Header.Get("Content-Type")
+		if !strings.HasPrefix(ct, "multipart/form-data") {
+			t.Errorf("Content-Type = %q, want multipart/form-data", ct)
+		}
+		f, fh, err := r.FormFile("file")
+		if err != nil {
+			t.Fatalf("FormFile: %v", err)
+		}
+		defer f.Close()
+		if fh.Filename != "backup.zip" {
+			t.Errorf("filename = %q, want %q", fh.Filename, "backup.zip")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+	c, _ := sonarr.New(srv.URL, "test-key")
+	if err := c.UploadBackup(context.Background(), "backup.zip", strings.NewReader("fake-backup-data")); err != nil {
+		t.Fatalf("UploadBackup: %v", err)
 	}
 }

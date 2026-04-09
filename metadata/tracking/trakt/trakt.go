@@ -697,6 +697,1234 @@ func (c *Client) Networks(ctx context.Context) ([]Network, error) {
 	return out, nil
 }
 
+// Recently updated.
+
+// GetUpdatedMovies returns movies updated since the given date (YYYY-MM-DD).
+func (c *Client) GetUpdatedMovies(ctx context.Context, startDate string, page, limit int) ([]UpdatedMovie, *PaginationHeaders, error) {
+	var out []UpdatedMovie
+	pg, err := c.get(ctx, "/movies/updates/"+url.PathEscape(startDate), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetUpdatedShows returns shows updated since the given date (YYYY-MM-DD).
+func (c *Client) GetUpdatedShows(ctx context.Context, startDate string, page, limit int) ([]UpdatedShow, *PaginationHeaders, error) {
+	var out []UpdatedShow
+	pg, err := c.get(ctx, "/shows/updates/"+url.PathEscape(startDate), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// User profile (authenticated).
+
+// GetProfile returns the authenticated user's profile.
+func (c *Client) GetProfile(ctx context.Context) (*UserProfile, error) {
+	var out UserProfile
+	_, err := c.get(ctx, "/users/me", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetUserStats returns the authenticated user's stats.
+func (c *Client) GetUserStats(ctx context.Context) (*UserStats, error) {
+	var out UserStats
+	_, err := c.get(ctx, "/users/me/stats", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Watchlist (authenticated).
+
+// GetWatchlist returns the user's watchlist items filtered by type.
+// Pass an empty mediaType for all items.
+func (c *Client) GetWatchlist(ctx context.Context, mediaType string, page, limit int) ([]WatchlistItem, *PaginationHeaders, error) {
+	path := "/sync/watchlist"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []WatchlistItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddToWatchlist adds items to the user's watchlist.
+func (c *Client) AddToWatchlist(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/watchlist", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromWatchlist removes items from the user's watchlist.
+func (c *Client) RemoveFromWatchlist(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/watchlist/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Collection (authenticated).
+
+// GetCollection returns the user's collection filtered by type ("movies" or "shows").
+func (c *Client) GetCollection(ctx context.Context, mediaType string, page, limit int) ([]CollectionItem, *PaginationHeaders, error) {
+	var out []CollectionItem
+	pg, err := c.get(ctx, "/sync/collection/"+url.PathEscape(mediaType), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddToCollection adds items to the user's collection.
+func (c *Client) AddToCollection(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/collection", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromCollection removes items from the user's collection.
+func (c *Client) RemoveFromCollection(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/collection/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// History (authenticated).
+
+// GetHistory returns the user's watch history filtered by type.
+func (c *Client) GetHistory(ctx context.Context, mediaType string, page, limit int) ([]HistoryItem, *PaginationHeaders, error) {
+	path := "/sync/history"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []HistoryItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddToHistory adds items to the user's watch history.
+func (c *Client) AddToHistory(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/history", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromHistory removes items from the user's watch history.
+func (c *Client) RemoveFromHistory(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/history/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Ratings (authenticated).
+
+// GetRatings returns the user's ratings filtered by type.
+func (c *Client) GetRatings(ctx context.Context, mediaType string) ([]RatedItem, error) {
+	path := "/sync/ratings"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []RatedItem
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AddRatings adds ratings for items.
+func (c *Client) AddRatings(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/ratings", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveRatings removes ratings for items.
+func (c *Client) RemoveRatings(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/ratings/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// User lists (authenticated).
+
+// GetUserLists returns all custom lists for the authenticated user.
+func (c *Client) GetUserLists(ctx context.Context) ([]UserList, error) {
+	var out []UserList
+	_, err := c.get(ctx, "/users/me/lists", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CreateList creates a new custom list.
+func (c *Client) CreateList(ctx context.Context, list *UserList) (*UserList, error) {
+	var out UserList
+	if err := c.post(ctx, "/users/me/lists", list, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdateList updates an existing custom list.
+func (c *Client) UpdateList(ctx context.Context, idOrSlug string, list *UserList) error {
+	return c.put(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug), list)
+}
+
+// DeleteList deletes a custom list.
+func (c *Client) DeleteList(ctx context.Context, idOrSlug string) error {
+	return c.del(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug))
+}
+
+// GetListItems returns all items in a custom list.
+func (c *Client) GetListItems(ctx context.Context, idOrSlug string, page, limit int) ([]ListItem, *PaginationHeaders, error) {
+	var out []ListItem
+	pg, err := c.get(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug)+"/items", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddListItems adds items to a custom list.
+func (c *Client) AddListItems(ctx context.Context, idOrSlug string, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug)+"/items", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveListItems removes items from a custom list.
+func (c *Client) RemoveListItems(ctx context.Context, idOrSlug string, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/users/me/lists/"+url.PathEscape(idOrSlug)+"/items/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Scrobble (authenticated).
+
+// ScrobbleStart starts watching an item.
+func (c *Client) ScrobbleStart(ctx context.Context, req *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/start", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ScrobblePause pauses watching an item.
+func (c *Client) ScrobblePause(ctx context.Context, req *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/pause", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ScrobbleStop stops watching an item.
+func (c *Client) ScrobbleStop(ctx context.Context, req *ScrobbleRequest) (*ScrobbleResponse, error) {
+	var out ScrobbleResponse
+	if err := c.post(ctx, "/scrobble/stop", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Checkin (authenticated).
+
+// Checkin checks in to a movie or episode.
+func (c *Client) Checkin(ctx context.Context, req *CheckinRequest) (*CheckinResponse, error) {
+	var out CheckinResponse
+	if err := c.post(ctx, "/checkin", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// CancelCheckin cancels the active checkin.
+func (c *Client) CancelCheckin(ctx context.Context) error {
+	return c.del(ctx, "/checkin")
+}
+
+// Recommendations (authenticated).
+
+// GetMovieRecommendations returns personalized movie recommendations for the user.
+func (c *Client) GetMovieRecommendations(ctx context.Context, page, limit int) ([]Movie, *PaginationHeaders, error) {
+	var out []Movie
+	pg, err := c.get(ctx, "/recommendations/movies", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetShowRecommendations returns personalized show recommendations for the user.
+func (c *Client) GetShowRecommendations(ctx context.Context, page, limit int) ([]Show, *PaginationHeaders, error) {
+	var out []Show
+	pg, err := c.get(ctx, "/recommendations/shows", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// HideMovieRecommendation hides a movie from recommendations.
+func (c *Client) HideMovieRecommendation(ctx context.Context, idOrSlug string) error {
+	return c.del(ctx, "/recommendations/movies/"+url.PathEscape(idOrSlug))
+}
+
+// HideShowRecommendation hides a show from recommendations.
+func (c *Client) HideShowRecommendation(ctx context.Context, idOrSlug string) error {
+	return c.del(ctx, "/recommendations/shows/"+url.PathEscape(idOrSlug))
+}
+
+// Most Collected.
+
+// MostCollectedMovies returns the most collected movies over a period.
+func (c *Client) MostCollectedMovies(ctx context.Context, period string, page, limit int) ([]PlayedMovie, *PaginationHeaders, error) {
+	var out []PlayedMovie
+	pg, err := c.get(ctx, "/movies/collected/"+url.PathEscape(period), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// MostCollectedShows returns the most collected shows over a period.
+func (c *Client) MostCollectedShows(ctx context.Context, period string, page, limit int) ([]PlayedShow, *PaginationHeaders, error) {
+	var out []PlayedShow
+	pg, err := c.get(ctx, "/shows/collected/"+url.PathEscape(period), extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// Movie extras.
+
+// GetMovieComments returns comments for a movie.
+func (c *Client) GetMovieComments(ctx context.Context, idOrSlug, sort string, page, limit int) ([]Comment, *PaginationHeaders, error) {
+	path := "/movies/" + url.PathEscape(idOrSlug) + "/comments"
+	if sort != "" {
+		path += "/" + url.PathEscape(sort)
+	}
+	var out []Comment
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetMovieRelated returns related movies.
+func (c *Client) GetMovieRelated(ctx context.Context, idOrSlug string, page, limit int) ([]Movie, *PaginationHeaders, error) {
+	var out []Movie
+	pg, err := c.get(ctx, "/movies/"+url.PathEscape(idOrSlug)+"/related", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetMovieLists returns lists that contain this movie.
+func (c *Client) GetMovieLists(ctx context.Context, idOrSlug, listType, sort string, page, limit int) ([]UserList, *PaginationHeaders, error) {
+	path := "/movies/" + url.PathEscape(idOrSlug) + "/lists"
+	if listType != "" {
+		path += "/" + url.PathEscape(listType)
+		if sort != "" {
+			path += "/" + url.PathEscape(sort)
+		}
+	}
+	var out []UserList
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetMovieWatching returns users currently watching a movie.
+func (c *Client) GetMovieWatching(ctx context.Context, idOrSlug string) ([]WatchingItem, error) {
+	var out []WatchingItem
+	_, err := c.get(ctx, "/movies/"+url.PathEscape(idOrSlug)+"/watching", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Show extras.
+
+// GetShowComments returns comments for a show.
+func (c *Client) GetShowComments(ctx context.Context, idOrSlug, sort string, page, limit int) ([]Comment, *PaginationHeaders, error) {
+	path := "/shows/" + url.PathEscape(idOrSlug) + "/comments"
+	if sort != "" {
+		path += "/" + url.PathEscape(sort)
+	}
+	var out []Comment
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetShowRelated returns related shows.
+func (c *Client) GetShowRelated(ctx context.Context, idOrSlug string, page, limit int) ([]Show, *PaginationHeaders, error) {
+	var out []Show
+	pg, err := c.get(ctx, "/shows/"+url.PathEscape(idOrSlug)+"/related", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetShowLists returns lists that contain this show.
+func (c *Client) GetShowLists(ctx context.Context, idOrSlug, listType, sort string, page, limit int) ([]UserList, *PaginationHeaders, error) {
+	path := "/shows/" + url.PathEscape(idOrSlug) + "/lists"
+	if listType != "" {
+		path += "/" + url.PathEscape(listType)
+		if sort != "" {
+			path += "/" + url.PathEscape(sort)
+		}
+	}
+	var out []UserList
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetShowWatching returns users currently watching a show.
+func (c *Client) GetShowWatching(ctx context.Context, idOrSlug string) ([]WatchingItem, error) {
+	var out []WatchingItem
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(idOrSlug)+"/watching", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetShowWatchedProgress returns the watched progress for a show.
+func (c *Client) GetShowWatchedProgress(ctx context.Context, idOrSlug string) (*WatchedProgress, error) {
+	var out WatchedProgress
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(idOrSlug)+"/progress/watched", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetShowCollectionProgress returns the collection progress for a show.
+func (c *Client) GetShowCollectionProgress(ctx context.Context, idOrSlug string) (*CollectionProgress, error) {
+	var out CollectionProgress
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(idOrSlug)+"/progress/collection", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Season extras.
+
+// GetSeasonComments returns comments for a season.
+func (c *Client) GetSeasonComments(ctx context.Context, showID string, season int, sort string, page, limit int) ([]Comment, *PaginationHeaders, error) {
+	path := "/shows/" + url.PathEscape(showID) + "/seasons/" + strconv.Itoa(season) + "/comments"
+	if sort != "" {
+		path += "/" + url.PathEscape(sort)
+	}
+	var out []Comment
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetSeasonRatings returns ratings for a season.
+func (c *Client) GetSeasonRatings(ctx context.Context, showID string, season int) (*Ratings, error) {
+	var out Ratings
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(showID)+"/seasons/"+strconv.Itoa(season)+"/ratings", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetSeasonStats returns stats for a season.
+func (c *Client) GetSeasonStats(ctx context.Context, showID string, season int) (*Stats, error) {
+	var out Stats
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(showID)+"/seasons/"+strconv.Itoa(season)+"/stats", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetSeasonWatching returns users currently watching a season.
+func (c *Client) GetSeasonWatching(ctx context.Context, showID string, season int) ([]WatchingItem, error) {
+	var out []WatchingItem
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(showID)+"/seasons/"+strconv.Itoa(season)+"/watching", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetSeasonPeople returns cast and crew for a season.
+func (c *Client) GetSeasonPeople(ctx context.Context, showID string, season int) (*People, error) {
+	var out People
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(showID)+"/seasons/"+strconv.Itoa(season)+"/people", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetSeasonLists returns lists that contain this season.
+func (c *Client) GetSeasonLists(ctx context.Context, showID string, season int, listType, sort string, page, limit int) ([]UserList, *PaginationHeaders, error) {
+	path := "/shows/" + url.PathEscape(showID) + "/seasons/" + strconv.Itoa(season) + "/lists"
+	if listType != "" {
+		path += "/" + url.PathEscape(listType)
+		if sort != "" {
+			path += "/" + url.PathEscape(sort)
+		}
+	}
+	var out []UserList
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// Episode extras.
+
+// GetEpisodeTranslations returns translations for an episode.
+func (c *Client) GetEpisodeTranslations(ctx context.Context, showID string, season, episode int, language string) ([]EpisodeTranslation, error) {
+	path := "/shows/" + url.PathEscape(showID) + "/seasons/" + strconv.Itoa(season) + "/episodes/" + strconv.Itoa(episode) + "/translations"
+	if language != "" {
+		path += "/" + url.PathEscape(language)
+	}
+	var out []EpisodeTranslation
+	_, err := c.get(ctx, path, nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetEpisodeComments returns comments for an episode.
+func (c *Client) GetEpisodeComments(ctx context.Context, showID string, season, episode int, sort string, page, limit int) ([]Comment, *PaginationHeaders, error) {
+	path := "/shows/" + url.PathEscape(showID) + "/seasons/" + strconv.Itoa(season) + "/episodes/" + strconv.Itoa(episode) + "/comments"
+	if sort != "" {
+		path += "/" + url.PathEscape(sort)
+	}
+	var out []Comment
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetEpisodeLists returns lists that contain this episode.
+func (c *Client) GetEpisodeLists(ctx context.Context, showID string, season, episode int, listType, sort string, page, limit int) ([]UserList, *PaginationHeaders, error) {
+	path := "/shows/" + url.PathEscape(showID) + "/seasons/" + strconv.Itoa(season) + "/episodes/" + strconv.Itoa(episode) + "/lists"
+	if listType != "" {
+		path += "/" + url.PathEscape(listType)
+		if sort != "" {
+			path += "/" + url.PathEscape(sort)
+		}
+	}
+	var out []UserList
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetEpisodePeople returns cast and crew for an episode.
+func (c *Client) GetEpisodePeople(ctx context.Context, showID string, season, episode int) (*People, error) {
+	var out People
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(showID)+"/seasons/"+strconv.Itoa(season)+"/episodes/"+strconv.Itoa(episode)+"/people", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetEpisodeWatching returns users currently watching an episode.
+func (c *Client) GetEpisodeWatching(ctx context.Context, showID string, season, episode int) ([]WatchingItem, error) {
+	var out []WatchingItem
+	_, err := c.get(ctx, "/shows/"+url.PathEscape(showID)+"/seasons/"+strconv.Itoa(season)+"/episodes/"+strconv.Itoa(episode)+"/watching", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Person extras.
+
+// GetPersonMovies returns movie credits for a person.
+func (c *Client) GetPersonMovies(ctx context.Context, idOrSlug string) (*PersonMovieCredits, error) {
+	var out PersonMovieCredits
+	_, err := c.get(ctx, "/people/"+url.PathEscape(idOrSlug)+"/movies", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetPersonShows returns show credits for a person.
+func (c *Client) GetPersonShows(ctx context.Context, idOrSlug string) (*PersonShowCredits, error) {
+	var out PersonShowCredits
+	_, err := c.get(ctx, "/people/"+url.PathEscape(idOrSlug)+"/shows", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetPersonLists returns lists that contain a person.
+func (c *Client) GetPersonLists(ctx context.Context, idOrSlug, listType, sort string, page, limit int) ([]UserList, *PaginationHeaders, error) {
+	path := "/people/" + url.PathEscape(idOrSlug) + "/lists"
+	if listType != "" {
+		path += "/" + url.PathEscape(listType)
+		if sort != "" {
+			path += "/" + url.PathEscape(sort)
+		}
+	}
+	var out []UserList
+	pg, err := c.get(ctx, path, pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// Authenticated calendars ("my" variants).
+
+// MyCalendarMovies returns the authenticated user's calendar movies.
+func (c *Client) MyCalendarMovies(ctx context.Context, startDate string, days int) ([]CalendarMovie, error) {
+	path := "/calendars/my/movies/" + url.PathEscape(startDate) + "/" + strconv.Itoa(days)
+	var out []CalendarMovie
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MyCalendarShows returns the authenticated user's calendar shows.
+func (c *Client) MyCalendarShows(ctx context.Context, startDate string, days int) ([]CalendarShow, error) {
+	path := "/calendars/my/shows/" + url.PathEscape(startDate) + "/" + strconv.Itoa(days)
+	var out []CalendarShow
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MyCalendarNewShows returns the authenticated user's new show premieres.
+func (c *Client) MyCalendarNewShows(ctx context.Context, startDate string, days int) ([]CalendarShow, error) {
+	path := "/calendars/my/shows/new/" + url.PathEscape(startDate) + "/" + strconv.Itoa(days)
+	var out []CalendarShow
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MyCalendarSeasonPremieres returns the authenticated user's season premieres.
+func (c *Client) MyCalendarSeasonPremieres(ctx context.Context, startDate string, days int) ([]CalendarShow, error) {
+	path := "/calendars/my/shows/premieres/" + url.PathEscape(startDate) + "/" + strconv.Itoa(days)
+	var out []CalendarShow
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MyCalendarDVD returns the authenticated user's DVD/Blu-ray releases.
+func (c *Client) MyCalendarDVD(ctx context.Context, startDate string, days int) ([]CalendarDVDMovie, error) {
+	path := "/calendars/my/dvd/" + url.PathEscape(startDate) + "/" + strconv.Itoa(days)
+	var out []CalendarDVDMovie
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CalendarDVD returns all DVD/Blu-ray releases in the given date range.
+func (c *Client) CalendarDVD(ctx context.Context, startDate string, days int) ([]CalendarDVDMovie, error) {
+	path := "/calendars/all/dvd/" + url.PathEscape(startDate) + "/" + strconv.Itoa(days)
+	var out []CalendarDVDMovie
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Comments.
+
+// GetComment returns a single comment by ID.
+func (c *Client) GetComment(ctx context.Context, id int) (*Comment, error) {
+	var out Comment
+	_, err := c.get(ctx, "/comments/"+strconv.Itoa(id), nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// PostComment creates a new comment on a media item.
+func (c *Client) PostComment(ctx context.Context, req *CommentRequest) (*Comment, error) {
+	var out Comment
+	if err := c.post(ctx, "/comments", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdateComment updates an existing comment.
+func (c *Client) UpdateComment(ctx context.Context, id int, req *CommentRequest) (*Comment, error) {
+	if err := c.put(ctx, "/comments/"+strconv.Itoa(id), req); err != nil {
+		return nil, err
+	}
+	return c.GetComment(ctx, id)
+}
+
+// DeleteComment deletes a comment.
+func (c *Client) DeleteComment(ctx context.Context, id int) error {
+	return c.del(ctx, "/comments/"+strconv.Itoa(id))
+}
+
+// GetCommentReplies returns replies to a comment.
+func (c *Client) GetCommentReplies(ctx context.Context, id, page, limit int) ([]Comment, *PaginationHeaders, error) {
+	var out []Comment
+	pg, err := c.get(ctx, "/comments/"+strconv.Itoa(id)+"/replies", pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// PostCommentReply posts a reply to a comment.
+func (c *Client) PostCommentReply(ctx context.Context, id int, req *CommentRequest) (*Comment, error) {
+	var out Comment
+	if err := c.post(ctx, "/comments/"+strconv.Itoa(id)+"/replies", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetCommentItem returns the media item attached to a comment.
+func (c *Client) GetCommentItem(ctx context.Context, id int) (*CommentItem, error) {
+	var out CommentItem
+	_, err := c.get(ctx, "/comments/"+strconv.Itoa(id)+"/item", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// LikeComment likes a comment.
+func (c *Client) LikeComment(ctx context.Context, id int) error {
+	return c.post(ctx, "/comments/"+strconv.Itoa(id)+"/like", nil, nil)
+}
+
+// UnlikeComment removes a like from a comment.
+func (c *Client) UnlikeComment(ctx context.Context, id int) error {
+	return c.del(ctx, "/comments/"+strconv.Itoa(id)+"/like")
+}
+
+// TrendingComments returns trending comments.
+func (c *Client) TrendingComments(ctx context.Context, commentType, mediaType string, includeReplies bool, page, limit int) ([]CommentItem, *PaginationHeaders, error) {
+	path := "/comments/trending"
+	if commentType != "" {
+		path += "/" + url.PathEscape(commentType)
+		if mediaType != "" {
+			path += "/" + url.PathEscape(mediaType)
+		}
+	}
+	params := pageParams(page, limit)
+	if includeReplies {
+		params.Set("include_replies", "true")
+	}
+	var out []CommentItem
+	pg, err := c.get(ctx, path, params, &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// RecentComments returns recently created comments.
+func (c *Client) RecentComments(ctx context.Context, commentType, mediaType string, includeReplies bool, page, limit int) ([]CommentItem, *PaginationHeaders, error) {
+	path := "/comments/recent"
+	if commentType != "" {
+		path += "/" + url.PathEscape(commentType)
+		if mediaType != "" {
+			path += "/" + url.PathEscape(mediaType)
+		}
+	}
+	params := pageParams(page, limit)
+	if includeReplies {
+		params.Set("include_replies", "true")
+	}
+	var out []CommentItem
+	pg, err := c.get(ctx, path, params, &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// UpdatedComments returns recently updated comments.
+func (c *Client) UpdatedComments(ctx context.Context, commentType, mediaType string, includeReplies bool, page, limit int) ([]CommentItem, *PaginationHeaders, error) {
+	path := "/comments/updates"
+	if commentType != "" {
+		path += "/" + url.PathEscape(commentType)
+		if mediaType != "" {
+			path += "/" + url.PathEscape(mediaType)
+		}
+	}
+	params := pageParams(page, limit)
+	if includeReplies {
+		params.Set("include_replies", "true")
+	}
+	var out []CommentItem
+	pg, err := c.get(ctx, path, params, &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// Notes (VIP only).
+
+// GetNotes returns the authenticated user's notes.
+func (c *Client) GetNotes(ctx context.Context, page, limit int) ([]NoteItem, *PaginationHeaders, error) {
+	var out []NoteItem
+	pg, err := c.get(ctx, "/notes", pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetNote returns a single note by ID.
+func (c *Client) GetNote(ctx context.Context, id int) (*NoteItem, error) {
+	var out NoteItem
+	_, err := c.get(ctx, "/notes/"+strconv.Itoa(id), nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// AddNote creates a new note.
+func (c *Client) AddNote(ctx context.Context, req *NoteRequest) (*NoteItem, error) {
+	var out NoteItem
+	if err := c.post(ctx, "/notes", req, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdateNote updates an existing note.
+func (c *Client) UpdateNote(ctx context.Context, id int, req *NoteRequest) error {
+	return c.put(ctx, "/notes/"+strconv.Itoa(id), req)
+}
+
+// DeleteNote deletes a note.
+func (c *Client) DeleteNote(ctx context.Context, id int) error {
+	return c.del(ctx, "/notes/"+strconv.Itoa(id))
+}
+
+// Sync extras (authenticated).
+
+// GetLastActivities returns timestamps of the user's last activities.
+func (c *Client) GetLastActivities(ctx context.Context) (*LastActivities, error) {
+	var out LastActivities
+	_, err := c.get(ctx, "/sync/last_activities", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetPlaybackProgress returns the user's playback progress items.
+func (c *Client) GetPlaybackProgress(ctx context.Context, mediaType string) ([]PlaybackProgress, error) {
+	path := "/sync/playback"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []PlaybackProgress
+	_, err := c.get(ctx, path, nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RemovePlaybackItem removes a playback progress item.
+func (c *Client) RemovePlaybackItem(ctx context.Context, id int64) error {
+	return c.del(ctx, "/sync/playback/"+strconv.FormatInt(id, 10))
+}
+
+// GetWatched returns the user's watched movies or shows.
+func (c *Client) GetWatched(ctx context.Context, mediaType string) ([]WatchedItem, error) {
+	var out []WatchedItem
+	_, err := c.get(ctx, "/sync/watched/"+url.PathEscape(mediaType), url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetFavorites returns the authenticated user's favorites.
+func (c *Client) GetFavorites(ctx context.Context, mediaType string, page, limit int) ([]FavoritesItem, *PaginationHeaders, error) {
+	path := "/sync/favorites"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []FavoritesItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddToFavorites adds items to favorites.
+func (c *Client) AddToFavorites(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/favorites", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveFromFavorites removes items from favorites.
+func (c *Client) RemoveFromFavorites(ctx context.Context, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/sync/favorites/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// User by username (public).
+
+// GetUserProfile returns a user's profile by username.
+func (c *Client) GetUserProfile(ctx context.Context, username string) (*UserProfile, error) {
+	var out UserProfile
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username), url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetUserWatchlist returns a user's watchlist by username.
+func (c *Client) GetUserWatchlist(ctx context.Context, username, mediaType string, page, limit int) ([]WatchlistItem, *PaginationHeaders, error) {
+	path := "/users/" + url.PathEscape(username) + "/watchlist"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []WatchlistItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetUserListsByUsername returns all custom lists for a user by username.
+func (c *Client) GetUserListsByUsername(ctx context.Context, username string) ([]UserList, error) {
+	var out []UserList
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/lists", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetUserListByUsername returns a single custom list for a user by username.
+func (c *Client) GetUserListByUsername(ctx context.Context, username, idOrSlug string) (*UserList, error) {
+	var out UserList
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/lists/"+url.PathEscape(idOrSlug), nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetUserListItemsByUsername returns items in a user's custom list.
+func (c *Client) GetUserListItemsByUsername(ctx context.Context, username, idOrSlug string, page, limit int) ([]ListItem, *PaginationHeaders, error) {
+	var out []ListItem
+	pg, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/lists/"+url.PathEscape(idOrSlug)+"/items", extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetUserRatings returns a user's ratings by username.
+func (c *Client) GetUserRatings(ctx context.Context, username, mediaType string) ([]RatedItem, error) {
+	path := "/users/" + url.PathEscape(username) + "/ratings"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []RatedItem
+	_, err := c.get(ctx, path, url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetUserHistory returns a user's watch history by username.
+func (c *Client) GetUserHistory(ctx context.Context, username, mediaType string, page, limit int) ([]HistoryItem, *PaginationHeaders, error) {
+	path := "/users/" + url.PathEscape(username) + "/history"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []HistoryItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetUserCollection returns a user's collection by username.
+func (c *Client) GetUserCollection(ctx context.Context, username, mediaType string) ([]CollectionItem, error) {
+	var out []CollectionItem
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/collection/"+url.PathEscape(mediaType), url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetUserStatsByUsername returns a user's stats by username.
+func (c *Client) GetUserStatsByUsername(ctx context.Context, username string) (*UserStats, error) {
+	var out UserStats
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/stats", nil, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Social (authenticated).
+
+// GetFollowers returns the authenticated user's followers.
+func (c *Client) GetFollowers(ctx context.Context) ([]UserFollower, error) {
+	var out []UserFollower
+	_, err := c.get(ctx, "/users/me/followers", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetFollowing returns the users the authenticated user is following.
+func (c *Client) GetFollowing(ctx context.Context) ([]UserFollower, error) {
+	var out []UserFollower
+	_, err := c.get(ctx, "/users/me/following", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// FollowUser follows a user.
+func (c *Client) FollowUser(ctx context.Context, username string) error {
+	return c.post(ctx, "/users/"+url.PathEscape(username)+"/follow", nil, nil)
+}
+
+// UnfollowUser unfollows a user.
+func (c *Client) UnfollowUser(ctx context.Context, username string) error {
+	return c.del(ctx, "/users/"+url.PathEscape(username)+"/follow")
+}
+
+// GetFollowRequests returns pending follow requests.
+func (c *Client) GetFollowRequests(ctx context.Context) ([]FollowRequest, error) {
+	var out []FollowRequest
+	_, err := c.get(ctx, "/users/requests", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ApproveFollowRequest approves a pending follow request.
+func (c *Client) ApproveFollowRequest(ctx context.Context, id int) error {
+	return c.post(ctx, "/users/requests/"+strconv.Itoa(id), nil, nil)
+}
+
+// DenyFollowRequest denies a pending follow request.
+func (c *Client) DenyFollowRequest(ctx context.Context, id int) error {
+	return c.del(ctx, "/users/requests/"+strconv.Itoa(id))
+}
+
+// GetUserFollowers returns a user's followers by username.
+func (c *Client) GetUserFollowers(ctx context.Context, username string) ([]UserFollower, error) {
+	var out []UserFollower
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/followers", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetUserFollowing returns who a user is following by username.
+func (c *Client) GetUserFollowing(ctx context.Context, username string) ([]UserFollower, error) {
+	var out []UserFollower
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/following", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Updated IDs.
+
+// GetUpdatedMovieIDs returns just the Trakt IDs of movies updated since the given date.
+func (c *Client) GetUpdatedMovieIDs(ctx context.Context, startDate string, page, limit int) ([]int, *PaginationHeaders, error) {
+	var out []int
+	pg, err := c.get(ctx, "/movies/updates/id/"+url.PathEscape(startDate), pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// GetUpdatedShowIDs returns just the Trakt IDs of shows updated since the given date.
+func (c *Client) GetUpdatedShowIDs(ctx context.Context, startDate string, page, limit int) ([]int, *PaginationHeaders, error) {
+	var out []int
+	pg, err := c.get(ctx, "/shows/updates/id/"+url.PathEscape(startDate), pageParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// Hidden items (authenticated).
+
+// GetHiddenItems returns items hidden by the user for a section.
+// section can be: "calendar", "progress_watched", "progress_watched_reset",
+// "progress_collected", "recommendations", "comments".
+func (c *Client) GetHiddenItems(ctx context.Context, section, mediaType string, page, limit int) ([]ListItem, *PaginationHeaders, error) {
+	path := "/users/hidden/" + url.PathEscape(section)
+	if mediaType != "" {
+		path += "?type=" + url.QueryEscape(mediaType)
+	}
+	var out []ListItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
+// AddHiddenItems hides items from a section.
+func (c *Client) AddHiddenItems(ctx context.Context, section string, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/users/hidden/"+url.PathEscape(section), items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RemoveHiddenItems unhides items from a section.
+func (c *Client) RemoveHiddenItems(ctx context.Context, section string, items *SyncItems) (*SyncResponse, error) {
+	var out SyncResponse
+	if err := c.post(ctx, "/users/hidden/"+url.PathEscape(section)+"/remove", items, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// User watching.
+
+// GetUserWatching returns what a user is currently watching.
+func (c *Client) GetUserWatching(ctx context.Context, username string) (*WatchingItem, error) {
+	var out WatchingItem
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/watching", url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetUserWatched returns a user's watched items by username.
+func (c *Client) GetUserWatched(ctx context.Context, username, mediaType string) ([]WatchedItem, error) {
+	var out []WatchedItem
+	_, err := c.get(ctx, "/users/"+url.PathEscape(username)+"/watched/"+url.PathEscape(mediaType), url.Values{"extended": {"full"}}, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetUserFavorites returns a user's favorites by username.
+func (c *Client) GetUserFavorites(ctx context.Context, username, mediaType string, page, limit int) ([]FavoritesItem, *PaginationHeaders, error) {
+	path := "/users/" + url.PathEscape(username) + "/favorites"
+	if mediaType != "" {
+		path += "/" + url.PathEscape(mediaType)
+	}
+	var out []FavoritesItem
+	pg, err := c.get(ctx, path, extendedParams(page, limit), &out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, pg, nil
+}
+
 // OAuth2.
 
 func (c *Client) post(ctx context.Context, path string, body, dst any) error {
@@ -715,6 +1943,13 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 	req.Header.Set("trakt-api-key", c.clientID)
 	req.Header.Set("trakt-api-version", apiVersion)
 	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -739,6 +1974,90 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 		if err := json.Unmarshal(respBody, dst); err != nil {
 			return fmt.Errorf("trakt: decode response: %w", err)
 		}
+	}
+	return nil
+}
+
+func (c *Client) del(ctx context.Context, path string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.rawBaseURL+path, http.NoBody)
+	if err != nil {
+		return fmt.Errorf("trakt: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("trakt-api-key", c.clientID)
+	req.Header.Set("trakt-api-version", apiVersion)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("trakt: DELETE %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("trakt: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(body, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(body)
+		}
+		return apiErr
+	}
+	return nil
+}
+
+func (c *Client) put(ctx context.Context, path string, body any) error {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("trakt: marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.rawBaseURL+path, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("trakt: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("trakt-api-key", c.clientID)
+	req.Header.Set("trakt-api-version", apiVersion)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	c.mu.RLock()
+	token := c.accessToken
+	c.mu.RUnlock()
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("trakt: PUT %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("trakt: read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode}
+		if jsonErr := json.Unmarshal(respBody, apiErr); jsonErr != nil {
+			apiErr.RawBody = string(respBody)
+		}
+		return apiErr
 	}
 	return nil
 }
