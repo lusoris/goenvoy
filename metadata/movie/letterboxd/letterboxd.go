@@ -414,7 +414,7 @@ func (c *Client) GetListTopics(ctx context.Context) (*ListTopicsResponse, error)
 }
 
 // CreateList creates a new list.
-func (c *Client) CreateList(ctx context.Context, req ListCreationRequest) (*ListCreateResponse, error) {
+func (c *Client) CreateList(ctx context.Context, req *ListCreationRequest) (*ListCreateResponse, error) {
 	var resp ListCreateResponse
 	if err := c.post(ctx, "/lists", req, &resp); err != nil {
 		return nil, err
@@ -423,7 +423,7 @@ func (c *Client) CreateList(ctx context.Context, req ListCreationRequest) (*List
 }
 
 // UpdateList updates an existing list.
-func (c *Client) UpdateList(ctx context.Context, id string, req ListUpdateRequest) (*ListUpdateResponse, error) {
+func (c *Client) UpdateList(ctx context.Context, id string, req *ListUpdateRequest) (*ListUpdateResponse, error) {
 	var resp ListUpdateResponse
 	if err := c.patch(ctx, "/list/"+url.PathEscape(id), req, &resp); err != nil {
 		return nil, err
@@ -526,7 +526,7 @@ func (c *Client) GetLogEntryMembers(ctx context.Context, id, cursor string, perP
 }
 
 // CreateLogEntry creates a new log entry (diary entry and/or review).
-func (c *Client) CreateLogEntry(ctx context.Context, req LogEntryCreationRequest) (*LogEntry, error) {
+func (c *Client) CreateLogEntry(ctx context.Context, req *LogEntryCreationRequest) (*LogEntry, error) {
 	var e LogEntry
 	if err := c.post(ctx, "/log-entries", req, &e); err != nil {
 		return nil, err
@@ -535,7 +535,7 @@ func (c *Client) CreateLogEntry(ctx context.Context, req LogEntryCreationRequest
 }
 
 // UpdateLogEntry updates an existing log entry.
-func (c *Client) UpdateLogEntry(ctx context.Context, id string, req LogEntryUpdateRequest) (*LogEntry, error) {
+func (c *Client) UpdateLogEntry(ctx context.Context, id string, req *LogEntryUpdateRequest) (*LogEntry, error) {
 	var e LogEntry
 	if err := c.patch(ctx, "/log-entry/"+url.PathEscape(id), req, &e); err != nil {
 		return nil, err
@@ -671,7 +671,7 @@ func (c *Client) GetMe(ctx context.Context) (*MemberAccount, error) {
 }
 
 // UpdateMe updates the authenticated member's account settings.
-func (c *Client) UpdateMe(ctx context.Context, req MemberSettingsUpdateRequest) (*MemberSettingsUpdateResponse, error) {
+func (c *Client) UpdateMe(ctx context.Context, req *MemberSettingsUpdateRequest) (*MemberSettingsUpdateResponse, error) {
 	var resp MemberSettingsUpdateResponse
 	if err := c.patch(ctx, "/me", req, &resp); err != nil {
 		return nil, err

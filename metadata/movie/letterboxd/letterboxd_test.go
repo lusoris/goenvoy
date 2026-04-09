@@ -564,7 +564,7 @@ func TestCreateList(t *testing.T) {
 	defer srv.Close()
 
 	c := newClient(t, srv)
-	got, err := c.CreateList(context.Background(), letterboxd.ListCreationRequest{Name: "My List"})
+	got, err := c.CreateList(context.Background(), &letterboxd.ListCreationRequest{Name: "My List"})
 	if err != nil {
 		t.Fatalf("CreateList: %v", err)
 	}
@@ -582,7 +582,7 @@ func TestUpdateList(t *testing.T) {
 	defer srv.Close()
 
 	c := newClient(t, srv)
-	got, err := c.UpdateList(context.Background(), "lst1", letterboxd.ListUpdateRequest{Name: "Updated"})
+	got, err := c.UpdateList(context.Background(), "lst1", &letterboxd.ListUpdateRequest{Name: "Updated"})
 	if err != nil {
 		t.Fatalf("UpdateList: %v", err)
 	}
@@ -755,7 +755,7 @@ func TestCreateLogEntry(t *testing.T) {
 	defer srv.Close()
 
 	c := newClient(t, srv)
-	got, err := c.CreateLogEntry(context.Background(), letterboxd.LogEntryCreationRequest{FilmID: "f1", Rating: 4.0})
+	got, err := c.CreateLogEntry(context.Background(), &letterboxd.LogEntryCreationRequest{FilmID: "f1", Rating: 4.0})
 	if err != nil {
 		t.Fatalf("CreateLogEntry: %v", err)
 	}
@@ -772,7 +772,7 @@ func TestUpdateLogEntry(t *testing.T) {
 
 	c := newClient(t, srv)
 	rating := 5.0
-	got, err := c.UpdateLogEntry(context.Background(), "le1", letterboxd.LogEntryUpdateRequest{Rating: &rating})
+	got, err := c.UpdateLogEntry(context.Background(), "le1", &letterboxd.LogEntryUpdateRequest{Rating: &rating})
 	if err != nil {
 		t.Fatalf("UpdateLogEntry: %v", err)
 	}
@@ -1033,7 +1033,7 @@ func TestUpdateMe(t *testing.T) {
 	defer srv.Close()
 
 	c := newClient(t, srv)
-	got, err := c.UpdateMe(context.Background(), letterboxd.MemberSettingsUpdateRequest{Bio: "Updated bio"})
+	got, err := c.UpdateMe(context.Background(), &letterboxd.MemberSettingsUpdateRequest{Bio: "Updated bio"})
 	if err != nil {
 		t.Fatalf("UpdateMe: %v", err)
 	}
