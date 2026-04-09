@@ -614,3 +614,583 @@ func TestWithCustomHTTPClient(t *testing.T) {
 		t.Errorf("Title = %q, want %q", m.Title, "Custom")
 	}
 }
+
+func newPostTestServer(t *testing.T, wantPath, wantMethod, wantKey string, response any) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != wantPath {
+			t.Errorf("path = %q, want %q", r.URL.Path, wantPath)
+		}
+		if r.Method != wantMethod {
+			t.Errorf("method = %q, want %q", r.Method, wantMethod)
+		}
+		if wantKey != "" {
+			if got := r.Header.Get("simkl-api-key"); got != wantKey {
+				t.Errorf("simkl-api-key = %q, want %q", got, wantKey)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+}
+
+func newDeleteTestServer(t *testing.T, wantPath, wantKey string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != wantPath {
+			t.Errorf("path = %q, want %q", r.URL.Path, wantPath)
+		}
+		if r.Method != http.MethodDelete {
+			t.Errorf("method = %q, want %q", r.Method, http.MethodDelete)
+		}
+		if wantKey != "" {
+			if got := r.Header.Get("simkl-api-key"); got != wantKey {
+				t.Errorf("simkl-api-key = %q, want %q", got, wantKey)
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+}
+
+// Ratings.
+
+func TestGetRatingByID(t *testing.T) {
+	info := simkl.RatingInfo{
+		Title: "Inception",
+		Year:  2010,
+		Type:  "movie",
+		IDs:   simkl.IDs{Simkl: 42},
+		Rank:  5,
+	}
+	ts := newTestServer(t, "/ratings", "rate-key", info)
+	defer ts.Close()
+
+	c := simkl.New("rate-key", simkl.WithBaseURL(ts.URL))
+	got, err := c.GetRatingByID(context.Background(), 42, "rank")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Title != "Inception" {
+		t.Errorf("Title = %q, want %q", got.Title, "Inception")
+	}
+	if got.Rank != 5 {
+		t.Errorf("Rank = %d, want %d", got.Rank, 5)
+	}
+}
+
+func TestGetWatchlistRatings(t *testing.T) {
+	items := []simkl.RatingInfo{
+		{Title: "R1", IDs: simkl.IDs{Simkl: 1}},
+		{Title: "R2", IDs: simkl.IDs{Simkl: 2}},
+	}
+	ts := newTestServer(t, "/ratings/tv/", "wr-key", items)
+	defer ts.Close()
+
+	c := simkl.New("wr-key", simkl.WithBaseURL(ts.URL))
+	got, err := c.GetWatchlistRatings(context.Background(), "tv", "watching", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len = %d, want 2", len(got))
+	}
+	if got[0].Title != "R1" {
+		t.Errorf("Title = %q, want %q", got[0].Title, "R1")
+	}
+}
+
+// Random search.
+
+func TestSearchRandom(t *testing.T) {
+	result := simkl.RandomResult{
+		Title: "Random Movie",
+		Year:  2020,
+		Type:  "movie",
+		IDs:   simkl.IDs{Simkl: 999},
+	}
+	ts := newPostTestServer(t, "/search/random", http.MethodPost, "rnd-key", result)
+	defer ts.Close()
+
+	c := simkl.New("rnd-key", simkl.WithBaseURL(ts.URL))
+	got, err := c.SearchRandom(context.Background(), &simkl.RandomSearchParams{
+		Type:  "movie",
+		Genre: "action",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Title != "Random Movie" {
+		t.Errorf("Title = %q, want %q", got.Title, "Random Movie")
+	}
+}
+
+// Movie genres & best.
+
+func TestMovieGenres(t *testing.T) {
+	items := []simkl.GenreItem{{Title: "Genre Movie", Year: 2024}}
+	ts := newTestServer(t, "/movies/genres/action", "mg-key", items)
+	defer ts.Close()
+
+	c := simkl.New("mg-key", simkl.WithBaseURL(ts.URL))
+	got, err := c.MovieGenres(context.Background(), "action", 1, 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+	if got[0].Title != "Genre Movie" {
+		t.Errorf("Title = %q, want %q", got[0].Title, "Genre Movie")
+	}
+}
+
+func TestBestMovies(t *testing.T) {
+	items := []simkl.BestItem{{Title: "Best Movie", Year: 2024}}
+	ts := newTestServer(t, "/movies/best/all", "bm-key", items)
+	defer ts.Close()
+
+	c := simkl.New("bm-key", simkl.WithBaseURL(ts.URL))
+	got, err := c.BestMovies(context.Background(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+	if got[0].Title != "Best Movie" {
+		t.Errorf("Title = %q, want %q", got[0].Title, "Best Movie")
+	}
+}
+
+// Scrobble.
+
+func TestScrobbleStart(t *testing.T) {
+	resp := simkl.ScrobbleResponse{Action: "start", Result: "success"}
+	ts := newPostTestServer(t, "/scrobble/start", http.MethodPost, "sc-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("sc-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.ScrobbleStart(context.Background(), &simkl.ScrobbleRequest{
+		Movie: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 1}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Action != "start" {
+		t.Errorf("Action = %q, want %q", got.Action, "start")
+	}
+}
+
+func TestScrobblePause(t *testing.T) {
+	resp := simkl.ScrobbleResponse{Action: "pause", Result: "success"}
+	ts := newPostTestServer(t, "/scrobble/pause", http.MethodPost, "sp-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("sp-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.ScrobblePause(context.Background(), &simkl.ScrobbleRequest{
+		Movie: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 1}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Action != "pause" {
+		t.Errorf("Action = %q, want %q", got.Action, "pause")
+	}
+}
+
+func TestScrobbleStop(t *testing.T) {
+	resp := simkl.ScrobbleResponse{Action: "stop", Result: "success"}
+	ts := newPostTestServer(t, "/scrobble/stop", http.MethodPost, "ss-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("ss-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.ScrobbleStop(context.Background(), &simkl.ScrobbleRequest{
+		Show:    &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 2}},
+		Episode: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 30}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Action != "stop" {
+		t.Errorf("Action = %q, want %q", got.Action, "stop")
+	}
+}
+
+func TestScrobbleCheckin(t *testing.T) {
+	resp := simkl.ScrobbleResponse{Action: "checkin", Result: "success"}
+	ts := newPostTestServer(t, "/scrobble/checkin", http.MethodPost, "ci-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("ci-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.ScrobbleCheckin(context.Background(), &simkl.ScrobbleRequest{
+		Anime: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 5}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Action != "checkin" {
+		t.Errorf("Action = %q, want %q", got.Action, "checkin")
+	}
+}
+
+// Sync.
+
+func TestGetLastActivity(t *testing.T) {
+	activity := simkl.LastActivity{
+		AllItems: "2024-01-01T00:00:00Z",
+		TVShows:  &simkl.ActivityTimestamps{All: "2024-01-01T00:00:00Z"},
+	}
+	ts := newTestServer(t, "/sync/activities", "la-key", activity)
+	defer ts.Close()
+
+	c := simkl.New("la-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.GetLastActivity(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.AllItems != "2024-01-01T00:00:00Z" {
+		t.Errorf("AllItems = %q, want %q", got.AllItems, "2024-01-01T00:00:00Z")
+	}
+	if got.TVShows == nil {
+		t.Fatal("TVShows is nil")
+	}
+}
+
+func TestGetAllItems(t *testing.T) {
+	resp := simkl.WatchlistResponse{
+		Shows: []simkl.WatchlistItem{
+			{Status: "watching", Show: &simkl.ShowShort{Title: "Test Show"}},
+		},
+	}
+	ts := newTestServer(t, "/sync/all-items/shows/watching", "ai-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("ai-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.GetAllItems(context.Background(), "shows", "watching", "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Shows) != 1 {
+		t.Fatalf("len = %d, want 1", len(got.Shows))
+	}
+	if got.Shows[0].Show.Title != "Test Show" {
+		t.Errorf("Title = %q, want %q", got.Shows[0].Show.Title, "Test Show")
+	}
+}
+
+func TestGetAllItemsNoFilter(t *testing.T) {
+	resp := simkl.WatchlistResponse{
+		Movies: []simkl.WatchlistItem{
+			{Status: "completed", Movie: &simkl.MovieShort{Title: "Good Film"}},
+		},
+	}
+	ts := newTestServer(t, "/sync/all-items/", "ai2-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("ai2-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.GetAllItems(context.Background(), "", "", "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Movies) != 1 {
+		t.Fatalf("len = %d, want 1", len(got.Movies))
+	}
+}
+
+func TestAddToHistory(t *testing.T) {
+	resp := simkl.SyncResponse{Added: &simkl.SyncCount{Movies: 1}}
+	ts := newPostTestServer(t, "/sync/history", http.MethodPost, "ah-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("ah-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.AddToHistory(context.Background(), &simkl.SyncItems{
+		Movies: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 1}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Added == nil || got.Added.Movies != 1 {
+		t.Errorf("Added.Movies = %v, want 1", got.Added)
+	}
+}
+
+func TestRemoveFromHistory(t *testing.T) {
+	resp := simkl.SyncResponse{Deleted: &simkl.SyncCount{Shows: 2}}
+	ts := newPostTestServer(t, "/sync/history/remove", http.MethodPost, "rh-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("rh-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.RemoveFromHistory(context.Background(), &simkl.SyncItems{
+		Shows: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 1}}, {IDs: &simkl.IDs{Simkl: 2}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Deleted == nil || got.Deleted.Shows != 2 {
+		t.Errorf("Deleted.Shows = %v, want 2", got.Deleted)
+	}
+}
+
+func TestGetSyncRatings(t *testing.T) {
+	resp := simkl.WatchlistResponse{
+		Movies: []simkl.WatchlistItem{
+			{UserRating: 9, Movie: &simkl.MovieShort{Title: "Rated Movie"}},
+		},
+	}
+	ts := newTestServer(t, "/sync/ratings/movies/9", "sr-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("sr-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.GetSyncRatings(context.Background(), "movies", "9", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Movies) != 1 {
+		t.Fatalf("len = %d, want 1", len(got.Movies))
+	}
+	if got.Movies[0].UserRating != 9 {
+		t.Errorf("UserRating = %d, want %d", got.Movies[0].UserRating, 9)
+	}
+}
+
+func TestAddRatings(t *testing.T) {
+	resp := simkl.SyncResponse{Added: &simkl.SyncCount{Movies: 1}}
+	ts := newPostTestServer(t, "/sync/ratings", http.MethodPost, "ar-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("ar-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.AddRatings(context.Background(), &simkl.SyncItems{
+		Movies: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 5}, Rating: 8}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Added == nil || got.Added.Movies != 1 {
+		t.Errorf("Added.Movies = %v, want 1", got.Added)
+	}
+}
+
+func TestRemoveRatings(t *testing.T) {
+	resp := simkl.SyncResponse{Deleted: &simkl.SyncCount{Movies: 1}}
+	ts := newPostTestServer(t, "/sync/ratings/remove", http.MethodPost, "rr-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("rr-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.RemoveRatings(context.Background(), &simkl.SyncItems{
+		Movies: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 5}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Deleted == nil || got.Deleted.Movies != 1 {
+		t.Errorf("Deleted.Movies = %v, want 1", got.Deleted)
+	}
+}
+
+func TestAddToList(t *testing.T) {
+	resp := simkl.SyncResponse{Added: &simkl.SyncCount{Shows: 1}}
+	ts := newPostTestServer(t, "/sync/add-to-list", http.MethodPost, "al-key", resp)
+	defer ts.Close()
+
+	c := simkl.New("al-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.AddToList(context.Background(), &simkl.SyncItems{
+		Shows: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 1}, To: "plantowatch"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Added == nil || got.Added.Shows != 1 {
+		t.Errorf("Added.Shows = %v, want 1", got.Added)
+	}
+}
+
+func TestGetPlaybacks(t *testing.T) {
+	sessions := []simkl.PlaybackSession{
+		{ID: 123, Progress: 45.5, Type: "movie", Movie: &simkl.MovieShort{Title: "Paused Movie"}},
+	}
+	ts := newTestServer(t, "/sync/playback/movies", "pb-key", sessions)
+	defer ts.Close()
+
+	c := simkl.New("pb-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.GetPlaybacks(context.Background(), "movies")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+	if got[0].ID != 123 {
+		t.Errorf("ID = %d, want %d", got[0].ID, 123)
+	}
+	if got[0].Progress != 45.5 {
+		t.Errorf("Progress = %v, want %v", got[0].Progress, 45.5)
+	}
+}
+
+func TestDeletePlayback(t *testing.T) {
+	ts := newDeleteTestServer(t, "/sync/playback/456", "dp-key")
+	defer ts.Close()
+
+	c := simkl.New("dp-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	err := c.DeletePlayback(context.Background(), 456)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCheckIfWatched(t *testing.T) {
+	results := []simkl.WatchedCheckResult{
+		{Title: "Inception", Year: 2010, Result: true, List: "completed", IDs: simkl.IDs{Simkl: 42}},
+		{Title: "Unknown", Year: 2000, Result: false, IDs: simkl.IDs{Simkl: 99}},
+	}
+	ts := newPostTestServer(t, "/sync/watched/", http.MethodPost, "cw-key", results)
+	defer ts.Close()
+
+	c := simkl.New("cw-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.CheckIfWatched(context.Background(), []simkl.WatchedCheckItem{
+		{IDs: &simkl.IDs{Simkl: 42}},
+		{IDs: &simkl.IDs{Simkl: 99}},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len = %d, want 2", len(got))
+	}
+	if !got[0].Result {
+		t.Error("result[0].Result = false, want true")
+	}
+	if got[1].Result {
+		t.Error("result[1].Result = true, want false")
+	}
+}
+
+// Users.
+
+func TestGetUserStats(t *testing.T) {
+	stats := simkl.UserStats{
+		Total:  &simkl.MediaStats{Completed: 200, Total: 250},
+		Movies: &simkl.MediaStats{Completed: 100},
+	}
+	ts := newTestServer(t, "/users/12345/stats", "us-key", stats)
+	defer ts.Close()
+
+	c := simkl.New("us-key", simkl.WithBaseURL(ts.URL))
+	got, err := c.GetUserStats(context.Background(), 12345)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Total == nil {
+		t.Fatal("Total is nil")
+	}
+	if got.Total.Completed != 200 {
+		t.Errorf("Total.Completed = %d, want %d", got.Total.Completed, 200)
+	}
+}
+
+func TestGetUserSettings(t *testing.T) {
+	settings := simkl.UserSettings{
+		User:    simkl.UserAccount{Name: "testuser"},
+		Account: simkl.AccountDetails{ID: 42, Timezone: "UTC"},
+	}
+	ts := newTestServer(t, "/users/settings", "set-key", settings)
+	defer ts.Close()
+
+	c := simkl.New("set-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	got, err := c.GetUserSettings(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.User.Name != "testuser" {
+		t.Errorf("User.Name = %q, want %q", got.User.Name, "testuser")
+	}
+	if got.Account.ID != 42 {
+		t.Errorf("Account.ID = %d, want %d", got.Account.ID, 42)
+	}
+}
+
+func TestGetLastWatchedArts(t *testing.T) {
+	art := simkl.LastWatchedArt{
+		Title:  "Breaking Bad",
+		Poster: "/poster.jpg",
+		Fanart: "/fanart.jpg",
+		IDs:    simkl.IDs{Simkl: 1388},
+	}
+	ts := newTestServer(t, "/users/recently-watched-background/100", "lwa-key", art)
+	defer ts.Close()
+
+	c := simkl.New("lwa-key", simkl.WithBaseURL(ts.URL))
+	got, err := c.GetLastWatchedArts(context.Background(), 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Title != "Breaking Bad" {
+		t.Errorf("Title = %q, want %q", got.Title, "Breaking Bad")
+	}
+}
+
+// Error cases for new methods.
+
+func TestDeletePlaybackError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"not found"}`))
+	}))
+	defer ts.Close()
+
+	c := simkl.New("key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	err := c.DeletePlayback(context.Background(), 9999)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var apiErr *simkl.APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("expected *APIError, got %T", err)
+	}
+	if apiErr.StatusCode != http.StatusNotFound {
+		t.Errorf("StatusCode = %d, want %d", apiErr.StatusCode, http.StatusNotFound)
+	}
+}
+
+func TestScrobblePostAuthHeader(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer scrobble-tok" {
+			t.Errorf("Authorization = %q, want %q", auth, "Bearer scrobble-tok")
+		}
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %q, want POST", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(simkl.ScrobbleResponse{Action: "start", Result: "success"})
+	}))
+	defer ts.Close()
+
+	c := simkl.New("key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("scrobble-tok"))
+	_, err := c.ScrobbleStart(context.Background(), &simkl.ScrobbleRequest{
+		Movie: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 1}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDeleteAuthHeader(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer del-tok" {
+			t.Errorf("Authorization = %q, want %q", auth, "Bearer del-tok")
+		}
+		if r.Method != http.MethodDelete {
+			t.Errorf("method = %q, want DELETE", r.Method)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer ts.Close()
+
+	c := simkl.New("key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("del-tok"))
+	err := c.DeletePlayback(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
