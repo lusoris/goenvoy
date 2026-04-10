@@ -100,7 +100,7 @@ func (c *Client) GetMovie(ctx context.Context, id int, language string, appendTo
 Add a `RequestOption` functional option type and enriched "Full" response types:
 
 ```go
-// metadata/movie/tmdb/tmdb.go
+// metadata/video/tmdb/tmdb.go
 
 // RequestOption configures a single API request.
 type RequestOption func(*requestConfig)
@@ -819,7 +819,7 @@ func (c *Client) SearchFilms(ctx context.Context, query string) (*letterboxdapi.
 Add a `WithClientCredentials` option to the goenvoy Letterboxd module:
 
 ```go
-// metadata/movie/letterboxd/letterboxd.go
+// metadata/video/letterboxd/letterboxd.go
 
 // WithClientCredentials configures the client to automatically acquire and
 // refresh an OAuth2 access token using the client_credentials grant.

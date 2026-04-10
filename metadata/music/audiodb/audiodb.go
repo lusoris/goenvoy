@@ -7,33 +7,16 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://www.theaudiodb.com/api/v1/json"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://www.theaudiodb.com/api/v1/json"
 
 // Client is a TheAudioDB API client.
 type Client struct {
-	baseURL string
-	apiKey  string
-	http    *http.Client
-}
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") }
+	*metadata.BaseClient
+	apiKey string
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -48,17 +31,11 @@ func (e *APIError) Error() string {
 }
 
 // New creates a TheAudioDB [Client] with the given API key.
-func New(apiKey string, opts ...Option) *Client {
-	c := &Client{
-		baseURL: defaultBaseURL,
-		apiKey:  apiKey,
-		http:    &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+func New(apiKey string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "audiodb", opts...)
+	return &Client{BaseClient: bc, apiKey: apiKey}
 }
+
 
 // Response wrappers matching the API JSON structure.
 type artistsResp struct {
@@ -86,14 +63,14 @@ type trendingResp struct {
 }
 
 func (c *Client) get(ctx context.Context, endpoint string, v any) error {
-	u := c.baseURL + "/" + c.apiKey + "/" + endpoint
+	u := c.BaseURL() + "/" + c.apiKey + "/" + endpoint
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("audiodb: create request: %w", err)
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("audiodb: request: %w", err)
 	}

@@ -10,13 +10,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/book/openlibrary"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *openlibrary.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return openlibrary.New(openlibrary.WithBaseURL(srv.URL))
+	return openlibrary.New(metadata.WithBaseURL(srv.URL))
 }
 
 func TestSearch(t *testing.T) {
@@ -233,7 +234,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := openlibrary.New(openlibrary.WithBaseURL(srv.URL))
+	c := openlibrary.New(metadata.WithBaseURL(srv.URL))
 	_, err := c.Search(context.Background(), "nonexistent")
 	if err == nil {
 		t.Fatal("expected error")
@@ -254,7 +255,7 @@ func TestAPIErrorOnWork(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := openlibrary.New(openlibrary.WithBaseURL(srv.URL))
+	c := openlibrary.New(metadata.WithBaseURL(srv.URL))
 	_, err := c.GetWork(context.Background(), "INVALID")
 	if err == nil {
 		t.Fatal("expected error")

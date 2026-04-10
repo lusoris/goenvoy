@@ -8,33 +8,16 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://ws.audioscrobbler.com/2.0/"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://ws.audioscrobbler.com/2.0/"
 
 // Client is a Last.fm API client.
 type Client struct {
-	baseURL string
-	apiKey  string
-	http    *http.Client
-}
-
-// Option configures the Client.
-type Option func(*Client)
-
-// WithHTTPClient sets a custom HTTP client.
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") + "/" }
+	*metadata.BaseClient
+	apiKey string
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -60,17 +43,11 @@ func (e *Error) Error() string {
 }
 
 // New creates a new Last.fm client.
-func New(apiKey string, opts ...Option) *Client {
-	c := &Client{
-		baseURL: defaultBaseURL,
-		apiKey:  apiKey,
-		http:    &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+func New(apiKey string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "lastfm", opts...)
+	return &Client{BaseClient: bc, apiKey: apiKey}
 }
+
 
 func (c *Client) get(ctx context.Context, method string, extra url.Values, v any) error {
 	params := url.Values{}
@@ -83,14 +60,14 @@ func (c *Client) get(ctx context.Context, method string, extra url.Values, v any
 		}
 	}
 
-	u := c.baseURL + "?" + params.Encode()
+	u := c.BaseURL() + "?" + params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return err
 	}

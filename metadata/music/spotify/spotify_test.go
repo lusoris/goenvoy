@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/music/spotify"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *spotify.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return spotify.New("test-token", spotify.WithBaseURL(srv.URL))
+	return spotify.New("test-token", metadata.WithBaseURL(srv.URL))
 }
 
 func TestAuthorizationHeader(t *testing.T) {
@@ -445,7 +446,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := spotify.New("bad-token", spotify.WithBaseURL(srv.URL))
+	c := spotify.New("bad-token", metadata.WithBaseURL(srv.URL))
 	_, err := c.GetArtist(context.Background(), "1")
 	if err == nil {
 		t.Fatal("expected error")
@@ -461,7 +462,7 @@ func TestAPIError(t *testing.T) {
 
 func TestWithHTTPClient(t *testing.T) {
 	custom := &http.Client{}
-	c := spotify.New("token", spotify.WithHTTPClient(custom))
+	c := spotify.New("token", metadata.WithHTTPClient(custom))
 	// Verify the client was created without error.
 	if c == nil {
 		t.Fatal("expected non-nil client")

@@ -195,3 +195,10 @@ type Token struct {
 	Scope        string `json:"scope"`
 	CreatedAt    int64  `json:"created_at"`
 }
+
+// Mapping holds an external ID mapping for an anime.
+type Mapping struct {
+	ID           string `json:"id"`
+	ExternalSite string `json:"externalSite"`
+	ExternalID   string `json:"externalId"` //nolint:tagliatelle // API uses camelCase "Id".
+}

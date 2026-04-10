@@ -8,59 +8,28 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL   = "https://api.theporndb.net"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
-)
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header sent with every request.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default TPDB API base URL.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
+const defaultBaseURL = "https://api.theporndb.net"
 
 // Client is a ThePornDB (TPDB) API client.
 type Client struct {
-	apiToken   string
-	rawBaseURL string
-	httpClient *http.Client
-	userAgent  string
+	*metadata.BaseClient
+	apiToken string
 }
 
 // New creates a TPDB [Client] using the given API token.
-func New(apiToken string, opts ...Option) *Client {
-	c := &Client{
-		apiToken:   apiToken,
-		rawBaseURL: defaultBaseURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
+func New(apiToken string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "tpdb", opts...)
+	c := &Client{BaseClient: bc, apiToken: apiToken}
+	bc.SetAuth(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+apiToken)
+	})
 	return c
 }
+
 
 // APIError is returned when the API responds with a non-2xx status.
 type APIError struct {
@@ -92,7 +61,7 @@ type itemResponse[T any] struct {
 }
 
 func (c *Client) doRequest(ctx context.Context, method, path string, params url.Values, dst any) error {
-	u, err := url.Parse(c.rawBaseURL + path)
+	u, err := url.Parse(c.BaseURL() + path)
 	if err != nil {
 		return fmt.Errorf("tpdb: parse URL: %w", err)
 	}
@@ -107,9 +76,9 @@ func (c *Client) doRequest(ctx context.Context, method, path string, params url.
 
 	req.Header.Set("Authorization", "Bearer "+c.apiToken)
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("tpdb: %s %s: %w", method, path, err)
 	}

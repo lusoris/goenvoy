@@ -10,13 +10,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/game/igdb"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *igdb.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return igdb.New("test-client-id", "test-token", igdb.WithBaseURL(srv.URL))
+	return igdb.New("test-client-id", "test-token", metadata.WithBaseURL(srv.URL))
 }
 
 func TestSearchGames(t *testing.T) {
@@ -389,7 +390,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := igdb.New("bad-id", "bad-token", igdb.WithBaseURL(srv.URL))
+	c := igdb.New("bad-id", "bad-token", metadata.WithBaseURL(srv.URL))
 	_, err := c.SearchGames(context.Background(), "zelda", 10)
 	if err == nil {
 		t.Fatal("expected error")
@@ -485,7 +486,7 @@ func TestEndpointPaths(t *testing.T) {
 
 func TestWithHTTPClient(t *testing.T) {
 	custom := &http.Client{}
-	c := igdb.New("id", "token", igdb.WithHTTPClient(custom))
+	c := igdb.New("id", "token", metadata.WithHTTPClient(custom))
 	// Verify client was created without error.
 	if c == nil {
 		t.Fatal("expected non-nil client")

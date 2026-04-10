@@ -9,44 +9,21 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 const (
 	defaultStoreURL  = "https://store.steampowered.com/api"
 	defaultWebAPIURL = "https://api.steampowered.com"
-	defaultTimeout   = 30 * time.Second
 )
 
 // Client is a Steam API client.
 type Client struct {
+	*metadata.BaseClient
 	storeURL  string
 	webAPIURL string
 	apiKey    string
-	http      *http.Client
-}
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithStoreURL sets a custom Steam Store API base URL (useful for testing).
-func WithStoreURL(u string) Option {
-	return func(cl *Client) { cl.storeURL = strings.TrimRight(u, "/") }
-}
-
-// WithWebAPIURL sets a custom Steam Web API base URL (useful for testing).
-func WithWebAPIURL(u string) Option {
-	return func(cl *Client) { cl.webAPIURL = strings.TrimRight(u, "/") }
-}
-
-// WithAPIKey sets the Steam Web API key for endpoints that require authentication.
-func WithAPIKey(key string) Option {
-	return func(cl *Client) { cl.apiKey = key }
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -61,17 +38,23 @@ func (e *APIError) Error() string {
 }
 
 // New creates a Steam API [Client].
-func New(opts ...Option) *Client {
-	c := &Client{
-		storeURL:  defaultStoreURL,
-		webAPIURL: defaultWebAPIURL,
-		http:      &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+func New(opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultStoreURL, "steam", opts...)
+	return &Client{BaseClient: bc, storeURL: defaultStoreURL, webAPIURL: defaultWebAPIURL}
 }
+
+// NewWithAPIKey creates a Steam API [Client] with an API key for authenticated endpoints.
+func NewWithAPIKey(apiKey string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultStoreURL, "steam", opts...)
+	return &Client{BaseClient: bc, storeURL: defaultStoreURL, webAPIURL: defaultWebAPIURL, apiKey: apiKey}
+}
+
+// SetStoreURL overrides the Steam Store API base URL (useful for testing).
+func (c *Client) SetStoreURL(u string) { c.storeURL = strings.TrimRight(u, "/") }
+
+// SetWebAPIURL overrides the Steam Web API base URL (useful for testing).
+func (c *Client) SetWebAPIURL(u string) { c.webAPIURL = strings.TrimRight(u, "/") }
+
 
 func (c *Client) get(ctx context.Context, u string, v any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
@@ -79,7 +62,7 @@ func (c *Client) get(ctx context.Context, u string, v any) error {
 		return fmt.Errorf("steam: create request: %w", err)
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("steam: request: %w", err)
 	}

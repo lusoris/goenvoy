@@ -6,11 +6,12 @@ import (
 	"log"
 
 	"github.com/lusoris/goenvoy/metadata/music/musicbrainz"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func Example() {
 	// Create a new MusicBrainz client
-	client := musicbrainz.New(musicbrainz.WithUserAgent("your-app-name/1.0"))
+	client := musicbrainz.New(metadata.WithUserAgent("your-app-name/1.0"))
 
 	ctx := context.Background()
 

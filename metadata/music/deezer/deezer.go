@@ -9,37 +9,16 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://api.deezer.com"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://api.deezer.com"
 
 // Client is a Deezer API client.
 type Client struct {
-	baseURL     string
+	*metadata.BaseClient
 	accessToken string
-	http        *http.Client
-}
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") }
-}
-
-// WithAccessToken sets an access token for user-specific data.
-func WithAccessToken(token string) Option {
-	return func(cl *Client) { cl.accessToken = token }
 }
 
 // APIError is returned when the Deezer API responds with an error.
@@ -60,19 +39,20 @@ func (e *APIError) Error() string {
 }
 
 // New creates a Deezer [Client].
-func New(opts ...Option) *Client {
-	c := &Client{
-		baseURL: defaultBaseURL,
-		http:    &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+func New(opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "deezer", opts...)
+	return &Client{BaseClient: bc}
 }
 
+// NewWithToken creates a Deezer [Client] with an access token for user-specific data.
+func NewWithToken(accessToken string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "deezer", opts...)
+	return &Client{BaseClient: bc, accessToken: accessToken}
+}
+
+
 func (c *Client) get(ctx context.Context, path string, v any) error {
-	u := c.baseURL + path
+	u := c.BaseURL() + path
 
 	// Append access token if set.
 	if c.accessToken != "" {
@@ -88,7 +68,7 @@ func (c *Client) get(ctx context.Context, path string, v any) error {
 		return fmt.Errorf("deezer: create request: %w", err)
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("deezer: request: %w", err)
 	}

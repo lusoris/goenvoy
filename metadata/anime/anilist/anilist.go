@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 const (
 	defaultBaseURL   = "https://graphql.anilist.co"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
 )
 
 // GraphQL field fragments reused across queries.
@@ -95,56 +94,28 @@ const (
 	queryGetTags         = `query { MediaTagCollection { id name description category isGeneralSpoiler isMediaSpoiler } }`
 )
 
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header for all requests.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default AniList GraphQL endpoint.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
-
-// WithAccessToken sets an OAuth2 access token for user-authenticated requests
-// (mutations like updating anime lists, toggling favorites, etc.).
-// AniList tokens are long-lived (~1 year) and do not require refresh.
-func WithAccessToken(token string) Option {
-	return func(cl *Client) { cl.accessToken = token }
-}
-
 // Client is an AniList GraphQL API client.
 type Client struct {
-	rawBaseURL  string
-	httpClient  *http.Client
-	userAgent   string
+	*metadata.BaseClient
 	accessToken string
 }
 
 // New creates an AniList [Client].
-func New(opts ...Option) *Client {
-	c := &Client{
-		rawBaseURL: defaultBaseURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
+func New(opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "anilist", opts...)
+	return &Client{BaseClient: bc}
+}
+
+// NewWithToken creates an AniList [Client] with an OAuth2 access token.
+func NewWithToken(accessToken string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "anilist", opts...)
+	c := &Client{BaseClient: bc, accessToken: accessToken}
+	bc.SetAuth(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	})
 	return c
 }
+
 
 type graphQLRequest struct {
 	Query     string         `json:"query"`
@@ -163,19 +134,19 @@ func (c *Client) Query(ctx context.Context, query string, variables map[string]a
 		return fmt.Errorf("anilist: marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.rawBaseURL, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL(), bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("anilist: create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 	if c.accessToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.accessToken)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("anilist: request: %w", err)
 	}

@@ -14,83 +14,21 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 const (
 	defaultBaseURL   = "https://api.myanimelist.net/v2"
 	defaultAuthURL   = "https://myanimelist.net/v1/oauth2"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
 )
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header for all requests.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default API base URL.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
-
-// WithAuthURL overrides the default OAuth2 authorization URL.
-func WithAuthURL(u string) Option {
-	return func(cl *Client) { cl.authURL = u }
-}
-
-// WithClientSecret sets the client secret (required for confidential clients using auth code flow).
-func WithClientSecret(secret string) Option {
-	return func(cl *Client) { cl.clientSecret = secret }
-}
-
-// WithAccessToken sets a pre-existing OAuth2 access token for user-authenticated requests.
-func WithAccessToken(token string) Option {
-	return func(cl *Client) {
-		cl.mu.Lock()
-		cl.accessToken = token
-		cl.mu.Unlock()
-	}
-}
-
-// WithRefreshToken sets a pre-existing OAuth2 refresh token.
-func WithRefreshToken(token string) Option {
-	return func(cl *Client) {
-		cl.mu.Lock()
-		cl.refreshToken = token
-		cl.mu.Unlock()
-	}
-}
-
-// TokenCallback is called whenever a new token pair is obtained.
-type TokenCallback func(token Token)
-
-// WithTokenCallback sets a callback invoked when tokens change.
-func WithTokenCallback(cb TokenCallback) Option {
-	return func(cl *Client) { cl.onToken = cb }
-}
 
 // Client is a MyAnimeList API v2 client.
 type Client struct {
+	*metadata.BaseClient
 	clientID     string
 	clientSecret string
-	rawBaseURL   string
 	authURL      string
-	httpClient   *http.Client
-	userAgent    string
 	onToken      TokenCallback
 
 	mu           sync.RWMutex
@@ -98,20 +36,38 @@ type Client struct {
 	refreshToken string
 }
 
-// New creates a [Client] using the given MAL API client ID.
-func New(clientID string, opts ...Option) *Client {
-	c := &Client{
-		clientID:   clientID,
-		rawBaseURL: defaultBaseURL,
-		authURL:    defaultAuthURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+// SetClientSecret sets the client secret (required for confidential clients).
+func (c *Client) SetClientSecret(secret string) { c.clientSecret = secret }
+
+// SetAuthURL overrides the default OAuth2 authorization URL.
+func (c *Client) SetAuthURL(u string) { c.authURL = u }
+
+// SetAccessToken sets a pre-existing OAuth2 access token.
+func (c *Client) SetAccessToken(token string) {
+	c.mu.Lock()
+	c.accessToken = token
+	c.mu.Unlock()
 }
+
+// SetRefreshToken sets a pre-existing OAuth2 refresh token.
+func (c *Client) SetRefreshToken(token string) {
+	c.mu.Lock()
+	c.refreshToken = token
+	c.mu.Unlock()
+}
+
+// TokenCallback is called whenever a new token pair is obtained.
+type TokenCallback func(token Token)
+
+// SetTokenCallback sets a callback invoked when tokens change.
+func (c *Client) SetTokenCallback(cb TokenCallback) { c.onToken = cb }
+
+// New creates a [Client] using the given MAL API client ID.
+func New(clientID string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "mal", opts...)
+	return &Client{BaseClient: bc, clientID: clientID, authURL: defaultAuthURL}
+}
+
 
 // APIError is returned when the API responds with a non-2xx status.
 type APIError struct {
@@ -136,7 +92,7 @@ func (e *APIError) Error() string {
 }
 
 func (c *Client) get(ctx context.Context, path string, params url.Values, dst any) error {
-	u, err := url.Parse(c.rawBaseURL + path)
+	u, err := url.Parse(c.BaseURL() + path)
 	if err != nil {
 		return fmt.Errorf("mal: parse URL: %w", err)
 	}
@@ -151,7 +107,7 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, dst an
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -162,7 +118,7 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, dst an
 		req.Header.Set("X-MAL-CLIENT-ID", c.clientID)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("mal: GET %s: %w", path, err)
 	}
@@ -452,9 +408,9 @@ func (c *Client) tokenRequest(ctx context.Context, data url.Values) (*Token, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("mal: token request: %w", err)
 	}

@@ -16,7 +16,10 @@ func setup(t *testing.T, handler http.HandlerFunc) *steam.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return steam.New(steam.WithStoreURL(srv.URL), steam.WithWebAPIURL(srv.URL), steam.WithAPIKey("test-key"))
+	c := steam.NewWithAPIKey("test-key")
+	c.SetStoreURL(srv.URL)
+	c.SetWebAPIURL(srv.URL)
+	return c
 }
 
 func TestGetAppDetails(t *testing.T) {

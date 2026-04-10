@@ -8,7 +8,7 @@ Each module is versioned independently following [Semantic Versioning](https://s
 ## [Unreleased]
 
 ### Added
-- **Letterboxd** (`metadata/movie/letterboxd`): Social film discovery client with OAuth2 Bearer auth — 65 methods covering films, film collections, contributors, lists, log entries, members, comments, stories, search, news, and auth helpers — with 60 tests.
+- **Letterboxd** (`metadata/video/letterboxd`): Social film discovery client with OAuth2 Bearer auth — 65 methods covering films, film collections, contributors, lists, log entries, members, comments, stories, search, news, and auth helpers — with 60 tests.
 
 ## [v1.1.0] - 2026-04-09
 
@@ -17,12 +17,12 @@ Each module is versioned independently following [Semantic Versioning](https://s
 - **Trakt** (`metadata/tracking/trakt`): 140+ new methods — comments, notes, calendars, sync, lists, social, scrobble, users, people, certifications, countries, genres, languages, networks — with 171 tests.
 - **Google Books** (`metadata/book/googlebooks`): 18 new methods — bookshelves (list, get), volumes in shelf, annotations (list, insert, delete, update, summary), user library (add, remove, clear, mark reading), series (get, membership) — with 22 tests.
 - **Discogs** (`metadata/music/discogs`): 50+ new methods — release ratings, user identity/profile/submissions/contributions, user collection (folders, items, add/remove/rate), wantlist (add/remove), user lists, marketplace (listings, orders, fee, stats, price suggestions, inventory export) — with 59 tests.
-- **TMDb** (`metadata/movie/tmdb`): 80+ new methods — movie/TV extras (credits, images, videos, reviews, similar, recommendations, keywords, providers), TV seasons/episodes, person details, search (multi, keyword, company, collection), collections, account (lists, favorites, watchlist, ratings), lists (CRUD), certifications, watch providers, companies, keywords, changes, reviews, networks — with 121 tests.
-- **TVDB** (`metadata/movie/tvdb`): 70+ new methods — artwork (statuses, types), awards (categories), characters, companies (types), content ratings, countries, entity types, episodes, genders, genres, inspiration types, lists (extended, translations), movies (filter, slug, statuses, extended), people (types, extended, translations), search, seasons (types, extended, translations), series (filter, slug, statuses, episodes by language, extended, translations), source types, updates, user (info, favorites) — with 71 tests.
+- **TMDb** (`metadata/video/tmdb`): 80+ new methods — movie/TV extras (credits, images, videos, reviews, similar, recommendations, keywords, providers), TV seasons/episodes, person details, search (multi, keyword, company, collection), collections, account (lists, favorites, watchlist, ratings), lists (CRUD), certifications, watch providers, companies, keywords, changes, reviews, networks — with 121 tests.
+- **TVDB** (`metadata/video/tvdb`): 70+ new methods — artwork (statuses, types), awards (categories), characters, companies (types), content ratings, countries, entity types, episodes, genders, genres, inspiration types, lists (extended, translations), movies (filter, slug, statuses, extended), people (types, extended, translations), search, seasons (types, extended, translations), series (filter, slug, statuses, episodes by language, extended, translations), source types, updates, user (info, favorites) — with 71 tests.
 - **Simkl** (`metadata/tracking/simkl`): 23 new methods — ratings (add/remove), scrobble (start/pause/stop/checkin), sync (history, ratings, add-to-list, remove, watched), users (stats, recently watched), movie genres, random search, best filters — with 56 total tests.
 
 ### Changed
-- **TMDb** (`metadata/movie/tmdb`): Renamed `TMDbAvatar` → `UserAvatar` to avoid type-name stuttering.
+- **TMDb** (`metadata/video/tmdb`): Renamed `TMDbAvatar` → `UserAvatar` to avoid type-name stuttering.
 
 ### Fixed
 - Lint fixes across 6 packages: godot (section comment formatting), gofmt, revive (comment format, stuttering names), gocritic (parameter type combining), unparam (constant parameters).
@@ -31,7 +31,7 @@ Each module is versioned independently following [Semantic Versioning](https://s
 
 ### Changed
 - **Whisparr** (`arr/whisparr`): Renamed `ErosClient` → `ClientV3`, `NewEros` → `NewV3`, `ErosHistoryRecord` → `HistoryRecordV3`, `ErosParseResult` → `ParseResultV3`. Removes internal codename from public API.
-- **TMDb** (`metadata/movie/tmdb`): `DiscoverMovies` and `DiscoverTV` now accept `url.Values` instead of raw `string` for the `extraParams` parameter.
+- **TMDb** (`metadata/video/tmdb`): `DiscoverMovies` and `DiscoverTV` now accept `url.Values` instead of raw `string` for the `extraParams` parameter.
 
 ### Fixed
 - **arr** (`arr`): `BaseClient.Delete` now accepts a request body, fixing 9 bulk-delete and editor-delete operations across Lidarr, Radarr, Sonarr, Readarr, and Whisparr v3 that silently sent empty DELETE requests.
@@ -39,7 +39,7 @@ Each module is versioned independently following [Semantic Versioning](https://s
 - **Mylar** (`arr/mylar`): Use `url.Values` for API key and command parameters instead of raw string concatenation.
 - **Jackett** (`arr/jackett`): URL-escape indexer ID in Torznab search path to prevent path traversal.
 - **Steam** (`metadata/game/steam`): URL-encode API key in query parameters.
-- **TMDb** (`metadata/movie/tmdb`): URL-escape `mediaType` and `timeWindow` path segments in `GetTrending` to prevent path traversal.
+- **TMDb** (`metadata/video/tmdb`): URL-escape `mediaType` and `timeWindow` path segments in `GetTrending` to prevent path traversal.
 - **Kavita** (`mediaserver/kavita`): Add `sync.RWMutex` to protect JWT token from data races under concurrent use.
 - 15 modules now use a 30-second HTTP client timeout instead of `http.DefaultClient` with no timeout: Navidrome, Komga, Kavita, Steam, RAWG, IGDB, OpenSubtitles, Open Library, Google Books, Last.fm, Spotify, ListenBrainz, Discogs, TheAudioDB, Deezer.
 
@@ -62,7 +62,7 @@ Each module is versioned independently following [Semantic Versioning](https://s
 - **Audiobookshelf** (`mediaserver/audiobookshelf`): Audiobook/podcast server client — libraries, items, users, sessions, search, collections.
 - **Komga** (`mediaserver/komga`): Comic/manga server client with Basic Auth — libraries, series, books, collections, read lists, users.
 - **Navidrome** (`mediaserver/navidrome`): Music server client using Subsonic/OpenSubsonic API — artists, albums, songs, playlists, search, scrobbling, starring.
-- **OpenSubtitles** (`metadata/movie/opensubtitles`): Subtitle search and download — search, features, languages, formats, user info, popular, latest.
+- **OpenSubtitles** (`metadata/video/opensubtitles`): Subtitle search and download — search, features, languages, formats, user info, popular, latest.
 - **Last.fm** (`metadata/music/lastfm`): Music metadata — artist/album/track info, similar artists, charts, tags, search.
 - **Discogs** (`metadata/music/discogs`): Music database — releases, artists, labels, master releases, search.
 - **Kavita** (`mediaserver/kavita`): Manga/comic/ebook reader with JWT auth — libraries, series, volumes, chapters, collections, reading lists, search.

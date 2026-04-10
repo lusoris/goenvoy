@@ -202,3 +202,91 @@ type HTTPError struct {
 func (e *HTTPError) Error() string {
 	return "anilist: HTTP " + e.Status
 }
+
+// Studio represents an animation studio.
+type Studio struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+// StudioEdge connects a studio to a media entry.
+type StudioEdge struct {
+	Node   Studio `json:"node"`
+	IsMain bool   `json:"isMain"`
+}
+
+// StudioConnection contains studio edges.
+type StudioConnection struct {
+	Edges []StudioEdge `json:"edges"`
+}
+
+// CharacterEdge connects a character to a media entry with role and voice actors.
+type CharacterEdge struct {
+	Node        Character `json:"node"`
+	Role        string    `json:"role"`
+	VoiceActors []Staff   `json:"voiceActors"`
+}
+
+// CharacterConnectionDetailed contains character edges with roles and voice actors.
+type CharacterConnectionDetailed struct {
+	Edges []CharacterEdge `json:"edges"`
+}
+
+// StaffEdge connects a staff member to a media entry.
+type StaffEdge struct {
+	Node Staff  `json:"node"`
+	Role string `json:"role"`
+}
+
+// StaffConnectionDetailed contains staff edges with roles.
+type StaffConnectionDetailed struct {
+	Edges []StaffEdge `json:"edges"`
+}
+
+// MediaEdge connects related media entries.
+type MediaEdge struct {
+	Node         Media  `json:"node"`
+	RelationType string `json:"relationType"`
+}
+
+// MediaConnectionDetailed contains related media edges.
+type MediaConnectionDetailed struct {
+	Edges []MediaEdge `json:"edges"`
+}
+
+// ExternalLink is a link to an external site for a media entry.
+type ExternalLink struct {
+	ID       int     `json:"id"`
+	URL      *string `json:"url"`
+	Site     string  `json:"site"`
+	SiteID   *int    `json:"siteId"`
+	Type     string  `json:"type"`
+	Language *string `json:"language"`
+}
+
+// StreamingEpisode is a streaming source for an episode.
+type StreamingEpisode struct {
+	Title     *string `json:"title"`
+	Thumbnail *string `json:"thumbnail"`
+	URL       *string `json:"url"`
+	Site      *string `json:"site"`
+}
+
+// Trailer holds a media trailer reference.
+type Trailer struct {
+	ID        *string `json:"id"`
+	Site      *string `json:"site"`
+	Thumbnail *string `json:"thumbnail"`
+}
+
+// MediaDetailed extends Media with connection fields (studios, characters, staff, relations, etc.).
+type MediaDetailed struct {
+	Media
+	Studios           StudioConnection             `json:"studios"`
+	Characters        CharacterConnectionDetailed  `json:"characters"`
+	Staff             StaffConnectionDetailed      `json:"staff"`
+	Relations         MediaConnectionDetailed      `json:"relations"`
+	ExternalLinks     []ExternalLink               `json:"externalLinks"`
+	StreamingEpisodes []StreamingEpisode           `json:"streamingEpisodes"`
+	Trailer           *Trailer                     `json:"trailer"`
+}

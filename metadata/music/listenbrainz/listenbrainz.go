@@ -9,38 +9,16 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://api.listenbrainz.org"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://api.listenbrainz.org"
 
 // Client is a ListenBrainz API client.
 type Client struct {
-	baseURL string
-	token   string
-	http    *http.Client
-}
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") }
-}
-
-// WithToken sets the user token for authenticated (write) operations.
-func WithToken(token string) Option {
-	return func(cl *Client) { cl.token = token }
+	*metadata.BaseClient
+	token string
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -55,20 +33,25 @@ func (e *APIError) Error() string {
 }
 
 // New creates a ListenBrainz [Client]. A token is only required for write
-// operations and can be set via [WithToken].
-func New(opts ...Option) *Client {
-	c := &Client{
-		baseURL: defaultBaseURL,
-		http:    &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
+// operations and can be set via [NewWithToken].
+func New(opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "listenbrainz", opts...)
+	return &Client{BaseClient: bc}
+}
+
+// NewWithToken creates a ListenBrainz [Client] with a user token for authenticated operations.
+func NewWithToken(token string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "listenbrainz", opts...)
+	c := &Client{BaseClient: bc, token: token}
+	bc.SetAuth(func(req *http.Request) {
+		req.Header.Set("Authorization", "Token "+token)
+	})
 	return c
 }
 
+
 func (c *Client) get(ctx context.Context, path string, v any) error {
-	u := c.baseURL + path
+	u := c.BaseURL() + path
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
 	if err != nil {
@@ -84,7 +67,7 @@ func (c *Client) post(ctx context.Context, path string, body, v any) error {
 		return fmt.Errorf("listenbrainz: marshal request: %w", err)
 	}
 
-	u := c.baseURL + path
+	u := c.BaseURL() + path
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(data))
 	if err != nil {
@@ -101,7 +84,7 @@ func (c *Client) post(ctx context.Context, path string, body, v any) error {
 }
 
 func (c *Client) do(req *http.Request, v any) error {
-	resp, err := c.http.Do(req) //nolint:gosec // user-configured base URL is intentional for API clients
+	resp, err := c.HTTPClient().Do(req) //nolint:gosec // user-configured base URL is intentional for API clients
 	if err != nil {
 		return fmt.Errorf("listenbrainz: request: %w", err)
 	}

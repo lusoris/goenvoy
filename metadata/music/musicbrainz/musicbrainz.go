@@ -9,58 +9,24 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL   = "https://musicbrainz.org/ws/2"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1 (https://github.com/lusoris/goenvoy)"
-)
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header sent with every request.
-// MusicBrainz requires a meaningful User-Agent for identification.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default MusicBrainz API base URL.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
+const defaultBaseURL = "https://musicbrainz.org/ws/2"
 
 // Client is a MusicBrainz API client.
 type Client struct {
-	rawBaseURL string
-	httpClient *http.Client
-	userAgent  string
+	*metadata.BaseClient
 }
 
 // New creates a MusicBrainz [Client].
-func New(opts ...Option) *Client {
-	c := &Client{
-		rawBaseURL: defaultBaseURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+func New(opts ...metadata.Option) *Client {
+	opts = append([]metadata.Option{metadata.WithUserAgent("goenvoy/0.0.1 (https://github.com/lusoris/goenvoy)")}, opts...)
+	bc := metadata.NewBaseClient(defaultBaseURL, "musicbrainz", opts...)
+	return &Client{BaseClient: bc}
 }
+
 
 // APIError is returned when the API responds with a non-2xx status.
 type APIError struct {
@@ -81,7 +47,7 @@ func (e *APIError) Error() string {
 }
 
 func (c *Client) get(ctx context.Context, path string, params url.Values, dst any) error {
-	u, err := url.Parse(c.rawBaseURL + path)
+	u, err := url.Parse(c.BaseURL() + path)
 	if err != nil {
 		return fmt.Errorf("musicbrainz: parse URL: %w", err)
 	}
@@ -97,9 +63,9 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, dst an
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("musicbrainz: GET %s: %w", path, err)
 	}

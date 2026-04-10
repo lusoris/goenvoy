@@ -7,13 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
-)
 
 // GraphQL field fragments.
 const performerFields = `
@@ -77,46 +73,23 @@ const (
 	queryGetConfig        = `query { getConfig { host require_invite require_activation vote_promotion_threshold vote_application_threshold guidelines_url } }`
 )
 
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header for all requests.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
 // Client is a StashBox GraphQL API client.
 type Client struct {
-	endpoint   string
-	apiKey     string
-	httpClient *http.Client
-	userAgent  string
+	*metadata.BaseClient
+	apiKey string
 }
 
 // New creates a StashBox [Client].
 // endpoint is the full GraphQL URL (e.g., "https://stashdb.org/graphql").
-func New(endpoint, apiKey string, opts ...Option) *Client {
-	c := &Client{
-		endpoint:   endpoint,
-		apiKey:     apiKey,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
+func New(endpoint, apiKey string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(endpoint, "stashbox", opts...)
+	c := &Client{BaseClient: bc, apiKey: apiKey}
+	bc.SetAuth(func(req *http.Request) {
+		req.Header.Set("ApiKey", apiKey)
+	})
 	return c
 }
+
 
 // GraphQLError represents an error returned by the GraphQL API.
 type GraphQLError struct {
@@ -157,16 +130,16 @@ func (c *Client) Query(ctx context.Context, query string, variables map[string]a
 		return fmt.Errorf("stashbox: marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL(), bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("stashbox: create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("ApiKey", c.apiKey)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("stashbox: execute request: %w", err)
 	}

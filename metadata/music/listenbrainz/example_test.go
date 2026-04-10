@@ -19,7 +19,7 @@ func Example() {
 }
 
 func Example_withToken() {
-	c := listenbrainz.New(listenbrainz.WithToken("my-token"))
+	c := listenbrainz.NewWithToken("my-token")
 
 	err := c.SubmitListens(context.Background(), "single", []listenbrainz.Listen{
 		{

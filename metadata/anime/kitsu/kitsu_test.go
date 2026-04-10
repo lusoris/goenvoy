@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 // respondResource writes a JSON:API single-resource envelope.
@@ -44,7 +46,7 @@ func setup(t *testing.T, handler http.HandlerFunc) *Client {
 	t.Helper()
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
-	return New(WithBaseURL(ts.URL))
+	return New(metadata.WithBaseURL(ts.URL))
 }
 
 func TestGetAnime(t *testing.T) {
@@ -387,7 +389,7 @@ func TestWithUserAgent(t *testing.T) {
 	}))
 	t.Cleanup(ts.Close)
 
-	c := New(WithBaseURL(ts.URL), WithUserAgent("test-agent/1.0"))
+	c := New(metadata.WithBaseURL(ts.URL), metadata.WithUserAgent("test-agent/1.0"))
 	_, err := c.GetAnime(context.Background(), 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -433,7 +435,8 @@ func TestAuthenticate(t *testing.T) {
 	t.Cleanup(authSrv.Close)
 
 	var callbackToken Token
-	c := New(WithTokenCallback(func(tok Token) { callbackToken = tok }))
+	c := New()
+	c.SetTokenCallback(func(tok Token) { callbackToken = tok })
 	c.authURL = authSrv.URL
 
 	tok, err := c.Authenticate(context.Background(), "user@example.com", "s3cret")
@@ -470,7 +473,8 @@ func TestRefreshToken(t *testing.T) {
 	}))
 	t.Cleanup(authSrv.Close)
 
-	c := New(WithRefreshToken("old-rt"))
+	c := New()
+	c.SetRefreshToken("old-rt")
 	c.authURL = authSrv.URL
 
 	tok, err := c.RefreshToken(context.Background())

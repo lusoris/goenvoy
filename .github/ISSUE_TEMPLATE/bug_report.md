@@ -8,7 +8,7 @@ assignees: ''
 
 ## Module
 
-Which module is affected? (e.g. `arr/sonarr`, `metadata/movie/tmdb`)
+Which module is affected? (e.g. `arr/sonarr`, `metadata/video/tmdb`)
 
 ## Description
 

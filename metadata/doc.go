@@ -3,7 +3,7 @@
 //
 // Providers are organized by media category:
 //
-//   - movie: TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, OpenSubtitles
+//   - video: TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, OpenSubtitles, Letterboxd
 //   - anime: AniList, AniDB, Kitsu, MyAnimeList
 //   - tracking: Trakt, Simkl
 //   - adult: StashBox, TPDB
