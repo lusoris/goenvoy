@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/book/googlebooks"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *googlebooks.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return googlebooks.New("test-key", googlebooks.WithBaseURL(srv.URL))
+	return googlebooks.New("test-key", metadata.WithBaseURL(srv.URL))
 }
 
 func TestSearch(t *testing.T) {
@@ -161,7 +162,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := googlebooks.New("bad-key", googlebooks.WithBaseURL(srv.URL))
+	c := googlebooks.New("bad-key", metadata.WithBaseURL(srv.URL))
 	_, err := c.Search(context.Background(), "test")
 	if err == nil {
 		t.Fatal("expected error")
@@ -182,7 +183,7 @@ func TestAPIErrorOnGetVolume(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := googlebooks.New("key", googlebooks.WithBaseURL(srv.URL))
+	c := googlebooks.New("key", metadata.WithBaseURL(srv.URL))
 	_, err := c.GetVolume(context.Background(), "invalid")
 	if err == nil {
 		t.Fatal("expected error")
@@ -582,7 +583,7 @@ func TestPostError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := googlebooks.New("bad-key", googlebooks.WithBaseURL(srv.URL))
+	c := googlebooks.New("bad-key", metadata.WithBaseURL(srv.URL))
 	err := c.AddVolumeToBookshelf(context.Background(), 0, "vol1")
 	if err == nil {
 		t.Fatal("expected error")

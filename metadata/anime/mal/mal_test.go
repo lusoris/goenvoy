@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/anime/mal"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func testClient(t *testing.T, handler http.HandlerFunc) *mal.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return mal.New("test-client-id", mal.WithBaseURL(srv.URL))
+	return mal.New("test-client-id", metadata.WithBaseURL(srv.URL))
 }
 
 const animeJSON = `{
@@ -665,7 +666,7 @@ func TestWithUserAgent(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	c := mal.New("id", mal.WithBaseURL(srv.URL), mal.WithUserAgent("custom/1.0"))
+	c := mal.New("id", metadata.WithBaseURL(srv.URL), metadata.WithUserAgent("custom/1.0"))
 	_, err := c.GetAnime(context.Background(), 1, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -723,7 +724,8 @@ func TestAuthorizationURL(t *testing.T) {
 	authSrv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	t.Cleanup(authSrv.Close)
 
-	c := mal.New("my-client-id", mal.WithAuthURL(authSrv.URL))
+	c := mal.New("my-client-id")
+	c.SetAuthURL(authSrv.URL)
 	pkce := &mal.PKCEChallenge{
 		CodeVerifier:  "test-verifier",
 		CodeChallenge: "test-challenge",
@@ -773,10 +775,9 @@ func TestExchangeCode(t *testing.T) {
 	t.Cleanup(authSrv.Close)
 
 	var callbackToken mal.Token
-	c := mal.New("cid",
-		mal.WithAuthURL(authSrv.URL),
-		mal.WithTokenCallback(func(tok mal.Token) { callbackToken = tok }),
-	)
+	c := mal.New("cid")
+	c.SetAuthURL(authSrv.URL)
+	c.SetTokenCallback(func(tok mal.Token) { callbackToken = tok })
 	pkce := &mal.PKCEChallenge{CodeVerifier: "test-verifier", CodeChallenge: "test-challenge"}
 	tok, err := c.ExchangeCode(context.Background(), "auth-code-123", pkce, "")
 	if err != nil {
@@ -810,7 +811,9 @@ func TestRefreshToken(t *testing.T) {
 	}))
 	t.Cleanup(authSrv.Close)
 
-	c := mal.New("cid", mal.WithAuthURL(authSrv.URL), mal.WithRefreshToken("old-rt"))
+	c := mal.New("cid")
+	c.SetAuthURL(authSrv.URL)
+	c.SetRefreshToken("old-rt")
 	tok, err := c.RefreshToken(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -840,7 +843,8 @@ func TestBearerTokenOverClientID(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	c := mal.New("cid", mal.WithBaseURL(srv.URL), mal.WithAccessToken("my-tok"))
+	c := mal.New("cid", metadata.WithBaseURL(srv.URL))
+	c.SetAccessToken("my-tok")
 	_, err := c.GetAnime(context.Background(), 1, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -864,7 +868,7 @@ func TestClientIDFallback(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	c := mal.New("cid", mal.WithBaseURL(srv.URL))
+	c := mal.New("cid", metadata.WithBaseURL(srv.URL))
 	_, err := c.GetAnime(context.Background(), 1, nil)
 	if err != nil {
 		t.Fatal(err)

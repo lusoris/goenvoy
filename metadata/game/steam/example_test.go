@@ -19,7 +19,7 @@ func Example() {
 }
 
 func Example_withAPIKey() {
-	c := steam.New(steam.WithAPIKey("your-api-key"))
+	c := steam.NewWithAPIKey("your-api-key")
 
 	count, err := c.GetCurrentPlayers(context.Background(), 730)
 	if err != nil {

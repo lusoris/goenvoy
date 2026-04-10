@@ -11,92 +11,53 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 const (
 	defaultBaseURL   = "https://kitsu.io/api/edge"
 	defaultAuthURL   = "https://kitsu.io/api/oauth/token"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
 	jsonAPIMediaType = "application/vnd.api+json"
 )
 
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header for all requests.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default Kitsu API base URL.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
-
-// WithAccessToken sets a pre-existing OAuth2 access token.
-func WithAccessToken(token string) Option {
-	return func(cl *Client) {
-		cl.mu.Lock()
-		cl.accessToken = token
-		cl.mu.Unlock()
-	}
-}
-
-// WithRefreshToken sets a pre-existing OAuth2 refresh token.
-func WithRefreshToken(token string) Option {
-	return func(cl *Client) {
-		cl.mu.Lock()
-		cl.refreshToken = token
-		cl.mu.Unlock()
-	}
-}
-
-// TokenCallback is called whenever a new token pair is obtained.
-type TokenCallback func(token Token)
-
-// WithTokenCallback sets a callback invoked when tokens change.
-func WithTokenCallback(cb TokenCallback) Option {
-	return func(cl *Client) { cl.onToken = cb }
-}
-
 // Client is a Kitsu API client. Authentication is not required for public reads.
 type Client struct {
-	rawBaseURL string
-	authURL    string
-	httpClient *http.Client
-	userAgent  string
-	onToken    TokenCallback
+	*metadata.BaseClient
+	authURL string
+	onToken TokenCallback
 
 	mu           sync.RWMutex
 	accessToken  string
 	refreshToken string
 }
 
-// New creates a Kitsu [Client].
-func New(opts ...Option) *Client {
-	c := &Client{
-		rawBaseURL: defaultBaseURL,
-		authURL:    defaultAuthURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+// SetAccessToken sets a pre-existing OAuth2 access token.
+func (c *Client) SetAccessToken(token string) {
+	c.mu.Lock()
+	c.accessToken = token
+	c.mu.Unlock()
 }
+
+// SetRefreshToken sets a pre-existing OAuth2 refresh token.
+func (c *Client) SetRefreshToken(token string) {
+	c.mu.Lock()
+	c.refreshToken = token
+	c.mu.Unlock()
+}
+
+// TokenCallback is called whenever a new token pair is obtained.
+type TokenCallback func(token Token)
+
+// SetTokenCallback sets a callback invoked when tokens change.
+func (c *Client) SetTokenCallback(cb TokenCallback) { c.onToken = cb }
+
+// New creates a Kitsu [Client].
+func New(opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "kitsu", opts...)
+	return &Client{BaseClient: bc, authURL: defaultAuthURL}
+}
+
 
 // APIError is returned when the Kitsu API responds with a non-2xx status code.
 type APIError struct {
@@ -132,7 +93,7 @@ type jsonAPICollection[T any] struct {
 }
 
 func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
-	u := c.rawBaseURL + path
+	u := c.BaseURL() + path
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
 	if err != nil {
@@ -140,7 +101,7 @@ func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
 	}
 
 	req.Header.Set("Accept", jsonAPIMediaType)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -149,7 +110,7 @@ func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("kitsu: request: %w", err)
 	}
@@ -337,9 +298,9 @@ func (c *Client) tokenRequest(ctx context.Context, data url.Values) (*Token, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("kitsu: token request: %w", err)
 	}

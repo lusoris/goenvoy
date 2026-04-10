@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/anime/anilist"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *anilist.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return anilist.New(anilist.WithBaseURL(srv.URL))
+	return anilist.New(metadata.WithBaseURL(srv.URL))
 }
 
 func respondGraphQL(t *testing.T, w http.ResponseWriter, data any) {
@@ -407,7 +408,7 @@ func TestWithAccessToken(t *testing.T) {
 
 	_ = c // suppress unused
 
-	cl := anilist.New(anilist.WithBaseURL(srv.URL), anilist.WithAccessToken("my-tok"))
+	cl := anilist.NewWithToken("my-tok", metadata.WithBaseURL(srv.URL))
 	_, err := cl.GetMedia(context.Background(), 1)
 	assertNoError(t, err)
 	if gotAuth != "Bearer my-tok" {
@@ -425,7 +426,7 @@ func TestNoAccessTokenHeader(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	cl := anilist.New(anilist.WithBaseURL(srv.URL))
+	cl := anilist.New(metadata.WithBaseURL(srv.URL))
 	_, err := cl.GetMedia(context.Background(), 1)
 	assertNoError(t, err)
 	if gotAuth != "" {

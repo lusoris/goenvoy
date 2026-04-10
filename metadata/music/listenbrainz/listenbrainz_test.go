@@ -10,13 +10,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/music/listenbrainz"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *listenbrainz.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return listenbrainz.New(listenbrainz.WithBaseURL(srv.URL), listenbrainz.WithToken("test-token"))
+	return listenbrainz.NewWithToken("test-token", metadata.WithBaseURL(srv.URL))
 }
 
 func TestGetUserListens(t *testing.T) {

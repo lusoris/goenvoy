@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/adult/stashbox"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 type gqlRequest struct {
@@ -399,7 +400,7 @@ func TestWithCustomHTTPClient(t *testing.T) {
 	defer ts.Close()
 
 	custom := &http.Client{}
-	c := stashbox.New(ts.URL, "custom-key", stashbox.WithHTTPClient(custom))
+	c := stashbox.New(ts.URL, "custom-key", metadata.WithHTTPClient(custom))
 	result, err := c.FindPerformer(context.Background(), "p1")
 	if err != nil {
 		t.Fatal(err)

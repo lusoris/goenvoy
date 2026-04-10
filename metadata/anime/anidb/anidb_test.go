@@ -8,13 +8,15 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *Client {
 	t.Helper()
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
-	return New("testclient", 1, WithBaseURL(ts.URL))
+	return New("testclient", 1, metadata.WithBaseURL(ts.URL))
 }
 
 func serveXML(w http.ResponseWriter, data string) {
@@ -489,7 +491,7 @@ func TestWithUserAgent(t *testing.T) {
 	}))
 	t.Cleanup(ts.Close)
 
-	c := New("testclient", 2, WithBaseURL(ts.URL), WithUserAgent("custom/1.0"))
+	c := New("testclient", 2, metadata.WithBaseURL(ts.URL), metadata.WithUserAgent("custom/1.0"))
 	_, _ = c.HotAnime(context.Background())
 	if gotUA != "custom/1.0" {
 		t.Errorf("User-Agent = %q, want %q", gotUA, "custom/1.0")

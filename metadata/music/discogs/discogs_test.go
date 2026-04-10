@@ -8,13 +8,15 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func newTestClient(t *testing.T, handler http.HandlerFunc) *Client {
 	t.Helper()
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
-	return New("test-token", WithBaseURL(ts.URL))
+	return New("test-token", metadata.WithBaseURL(ts.URL))
 }
 
 func TestGetRelease(t *testing.T) {
@@ -131,15 +133,15 @@ func TestAPIError(t *testing.T) {
 
 func TestWithHTTPClient(t *testing.T) {
 	custom := &http.Client{}
-	c := New("token", WithHTTPClient(custom))
-	if c.http != custom {
+	c := New("token", metadata.WithHTTPClient(custom))
+	if c.HTTPClient() != custom {
 		t.Fatal("custom HTTP client not set")
 	}
 }
 
 func TestWithUserAgent(t *testing.T) {
-	c := New("token", WithUserAgent("myapp/2.0"))
-	if c.userAgent != "myapp/2.0" {
+	c := New("token", metadata.WithUserAgent("myapp/2.0"))
+	if c.UserAgent() != "myapp/2.0" {
 		t.Fatal("user agent not set")
 	}
 }

@@ -12,94 +12,57 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 const (
 	defaultBaseURL   = "https://api.simkl.com"
 	defaultCalURL    = "https://data.simkl.in"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
 	defaultFilter    = "all"
 )
 
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header sent with every request.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default Simkl API base URL.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
-
-// WithCalendarURL overrides the default Simkl calendar (CDN) base URL.
-func WithCalendarURL(u string) Option {
-	return func(cl *Client) { cl.calBaseURL = u }
-}
-
-// WithClientSecret sets the client secret needed for OAuth2 flows.
-func WithClientSecret(secret string) Option {
-	return func(cl *Client) { cl.clientSecret = secret }
-}
-
-// WithAccessToken sets a pre-existing OAuth2 access token for user-authenticated requests.
-func WithAccessToken(token string) Option {
-	return func(cl *Client) {
-		cl.mu.Lock()
-		cl.accessToken = token
-		cl.mu.Unlock()
-	}
-}
-
-// TokenCallback is called when a new access token is obtained.
-type TokenCallback func(accessToken string)
-
-// WithTokenCallback sets a callback invoked when a new token is obtained.
-func WithTokenCallback(cb TokenCallback) Option {
-	return func(cl *Client) { cl.onToken = cb }
-}
-
 // Client is a Simkl API client.
 type Client struct {
+	*metadata.BaseClient
 	clientID     string
 	clientSecret string
-	rawBaseURL   string
 	calBaseURL   string
-	httpClient   *http.Client
-	userAgent    string
 	onToken      TokenCallback
 
 	mu          sync.RWMutex
 	accessToken string
 }
 
-// New creates a Simkl [Client] using the given client ID (API key).
-func New(clientID string, opts ...Option) *Client {
-	c := &Client{
-		clientID:   clientID,
-		rawBaseURL: defaultBaseURL,
-		calBaseURL: defaultCalURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+// SetClientSecret sets the client secret needed for OAuth2 flows.
+func (c *Client) SetClientSecret(secret string) { c.clientSecret = secret }
+
+// SetCalendarURL overrides the default Simkl calendar (CDN) base URL.
+func (c *Client) SetCalendarURL(u string) { c.calBaseURL = u }
+
+// SetAccessToken sets a pre-existing OAuth2 access token.
+func (c *Client) SetAccessToken(token string) {
+	c.mu.Lock()
+	c.accessToken = token
+	c.mu.Unlock()
 }
+
+// TokenCallback is called when a new access token is obtained.
+type TokenCallback func(accessToken string)
+
+// SetTokenCallback sets a callback invoked when a new token is obtained.
+func (c *Client) SetTokenCallback(cb TokenCallback) { c.onToken = cb }
+
+// New creates a Simkl [Client] using the given client ID (API key).
+func New(clientID string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "simkl", opts...)
+	return &Client{
+		BaseClient: bc,
+		clientID:   clientID,
+		calBaseURL: defaultCalURL,
+	}
+}
+
 
 // APIError is returned when the API responds with a non-2xx status.
 type APIError struct {
@@ -140,7 +103,7 @@ func (c *Client) doGet(ctx context.Context, baseURL, path string, params url.Val
 
 	req.Header.Set("simkl-api-key", c.clientID)
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -149,7 +112,7 @@ func (c *Client) doGet(ctx context.Context, baseURL, path string, params url.Val
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("simkl: GET %s: %w", path, err)
 	}
@@ -177,7 +140,7 @@ func (c *Client) doGet(ctx context.Context, baseURL, path string, params url.Val
 }
 
 func (c *Client) get(ctx context.Context, path string, params url.Values, dst any) error {
-	return c.doGet(ctx, c.rawBaseURL, path, params, dst)
+	return c.doGet(ctx, c.BaseURL(), path, params, dst)
 }
 
 func (c *Client) getCal(ctx context.Context, path string, dst any) error {
@@ -499,7 +462,7 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 		return fmt.Errorf("simkl: marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.rawBaseURL+path, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL()+path, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("simkl: create request: %w", err)
 	}
@@ -507,7 +470,7 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("simkl-api-key", c.clientID)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -516,7 +479,7 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("simkl: POST %s: %w", path, err)
 	}
@@ -632,14 +595,14 @@ func (c *Client) ExchangeCode(ctx context.Context, code, redirectURI string) (st
 }
 
 func (c *Client) del(ctx context.Context, path string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.rawBaseURL+path, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.BaseURL()+path, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("simkl: create request: %w", err)
 	}
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("simkl-api-key", c.clientID)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -648,7 +611,7 @@ func (c *Client) del(ctx context.Context, path string) error {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("simkl: DELETE %s: %w", path, err)
 	}
@@ -915,7 +878,7 @@ func (c *Client) CheckIfWatched(ctx context.Context, items []WatchedCheckItem, e
 	if extended != "" {
 		p.Set("extended", extended)
 	}
-	u, err := url.Parse(c.rawBaseURL + "/sync/watched/")
+	u, err := url.Parse(c.BaseURL() + "/sync/watched/")
 	if err != nil {
 		return nil, fmt.Errorf("simkl: parse URL: %w", err)
 	}
@@ -936,7 +899,7 @@ func (c *Client) CheckIfWatched(ctx context.Context, items []WatchedCheckItem, e
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("simkl-api-key", c.clientID)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -945,7 +908,7 @@ func (c *Client) CheckIfWatched(ctx context.Context, items []WatchedCheckItem, e
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("simkl: POST /sync/watched/: %w", err)
 	}

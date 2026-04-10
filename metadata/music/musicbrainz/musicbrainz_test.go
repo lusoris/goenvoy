@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/music/musicbrainz"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func newTestServer(t *testing.T, wantPath string, response any) *httptest.Server {
@@ -40,7 +41,7 @@ func TestLookupArtist(t *testing.T) {
 	ts := newTestServer(t, "/artist/5b11f4ce-a62d-471e-81fc-a69a8278c7da", artist)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	a, err := c.LookupArtist(context.Background(), "5b11f4ce-a62d-471e-81fc-a69a8278c7da", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -66,7 +67,7 @@ func TestLookupRelease(t *testing.T) {
 	ts := newTestServer(t, "/release/b84ee12a-09ef-421b-82de-0441a926375b", release)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	r, err := c.LookupRelease(context.Background(), "b84ee12a-09ef-421b-82de-0441a926375b", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -89,7 +90,7 @@ func TestLookupReleaseGroup(t *testing.T) {
 	ts := newTestServer(t, "/release-group/1b022e01-4da6-387b-8658-8678046e4cef", rg)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	r, err := c.LookupReleaseGroup(context.Background(), "1b022e01-4da6-387b-8658-8678046e4cef", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -111,7 +112,7 @@ func TestLookupRecording(t *testing.T) {
 	ts := newTestServer(t, "/recording/87ec0c32-6035-476e-a7a6-8543b4bfbb65", rec)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	r, err := c.LookupRecording(context.Background(), "87ec0c32-6035-476e-a7a6-8543b4bfbb65", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -133,7 +134,7 @@ func TestLookupLabel(t *testing.T) {
 	ts := newTestServer(t, "/label/50c384a2-0b44-401b-b893-8181571d90e7", label)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	l, err := c.LookupLabel(context.Background(), "50c384a2-0b44-401b-b893-8181571d90e7", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -148,7 +149,7 @@ func TestLookupWork(t *testing.T) {
 	ts := newTestServer(t, "/work/abc-123", work)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	w, err := c.LookupWork(context.Background(), "abc-123", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -163,7 +164,7 @@ func TestLookupArea(t *testing.T) {
 	ts := newTestServer(t, "/area/area-1", area)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	a, err := c.LookupArea(context.Background(), "area-1", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -178,7 +179,7 @@ func TestLookupEvent(t *testing.T) {
 	ts := newTestServer(t, "/event/evt-1", event)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	e, err := c.LookupEvent(context.Background(), "evt-1", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -193,7 +194,7 @@ func TestLookupGenre(t *testing.T) {
 	ts := newTestServer(t, "/genre/genre-1", genre)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	g, err := c.LookupGenre(context.Background(), "genre-1")
 	if err != nil {
 		t.Fatal(err)
@@ -208,7 +209,7 @@ func TestLookupInstrument(t *testing.T) {
 	ts := newTestServer(t, "/instrument/inst-1", inst)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	i, err := c.LookupInstrument(context.Background(), "inst-1", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -228,7 +229,7 @@ func TestLookupPlace(t *testing.T) {
 	ts := newTestServer(t, "/place/place-1", place)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	p, err := c.LookupPlace(context.Background(), "place-1", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -256,7 +257,7 @@ func TestSearchArtists(t *testing.T) {
 	ts := newTestServer(t, "/artist", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.SearchArtists(context.Background(), "radiohead", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -285,7 +286,7 @@ func TestSearchReleases(t *testing.T) {
 	ts := newTestServer(t, "/release", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.SearchReleases(context.Background(), "ok computer", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -311,7 +312,7 @@ func TestSearchRecordings(t *testing.T) {
 	ts := newTestServer(t, "/recording", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.SearchRecordings(context.Background(), "paranoid android", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -334,7 +335,7 @@ func TestSearchReleaseGroups(t *testing.T) {
 	ts := newTestServer(t, "/release-group", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.SearchReleaseGroups(context.Background(), "the bends", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -357,7 +358,7 @@ func TestSearchLabels(t *testing.T) {
 	ts := newTestServer(t, "/label", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.SearchLabels(context.Background(), "parlophone", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -379,7 +380,7 @@ func TestBrowseReleasesByArtist(t *testing.T) {
 	ts := newTestServer(t, "/release", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.BrowseReleasesByArtist(context.Background(), "a74b1b7f-71a5-4011-9441-d0b5e4122711", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -404,7 +405,7 @@ func TestBrowseReleaseGroupsByArtist(t *testing.T) {
 	ts := newTestServer(t, "/release-group", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.BrowseReleaseGroupsByArtist(context.Background(), "a74b1b7f-71a5-4011-9441-d0b5e4122711", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -426,7 +427,7 @@ func TestBrowseRecordingsByArtist(t *testing.T) {
 	ts := newTestServer(t, "/recording", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.BrowseRecordingsByArtist(context.Background(), "a74b1b7f-71a5-4011-9441-d0b5e4122711", 25, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -445,7 +446,7 @@ func TestLookupByISRC(t *testing.T) {
 	ts := newTestServer(t, "/isrc/GBAYE9700104", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	recs, err := c.LookupByISRC(context.Background(), "GBAYE9700104", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -467,7 +468,7 @@ func TestLookupByDiscID(t *testing.T) {
 	ts := newTestServer(t, "/discid/test-disc-id", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	rels, err := c.LookupByDiscID(context.Background(), "test-disc-id", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -482,7 +483,7 @@ func TestListGenres(t *testing.T) {
 	ts := newTestServer(t, "/genre/all", genres)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.ListGenres(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -499,7 +500,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	_, err := c.LookupArtist(context.Background(), "nonexistent", nil)
 	if err == nil {
 		t.Fatal("expected error")
@@ -523,7 +524,7 @@ func TestAPIErrorRawBody(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	_, err := c.LookupArtist(context.Background(), "x", nil)
 	if err == nil {
 		t.Fatal("expected error")
@@ -542,7 +543,7 @@ func TestLookupSeries(t *testing.T) {
 	ts := newTestServer(t, "/series/s1", series)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	s, err := c.LookupSeries(context.Background(), "s1", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -557,7 +558,7 @@ func TestLookupURL(t *testing.T) {
 	ts := newTestServer(t, "/url/url-1", u)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.LookupURL(context.Background(), "url-1", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -579,7 +580,7 @@ func TestBrowseWorksByArtist(t *testing.T) {
 	ts := newTestServer(t, "/work", resp)
 	defer ts.Close()
 
-	c := musicbrainz.New(musicbrainz.WithBaseURL(ts.URL))
+	c := musicbrainz.New(metadata.WithBaseURL(ts.URL))
 	result, err := c.BrowseWorksByArtist(context.Background(), "a74b1b7f-71a5-4011-9441-d0b5e4122711", 25, 0)
 	if err != nil {
 		t.Fatal(err)

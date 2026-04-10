@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/game/rawg"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *rawg.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return rawg.New("test-key", rawg.WithBaseURL(srv.URL))
+	return rawg.New("test-key", metadata.WithBaseURL(srv.URL))
 }
 
 func TestSearchGames(t *testing.T) {
@@ -389,7 +390,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := rawg.New("bad-key", rawg.WithBaseURL(srv.URL))
+	c := rawg.New("bad-key", metadata.WithBaseURL(srv.URL))
 	_, err := c.SearchGames(context.Background(), "zelda", 1, 10)
 	if err == nil {
 		t.Fatal("expected error")
@@ -431,7 +432,7 @@ func TestAPIKeyInQueryParams(t *testing.T) {
 
 func TestWithHTTPClient(t *testing.T) {
 	custom := &http.Client{}
-	c := rawg.New("key", rawg.WithHTTPClient(custom))
+	c := rawg.New("key", metadata.WithHTTPClient(custom))
 	if c == nil {
 		t.Fatal("expected non-nil client")
 	}

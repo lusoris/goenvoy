@@ -8,61 +8,27 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL   = "http://api.anidb.net:9001/httpapi"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
-)
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header for all requests.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default AniDB HTTP API base URL.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
+const defaultBaseURL = "http://api.anidb.net:9001/httpapi"
 
 // Client is an AniDB HTTP API client.
 type Client struct {
+	*metadata.BaseClient
 	clientName string
 	clientVer  int
-	rawBaseURL string
-	httpClient *http.Client
-	userAgent  string
+	titles     titleStore
 }
 
 // New creates an AniDB [Client] using the given registered client name and version.
-func New(clientName string, clientVer int, opts ...Option) *Client {
-	c := &Client{
-		clientName: clientName,
-		clientVer:  clientVer,
-		rawBaseURL: defaultBaseURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+func New(clientName string, clientVer int, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "anidb", opts...)
+	return &Client{BaseClient: bc, clientName: clientName, clientVer: clientVer}
 }
+
+
 
 // APIError is returned when the AniDB API responds with an error.
 type APIError struct {
@@ -90,16 +56,16 @@ func (c *Client) get(ctx context.Context, request string, params url.Values, dst
 	params.Set("protover", "1")
 	params.Set("request", request)
 
-	u := c.rawBaseURL + "?" + params.Encode()
+	u := c.BaseURL() + "?" + params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("anidb: create request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("anidb: request: %w", err)
 	}

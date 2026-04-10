@@ -9,39 +9,16 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://api.discogs.com"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://api.discogs.com"
 
 // Client is a Discogs API client.
 type Client struct {
-	baseURL   string
-	token     string
-	userAgent string
-	http      *http.Client
-}
-
-// Option configures the Client.
-type Option func(*Client)
-
-// WithHTTPClient sets a custom HTTP client.
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") }
-}
-
-// WithUserAgent sets a custom User-Agent header.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
+	*metadata.BaseClient
+	token string
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -58,21 +35,19 @@ func (e *APIError) Error() string {
 // New creates a new Discogs client.
 //
 // The token is a Discogs personal access token used for authentication.
-func New(token string, opts ...Option) *Client {
-	c := &Client{
-		baseURL:   defaultBaseURL,
-		token:     token,
-		userAgent: "goenvoy/1.0",
-		http:      &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
+func New(token string, opts ...metadata.Option) *Client {
+	opts = append([]metadata.Option{metadata.WithUserAgent("goenvoy/1.0")}, opts...)
+	bc := metadata.NewBaseClient(defaultBaseURL, "discogs", opts...)
+	c := &Client{BaseClient: bc, token: token}
+	bc.SetAuth(func(req *http.Request) {
+		req.Header.Set("Authorization", "Discogs token="+token)
+	})
 	return c
 }
 
+
 func (c *Client) get(ctx context.Context, path string, params url.Values, v any) error {
-	u := c.baseURL + path
+	u := c.BaseURL() + path
 	if len(params) > 0 {
 		u += "?" + params.Encode()
 	}
@@ -82,10 +57,10 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, v any)
 		return err
 	}
 	req.Header.Set("Authorization", "Discogs token="+c.token)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return err
 	}
@@ -104,7 +79,7 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, v any)
 }
 
 func (c *Client) doJSON(ctx context.Context, method, path string, payload, v any) error {
-	u := c.baseURL + path
+	u := c.BaseURL() + path
 
 	var bodyReader io.Reader = http.NoBody
 	if payload != nil {
@@ -120,13 +95,13 @@ func (c *Client) doJSON(ctx context.Context, method, path string, payload, v any
 		return err
 	}
 	req.Header.Set("Authorization", "Discogs token="+c.token)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 	req.Header.Set("Accept", "application/json")
 	if payload != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return err
 	}
@@ -698,15 +673,15 @@ func (c *Client) GetExport(ctx context.Context, exportID int) (*Export, error) {
 
 // DownloadExport returns the download URL for an inventory export.
 func (c *Client) DownloadExport(ctx context.Context, exportID int) ([]byte, error) {
-	u := c.baseURL + fmt.Sprintf("/inventory/export/%d/download", exportID)
+	u := c.BaseURL() + fmt.Sprintf("/inventory/export/%d/download", exportID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Discogs token="+c.token)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return nil, err
 	}

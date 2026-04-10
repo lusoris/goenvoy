@@ -8,33 +8,17 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://api.igdb.com/v4"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://api.igdb.com/v4"
 
 // Client is an IGDB v4 API client.
 type Client struct {
-	baseURL     string
+	*metadata.BaseClient
 	clientID    string
 	accessToken string
-	http        *http.Client
-}
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") }
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -49,22 +33,20 @@ func (e *APIError) Error() string {
 }
 
 // New creates an IGDB [Client] with the given Twitch client ID and access token.
-func New(clientID, accessToken string, opts ...Option) *Client {
-	c := &Client{
-		baseURL:     defaultBaseURL,
-		clientID:    clientID,
-		accessToken: accessToken,
-		http:        &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
+func New(clientID, accessToken string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "igdb", opts...)
+	c := &Client{BaseClient: bc, clientID: clientID, accessToken: accessToken}
+	bc.SetAuth(func(req *http.Request) {
+		req.Header.Set("Client-ID", clientID)
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	})
 	return c
 }
 
+
 // query sends a POST request to the given endpoint with an APICalypse query body.
 func (c *Client) query(ctx context.Context, endpoint, body string, v any) error {
-	u := c.baseURL + "/" + endpoint
+	u := c.BaseURL() + "/" + endpoint
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, strings.NewReader(body))
 	if err != nil {
@@ -75,7 +57,7 @@ func (c *Client) query(ctx context.Context, endpoint, body string, v any) error 
 	req.Header.Set("Authorization", "Bearer "+c.accessToken)
 	req.Header.Set("Content-Type", "text/plain")
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("igdb: request: %w", err)
 	}

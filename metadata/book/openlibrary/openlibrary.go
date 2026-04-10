@@ -7,32 +7,15 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://openlibrary.org"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://openlibrary.org"
 
 // Client is an Open Library API client.
 type Client struct {
-	baseURL string
-	http    *http.Client
-}
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") }
+	*metadata.BaseClient
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -47,19 +30,14 @@ func (e *APIError) Error() string {
 }
 
 // New creates an Open Library [Client].
-func New(opts ...Option) *Client {
-	c := &Client{
-		baseURL: defaultBaseURL,
-		http:    &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+func New(opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "openlibrary", opts...)
+	return &Client{BaseClient: bc}
 }
 
+
 func (c *Client) get(ctx context.Context, path string, params url.Values, v any) error {
-	u := c.baseURL + path
+	u := c.BaseURL() + path
 	if params != nil {
 		u += "?" + params.Encode()
 	}
@@ -69,7 +47,7 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, v any)
 		return fmt.Errorf("openlibrary: create request: %w", err)
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("openlibrary: request: %w", err)
 	}

@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/music/deezer"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *deezer.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return deezer.New(deezer.WithBaseURL(srv.URL))
+	return deezer.New(metadata.WithBaseURL(srv.URL))
 }
 
 func TestSearch(t *testing.T) {
@@ -461,7 +462,7 @@ func TestHTTPError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := deezer.New(deezer.WithBaseURL(srv.URL))
+	c := deezer.New(metadata.WithBaseURL(srv.URL))
 	_, err := c.GetArtist(context.Background(), 1)
 	if err == nil {
 		t.Fatal("expected error")
@@ -498,7 +499,7 @@ func TestWithAccessToken(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	ct := deezer.New(deezer.WithBaseURL(srv.URL), deezer.WithAccessToken("my-token"))
+	ct := deezer.NewWithToken("my-token", metadata.WithBaseURL(srv.URL))
 	_, err := ct.GetGenres(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -507,7 +508,7 @@ func TestWithAccessToken(t *testing.T) {
 
 func TestWithHTTPClient(t *testing.T) {
 	custom := &http.Client{}
-	c := deezer.New(deezer.WithHTTPClient(custom))
+	c := deezer.New(metadata.WithHTTPClient(custom))
 	if c == nil {
 		t.Fatal("expected non-nil client")
 	}

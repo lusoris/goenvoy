@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/tracking/simkl"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func newTestServer(t *testing.T, wantPath, wantKey string, response any) *httptest.Server {
@@ -39,7 +40,7 @@ func TestGetMovie(t *testing.T) {
 	ts := newTestServer(t, "/movies/the-dark-knight", "test-key", movie)
 	defer ts.Close()
 
-	c := simkl.New("test-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("test-key", metadata.WithBaseURL(ts.URL))
 	m, err := c.GetMovie(context.Background(), "the-dark-knight")
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +64,7 @@ func TestTrendingMovies(t *testing.T) {
 	ts := newTestServer(t, "/movies/trending/week", "trend-key", movies)
 	defer ts.Close()
 
-	c := simkl.New("trend-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("trend-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.TrendingMovies(context.Background(), "week")
 	if err != nil {
 		t.Fatal(err)
@@ -87,7 +88,7 @@ func TestGetShow(t *testing.T) {
 	ts := newTestServer(t, "/tv/breaking-bad", "show-key", show)
 	defer ts.Close()
 
-	c := simkl.New("show-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("show-key", metadata.WithBaseURL(ts.URL))
 	s, err := c.GetShow(context.Background(), "breaking-bad")
 	if err != nil {
 		t.Fatal(err)
@@ -108,7 +109,7 @@ func TestGetShowEpisodes(t *testing.T) {
 	ts := newTestServer(t, "/tv/episodes/1388", "ep-key", eps)
 	defer ts.Close()
 
-	c := simkl.New("ep-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("ep-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.GetShowEpisodes(context.Background(), "1388")
 	if err != nil {
 		t.Fatal(err)
@@ -126,7 +127,7 @@ func TestTrendingShows(t *testing.T) {
 	ts := newTestServer(t, "/tv/trending", "ts-key", shows)
 	defer ts.Close()
 
-	c := simkl.New("ts-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("ts-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.TrendingShows(context.Background(), "")
 	if err != nil {
 		t.Fatal(err)
@@ -141,7 +142,7 @@ func TestShowGenres(t *testing.T) {
 	ts := newTestServer(t, "/tv/genres/drama", "sg-key", items)
 	defer ts.Close()
 
-	c := simkl.New("sg-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("sg-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.ShowGenres(context.Background(), "drama", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -159,7 +160,7 @@ func TestShowPremieres(t *testing.T) {
 	ts := newTestServer(t, "/tv/premieres/new", "sp-key", items)
 	defer ts.Close()
 
-	c := simkl.New("sp-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("sp-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.ShowPremieres(context.Background(), "new", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -174,7 +175,7 @@ func TestAiringShows(t *testing.T) {
 	ts := newTestServer(t, "/tv/airing", "as-key", items)
 	defer ts.Close()
 
-	c := simkl.New("as-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("as-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.AiringShows(context.Background(), "", "")
 	if err != nil {
 		t.Fatal(err)
@@ -189,7 +190,7 @@ func TestBestShows(t *testing.T) {
 	ts := newTestServer(t, "/tv/best/all", "bs-key", items)
 	defer ts.Close()
 
-	c := simkl.New("bs-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("bs-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.BestShows(context.Background(), "all")
 	if err != nil {
 		t.Fatal(err)
@@ -213,7 +214,7 @@ func TestGetAnime(t *testing.T) {
 	ts := newTestServer(t, "/anime/38", "anime-key", anime)
 	defer ts.Close()
 
-	c := simkl.New("anime-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("anime-key", metadata.WithBaseURL(ts.URL))
 	a, err := c.GetAnime(context.Background(), "38")
 	if err != nil {
 		t.Fatal(err)
@@ -231,7 +232,7 @@ func TestGetAnimeEpisodes(t *testing.T) {
 	ts := newTestServer(t, "/anime/episodes/38", "ae-key", eps)
 	defer ts.Close()
 
-	c := simkl.New("ae-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("ae-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.GetAnimeEpisodes(context.Background(), "38")
 	if err != nil {
 		t.Fatal(err)
@@ -246,7 +247,7 @@ func TestTrendingAnime(t *testing.T) {
 	ts := newTestServer(t, "/anime/trending/today", "ta-key", items)
 	defer ts.Close()
 
-	c := simkl.New("ta-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("ta-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.TrendingAnime(context.Background(), "today")
 	if err != nil {
 		t.Fatal(err)
@@ -261,7 +262,7 @@ func TestAnimePremieres(t *testing.T) {
 	ts := newTestServer(t, "/anime/premieres/new", "ap-key", items)
 	defer ts.Close()
 
-	c := simkl.New("ap-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("ap-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.AnimePremieres(context.Background(), "new", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -276,7 +277,7 @@ func TestAiringAnime(t *testing.T) {
 	ts := newTestServer(t, "/anime/airing", "aa-key", items)
 	defer ts.Close()
 
-	c := simkl.New("aa-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("aa-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.AiringAnime(context.Background(), "", "")
 	if err != nil {
 		t.Fatal(err)
@@ -294,7 +295,7 @@ func TestBestAnime(t *testing.T) {
 	ts := newTestServer(t, "/anime/best/voted", "ba-key", items)
 	defer ts.Close()
 
-	c := simkl.New("ba-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("ba-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.BestAnime(context.Background(), "voted")
 	if err != nil {
 		t.Fatal(err)
@@ -311,7 +312,7 @@ func TestSearchByID(t *testing.T) {
 	ts := newTestServer(t, "/search/id", "sid-key", results)
 	defer ts.Close()
 
-	c := simkl.New("sid-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("sid-key", metadata.WithBaseURL(ts.URL))
 	res, err := c.SearchByID(context.Background(), "imdb", "tt0903747")
 	if err != nil {
 		t.Fatal(err)
@@ -331,7 +332,7 @@ func TestSearchText(t *testing.T) {
 	ts := newTestServer(t, "/search/tv", "st-key", results)
 	defer ts.Close()
 
-	c := simkl.New("st-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("st-key", metadata.WithBaseURL(ts.URL))
 	res, err := c.SearchText(context.Background(), "tv", "breaking bad", 1, 20)
 	if err != nil {
 		t.Fatal(err)
@@ -349,7 +350,8 @@ func TestCalendarShows(t *testing.T) {
 	ts := newTestServer(t, "/calendar/tv.json", "", items)
 	defer ts.Close()
 
-	c := simkl.New("cal-key", simkl.WithCalendarURL(ts.URL))
+	c := simkl.New("cal-key")
+	c.SetCalendarURL(ts.URL)
 	result, err := c.CalendarShows(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -367,7 +369,8 @@ func TestCalendarAnime(t *testing.T) {
 	ts := newTestServer(t, "/calendar/anime.json", "", items)
 	defer ts.Close()
 
-	c := simkl.New("cal-key", simkl.WithCalendarURL(ts.URL))
+	c := simkl.New("cal-key")
+	c.SetCalendarURL(ts.URL)
 	result, err := c.CalendarAnime(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -382,7 +385,8 @@ func TestCalendarMovies(t *testing.T) {
 	ts := newTestServer(t, "/calendar/movie_release.json", "", items)
 	defer ts.Close()
 
-	c := simkl.New("cal-key", simkl.WithCalendarURL(ts.URL))
+	c := simkl.New("cal-key")
+	c.SetCalendarURL(ts.URL)
 	result, err := c.CalendarMovies(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -397,7 +401,8 @@ func TestCalendarShowsMonth(t *testing.T) {
 	ts := newTestServer(t, "/calendar/2024/6/tv.json", "", items)
 	defer ts.Close()
 
-	c := simkl.New("cal-key", simkl.WithCalendarURL(ts.URL))
+	c := simkl.New("cal-key")
+	c.SetCalendarURL(ts.URL)
 	result, err := c.CalendarShowsMonth(context.Background(), 2024, 6)
 	if err != nil {
 		t.Fatal(err)
@@ -418,7 +423,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("bad-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("bad-key", metadata.WithBaseURL(ts.URL))
 	_, err := c.GetMovie(context.Background(), "1")
 	if err == nil {
 		t.Fatal("expected error")
@@ -469,7 +474,7 @@ func TestGetDeviceCode(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("cid", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("cid", metadata.WithBaseURL(ts.URL))
 	dc, err := c.GetDeviceCode(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -508,11 +513,9 @@ func TestExchangeCode(t *testing.T) {
 	defer ts.Close()
 
 	var callbackToken string
-	c := simkl.New("cid",
-		simkl.WithBaseURL(ts.URL),
-		simkl.WithClientSecret("secret"),
-		simkl.WithTokenCallback(func(tok string) { callbackToken = tok }),
-	)
+	c := simkl.New("cid", metadata.WithBaseURL(ts.URL))
+	c.SetClientSecret("secret")
+	c.SetTokenCallback(func(tok string) { callbackToken = tok })
 	tok, err := c.ExchangeCode(context.Background(), "auth-code", "urn:ietf:wg:oauth:2.0:oob")
 	if err != nil {
 		t.Fatal(err)
@@ -537,7 +540,8 @@ func TestBearerTokenInHeader(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("cid", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("my-tok"))
+	c := simkl.New("cid", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("my-tok")
 	_, err := c.GetMovie(context.Background(), "1")
 	if err != nil {
 		t.Fatal(err)
@@ -556,7 +560,7 @@ func TestNoBearerTokenWhenEmpty(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("cid", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("cid", metadata.WithBaseURL(ts.URL))
 	_, err := c.GetMovie(context.Background(), "1")
 	if err != nil {
 		t.Fatal(err)
@@ -570,7 +574,7 @@ func TestAPIErrorRawBody(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("key", metadata.WithBaseURL(ts.URL))
 	_, err := c.GetMovie(context.Background(), "1")
 	if err == nil {
 		t.Fatal("expected error")
@@ -589,7 +593,7 @@ func TestAnimeGenres(t *testing.T) {
 	ts := newTestServer(t, "/anime/genres/action", "ag-key", items)
 	defer ts.Close()
 
-	c := simkl.New("ag-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("ag-key", metadata.WithBaseURL(ts.URL))
 	result, err := c.AnimeGenres(context.Background(), "action", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -605,7 +609,7 @@ func TestWithCustomHTTPClient(t *testing.T) {
 	defer ts.Close()
 
 	custom := &http.Client{}
-	c := simkl.New("custom-key", simkl.WithBaseURL(ts.URL), simkl.WithHTTPClient(custom))
+	c := simkl.New("custom-key", metadata.WithBaseURL(ts.URL), metadata.WithHTTPClient(custom))
 	m, err := c.GetMovie(context.Background(), "1")
 	if err != nil {
 		t.Fatal(err)
@@ -665,7 +669,7 @@ func TestGetRatingByID(t *testing.T) {
 	ts := newTestServer(t, "/ratings", "rate-key", info)
 	defer ts.Close()
 
-	c := simkl.New("rate-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("rate-key", metadata.WithBaseURL(ts.URL))
 	got, err := c.GetRatingByID(context.Background(), 42, "rank")
 	if err != nil {
 		t.Fatal(err)
@@ -686,7 +690,7 @@ func TestGetWatchlistRatings(t *testing.T) {
 	ts := newTestServer(t, "/ratings/tv/", "wr-key", items)
 	defer ts.Close()
 
-	c := simkl.New("wr-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("wr-key", metadata.WithBaseURL(ts.URL))
 	got, err := c.GetWatchlistRatings(context.Background(), "tv", "watching", "")
 	if err != nil {
 		t.Fatal(err)
@@ -711,7 +715,7 @@ func TestSearchRandom(t *testing.T) {
 	ts := newPostTestServer(t, "/search/random", "rnd-key", result)
 	defer ts.Close()
 
-	c := simkl.New("rnd-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("rnd-key", metadata.WithBaseURL(ts.URL))
 	got, err := c.SearchRandom(context.Background(), &simkl.RandomSearchParams{
 		Type:  "movie",
 		Genre: "action",
@@ -731,7 +735,7 @@ func TestMovieGenres(t *testing.T) {
 	ts := newTestServer(t, "/movies/genres/action", "mg-key", items)
 	defer ts.Close()
 
-	c := simkl.New("mg-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("mg-key", metadata.WithBaseURL(ts.URL))
 	got, err := c.MovieGenres(context.Background(), "action", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -749,7 +753,7 @@ func TestBestMovies(t *testing.T) {
 	ts := newTestServer(t, "/movies/best/all", "bm-key", items)
 	defer ts.Close()
 
-	c := simkl.New("bm-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("bm-key", metadata.WithBaseURL(ts.URL))
 	got, err := c.BestMovies(context.Background(), "")
 	if err != nil {
 		t.Fatal(err)
@@ -769,7 +773,8 @@ func TestScrobbleStart(t *testing.T) {
 	ts := newPostTestServer(t, "/scrobble/start", "sc-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("sc-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("sc-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.ScrobbleStart(context.Background(), &simkl.ScrobbleRequest{
 		Movie: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 1}},
 	})
@@ -786,7 +791,8 @@ func TestScrobblePause(t *testing.T) {
 	ts := newPostTestServer(t, "/scrobble/pause", "sp-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("sp-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("sp-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.ScrobblePause(context.Background(), &simkl.ScrobbleRequest{
 		Movie: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 1}},
 	})
@@ -803,7 +809,8 @@ func TestScrobbleStop(t *testing.T) {
 	ts := newPostTestServer(t, "/scrobble/stop", "ss-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("ss-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("ss-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.ScrobbleStop(context.Background(), &simkl.ScrobbleRequest{
 		Show:    &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 2}},
 		Episode: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 30}},
@@ -821,7 +828,8 @@ func TestScrobbleCheckin(t *testing.T) {
 	ts := newPostTestServer(t, "/scrobble/checkin", "ci-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("ci-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("ci-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.ScrobbleCheckin(context.Background(), &simkl.ScrobbleRequest{
 		Anime: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 5}},
 	})
@@ -843,7 +851,8 @@ func TestGetLastActivity(t *testing.T) {
 	ts := newTestServer(t, "/sync/activities", "la-key", activity)
 	defer ts.Close()
 
-	c := simkl.New("la-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("la-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.GetLastActivity(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -865,7 +874,8 @@ func TestGetAllItems(t *testing.T) {
 	ts := newTestServer(t, "/sync/all-items/shows/watching", "ai-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("ai-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("ai-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.GetAllItems(context.Background(), "shows", "watching", "", "")
 	if err != nil {
 		t.Fatal(err)
@@ -887,7 +897,8 @@ func TestGetAllItemsNoFilter(t *testing.T) {
 	ts := newTestServer(t, "/sync/all-items/", "ai2-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("ai2-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("ai2-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.GetAllItems(context.Background(), "", "", "", "")
 	if err != nil {
 		t.Fatal(err)
@@ -902,7 +913,8 @@ func TestAddToHistory(t *testing.T) {
 	ts := newPostTestServer(t, "/sync/history", "ah-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("ah-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("ah-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.AddToHistory(context.Background(), &simkl.SyncItems{
 		Movies: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 1}}},
 	})
@@ -919,7 +931,8 @@ func TestRemoveFromHistory(t *testing.T) {
 	ts := newPostTestServer(t, "/sync/history/remove", "rh-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("rh-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("rh-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.RemoveFromHistory(context.Background(), &simkl.SyncItems{
 		Shows: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 1}}, {IDs: &simkl.IDs{Simkl: 2}}},
 	})
@@ -940,7 +953,8 @@ func TestGetSyncRatings(t *testing.T) {
 	ts := newTestServer(t, "/sync/ratings/movies/9", "sr-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("sr-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("sr-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.GetSyncRatings(context.Background(), "movies", "9", "")
 	if err != nil {
 		t.Fatal(err)
@@ -958,7 +972,8 @@ func TestAddRatings(t *testing.T) {
 	ts := newPostTestServer(t, "/sync/ratings", "ar-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("ar-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("ar-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.AddRatings(context.Background(), &simkl.SyncItems{
 		Movies: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 5}, Rating: 8}},
 	})
@@ -975,7 +990,8 @@ func TestRemoveRatings(t *testing.T) {
 	ts := newPostTestServer(t, "/sync/ratings/remove", "rr-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("rr-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("rr-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.RemoveRatings(context.Background(), &simkl.SyncItems{
 		Movies: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 5}}},
 	})
@@ -992,7 +1008,8 @@ func TestAddToList(t *testing.T) {
 	ts := newPostTestServer(t, "/sync/add-to-list", "al-key", resp)
 	defer ts.Close()
 
-	c := simkl.New("al-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("al-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.AddToList(context.Background(), &simkl.SyncItems{
 		Shows: []simkl.SyncItemEntry{{IDs: &simkl.IDs{Simkl: 1}, To: "plantowatch"}},
 	})
@@ -1011,7 +1028,8 @@ func TestGetPlaybacks(t *testing.T) {
 	ts := newTestServer(t, "/sync/playback/movies", "pb-key", sessions)
 	defer ts.Close()
 
-	c := simkl.New("pb-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("pb-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.GetPlaybacks(context.Background(), "movies")
 	if err != nil {
 		t.Fatal(err)
@@ -1031,7 +1049,8 @@ func TestDeletePlayback(t *testing.T) {
 	ts := newDeleteTestServer(t, "/sync/playback/456", "dp-key")
 	defer ts.Close()
 
-	c := simkl.New("dp-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("dp-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	err := c.DeletePlayback(context.Background(), 456)
 	if err != nil {
 		t.Fatal(err)
@@ -1046,7 +1065,8 @@ func TestCheckIfWatched(t *testing.T) {
 	ts := newPostTestServer(t, "/sync/watched/", "cw-key", results)
 	defer ts.Close()
 
-	c := simkl.New("cw-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("cw-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.CheckIfWatched(context.Background(), []simkl.WatchedCheckItem{
 		{IDs: &simkl.IDs{Simkl: 42}},
 		{IDs: &simkl.IDs{Simkl: 99}},
@@ -1075,7 +1095,7 @@ func TestGetUserStats(t *testing.T) {
 	ts := newTestServer(t, "/users/12345/stats", "us-key", stats)
 	defer ts.Close()
 
-	c := simkl.New("us-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("us-key", metadata.WithBaseURL(ts.URL))
 	got, err := c.GetUserStats(context.Background(), 12345)
 	if err != nil {
 		t.Fatal(err)
@@ -1096,7 +1116,8 @@ func TestGetUserSettings(t *testing.T) {
 	ts := newTestServer(t, "/users/settings", "set-key", settings)
 	defer ts.Close()
 
-	c := simkl.New("set-key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("set-key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	got, err := c.GetUserSettings(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -1119,7 +1140,7 @@ func TestGetLastWatchedArts(t *testing.T) {
 	ts := newTestServer(t, "/users/recently-watched-background/100", "lwa-key", art)
 	defer ts.Close()
 
-	c := simkl.New("lwa-key", simkl.WithBaseURL(ts.URL))
+	c := simkl.New("lwa-key", metadata.WithBaseURL(ts.URL))
 	got, err := c.GetLastWatchedArts(context.Background(), 100)
 	if err != nil {
 		t.Fatal(err)
@@ -1138,7 +1159,8 @@ func TestDeletePlaybackError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("tok"))
+	c := simkl.New("key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("tok")
 	err := c.DeletePlayback(context.Background(), 9999)
 	if err == nil {
 		t.Fatal("expected error")
@@ -1166,7 +1188,8 @@ func TestScrobblePostAuthHeader(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("scrobble-tok"))
+	c := simkl.New("key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("scrobble-tok")
 	_, err := c.ScrobbleStart(context.Background(), &simkl.ScrobbleRequest{
 		Movie: &simkl.ScrobbleMedia{IDs: &simkl.IDs{Simkl: 1}},
 	})
@@ -1188,7 +1211,8 @@ func TestDeleteAuthHeader(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := simkl.New("key", simkl.WithBaseURL(ts.URL), simkl.WithAccessToken("del-tok"))
+	c := simkl.New("key", metadata.WithBaseURL(ts.URL))
+	c.SetAccessToken("del-tok")
 	err := c.DeletePlayback(context.Background(), 1)
 	if err != nil {
 		t.Fatal(err)

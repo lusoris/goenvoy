@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/music/audiodb"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *audiodb.Client {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return audiodb.New("2", audiodb.WithBaseURL(srv.URL))
+	return audiodb.New("2", metadata.WithBaseURL(srv.URL))
 }
 
 func TestSearchArtist(t *testing.T) {
@@ -281,7 +282,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := audiodb.New("2", audiodb.WithBaseURL(srv.URL))
+	c := audiodb.New("2", metadata.WithBaseURL(srv.URL))
 	_, err := c.SearchArtist(context.Background(), "coldplay")
 	if err == nil {
 		t.Fatal("expected error")
@@ -305,7 +306,7 @@ func TestAPIKeyInURL(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := audiodb.New("2", audiodb.WithBaseURL(srv.URL))
+	c := audiodb.New("2", metadata.WithBaseURL(srv.URL))
 	_, err := c.SearchArtist(context.Background(), "test")
 	if err != nil {
 		t.Fatal(err)

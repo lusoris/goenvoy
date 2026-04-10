@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata/adult/tpdb"
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func newTestServer(t *testing.T, wantPath, wantToken string, response any) *httptest.Server {
@@ -63,7 +64,7 @@ func TestSearchScenes(t *testing.T) {
 	ts := newListServer(t, "/scenes", "test-token", []tpdb.Scene{scene})
 	defer ts.Close()
 
-	c := tpdb.New("test-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("test-token", metadata.WithBaseURL(ts.URL))
 	scenes, pg, err := c.SearchScenes(context.Background(), &tpdb.SceneSearchParams{Query: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +95,7 @@ func TestGetScene(t *testing.T) {
 	ts := newItemServer(t, "/scenes/def456", "scene-token", scene)
 	defer ts.Close()
 
-	c := tpdb.New("scene-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("scene-token", metadata.WithBaseURL(ts.URL))
 	s, err := c.GetScene(context.Background(), "def456")
 	if err != nil {
 		t.Fatal(err)
@@ -115,7 +116,7 @@ func TestGetSimilarScenes(t *testing.T) {
 	ts := newListServer(t, "/scenes/abc/similar", "sim-token", scenes)
 	defer ts.Close()
 
-	c := tpdb.New("sim-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("sim-token", metadata.WithBaseURL(ts.URL))
 	result, err := c.GetSimilarScenes(context.Background(), "abc")
 	if err != nil {
 		t.Fatal(err)
@@ -138,7 +139,7 @@ func TestSearchPerformers(t *testing.T) {
 	ts := newListServer(t, "/performers", "perf-token", []tpdb.Performer{perf})
 	defer ts.Close()
 
-	c := tpdb.New("perf-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("perf-token", metadata.WithBaseURL(ts.URL))
 	perfs, pg, err := c.SearchPerformers(context.Background(), &tpdb.PerformerSearchParams{Query: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -170,7 +171,7 @@ func TestGetPerformer(t *testing.T) {
 	ts := newItemServer(t, "/performers/perf2", "p-token", perf)
 	defer ts.Close()
 
-	c := tpdb.New("p-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("p-token", metadata.WithBaseURL(ts.URL))
 	p, err := c.GetPerformer(context.Background(), "perf2")
 	if err != nil {
 		t.Fatal(err)
@@ -191,7 +192,7 @@ func TestGetPerformerScenes(t *testing.T) {
 	ts := newListServer(t, "/performers/p1/scenes", "ps-token", scenes)
 	defer ts.Close()
 
-	c := tpdb.New("ps-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("ps-token", metadata.WithBaseURL(ts.URL))
 	result, pg, err := c.GetPerformerScenes(context.Background(), "p1", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -209,7 +210,7 @@ func TestSearchSites(t *testing.T) {
 	ts := newListServer(t, "/sites", "site-token", []tpdb.Site{site})
 	defer ts.Close()
 
-	c := tpdb.New("site-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("site-token", metadata.WithBaseURL(ts.URL))
 	sites, pg, err := c.SearchSites(context.Background(), "test", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -230,7 +231,7 @@ func TestGetSite(t *testing.T) {
 	ts := newItemServer(t, "/sites/uuid-456", "s-token", site)
 	defer ts.Close()
 
-	c := tpdb.New("s-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("s-token", metadata.WithBaseURL(ts.URL))
 	s, err := c.GetSite(context.Background(), "uuid-456")
 	if err != nil {
 		t.Fatal(err)
@@ -248,7 +249,7 @@ func TestListTags(t *testing.T) {
 	ts := newListServer(t, "/tags", "tag-token", tags)
 	defer ts.Close()
 
-	c := tpdb.New("tag-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("tag-token", metadata.WithBaseURL(ts.URL))
 	result, pg, err := c.ListTags(context.Background(), "brunette", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -269,7 +270,7 @@ func TestGetTag(t *testing.T) {
 	ts := newItemServer(t, "/tags/blonde", "gt-token", tag)
 	defer ts.Close()
 
-	c := tpdb.New("gt-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("gt-token", metadata.WithBaseURL(ts.URL))
 	result, err := c.GetTag(context.Background(), "blonde")
 	if err != nil {
 		t.Fatal(err)
@@ -284,7 +285,7 @@ func TestListDirectors(t *testing.T) {
 	ts := newListServer(t, "/directors", "dir-token", dirs)
 	defer ts.Close()
 
-	c := tpdb.New("dir-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("dir-token", metadata.WithBaseURL(ts.URL))
 	result, pg, err := c.ListDirectors(context.Background(), "john", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -305,7 +306,7 @@ func TestSearchMovies(t *testing.T) {
 	ts := newListServer(t, "/movies", "mov-token", []tpdb.Movie{movie})
 	defer ts.Close()
 
-	c := tpdb.New("mov-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("mov-token", metadata.WithBaseURL(ts.URL))
 	movies, pg, err := c.SearchMovies(context.Background(), "test", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -326,7 +327,7 @@ func TestGetMovie(t *testing.T) {
 	ts := newItemServer(t, "/movies/6", "gm-token", movie)
 	defer ts.Close()
 
-	c := tpdb.New("gm-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("gm-token", metadata.WithBaseURL(ts.URL))
 	m, err := c.GetMovie(context.Background(), "6")
 	if err != nil {
 		t.Fatal(err)
@@ -344,7 +345,7 @@ func TestSearchJav(t *testing.T) {
 	ts := newListServer(t, "/jav", "jav-token", []tpdb.Jav{jav})
 	defer ts.Close()
 
-	c := tpdb.New("jav-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("jav-token", metadata.WithBaseURL(ts.URL))
 	result, pg, err := c.SearchJav(context.Background(), "test", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -365,7 +366,7 @@ func TestGetJav(t *testing.T) {
 	ts := newItemServer(t, "/jav/9", "gj-token", jav)
 	defer ts.Close()
 
-	c := tpdb.New("gj-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("gj-token", metadata.WithBaseURL(ts.URL))
 	j, err := c.GetJav(context.Background(), "9")
 	if err != nil {
 		t.Fatal(err)
@@ -380,7 +381,7 @@ func TestGetChanges(t *testing.T) {
 	ts := newListServer(t, "/changelog", "ch-token", scenes)
 	defer ts.Close()
 
-	c := tpdb.New("ch-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("ch-token", metadata.WithBaseURL(ts.URL))
 	result, pg, err := c.GetChanges(context.Background(), "2024-01-01T00:00:00Z", 1, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -400,7 +401,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := tpdb.New("bad-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("bad-token", metadata.WithBaseURL(ts.URL))
 	_, err := c.GetScene(context.Background(), "1")
 	if err == nil {
 		t.Fatal("expected error")
@@ -424,7 +425,7 @@ func TestAPIErrorRawBody(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := tpdb.New("token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("token", metadata.WithBaseURL(ts.URL))
 	_, err := c.GetScene(context.Background(), "1")
 	if err == nil {
 		t.Fatal("expected error")
@@ -443,7 +444,7 @@ func TestWithHTTPClient(t *testing.T) {
 	defer ts.Close()
 
 	custom := &http.Client{}
-	c := tpdb.New("custom-token", tpdb.WithBaseURL(ts.URL), tpdb.WithHTTPClient(custom))
+	c := tpdb.New("custom-token", metadata.WithBaseURL(ts.URL), metadata.WithHTTPClient(custom))
 	s, err := c.GetScene(context.Background(), "1")
 	if err != nil {
 		t.Fatal(err)
@@ -458,7 +459,7 @@ func TestGetSimilarPerformers(t *testing.T) {
 	ts := newListServer(t, "/performers/p1/similar", "sp-token", perfs)
 	defer ts.Close()
 
-	c := tpdb.New("sp-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("sp-token", metadata.WithBaseURL(ts.URL))
 	result, err := c.GetSimilarPerformers(context.Background(), "p1")
 	if err != nil {
 		t.Fatal(err)
@@ -476,7 +477,7 @@ func TestGetPerformerMovies(t *testing.T) {
 	ts := newListServer(t, "/performers/p2/movies", "pm-token", movies)
 	defer ts.Close()
 
-	c := tpdb.New("pm-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("pm-token", metadata.WithBaseURL(ts.URL))
 	result, pg, err := c.GetPerformerMovies(context.Background(), "p2", 1, 10)
 	if err != nil {
 		t.Fatal(err)
@@ -497,7 +498,7 @@ func TestGetDirector(t *testing.T) {
 	ts := newItemServer(t, "/directors/test-director", "gd-token", dir)
 	defer ts.Close()
 
-	c := tpdb.New("gd-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("gd-token", metadata.WithBaseURL(ts.URL))
 	d, err := c.GetDirector(context.Background(), "test-director")
 	if err != nil {
 		t.Fatal(err)
@@ -515,7 +516,7 @@ func TestFindSceneByHash(t *testing.T) {
 	ts := newListServer(t, "/scenes", "hash-token", scenes)
 	defer ts.Close()
 
-	c := tpdb.New("hash-token", tpdb.WithBaseURL(ts.URL))
+	c := tpdb.New("hash-token", metadata.WithBaseURL(ts.URL))
 	result, err := c.FindSceneByHash(context.Background(), "abc123def456")
 	if err != nil {
 		t.Fatal(err)

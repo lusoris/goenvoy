@@ -7,13 +7,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 func newTestClient(t *testing.T, handler http.HandlerFunc) *Client {
 	t.Helper()
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
-	return New("test-key", WithBaseURL(ts.URL))
+	return New("test-key", metadata.WithBaseURL(ts.URL))
 }
 
 func TestGetArtistInfo(t *testing.T) {
@@ -252,8 +254,8 @@ func TestAPIError(t *testing.T) {
 
 func TestWithHTTPClient(t *testing.T) {
 	custom := &http.Client{}
-	c := New("key", WithHTTPClient(custom))
-	if c.http != custom {
+	c := New("key", metadata.WithHTTPClient(custom))
+	if c.HTTPClient() != custom {
 		t.Fatal("custom HTTP client not set")
 	}
 }

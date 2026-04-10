@@ -37,7 +37,7 @@ This is a multi-module monorepo. Each service lives in its own Go module under a
 
 ```
 arr/sonarr/         → github.com/lusoris/goenvoy/arr/sonarr
-metadata/movie/tmdb → github.com/lusoris/goenvoy/metadata/movie/tmdb
+metadata/video/tmdb → github.com/lusoris/goenvoy/metadata/video/tmdb
 ```
 
 Parent packages (`arr/`, `metadata/`, etc.) contain shared types used by their child modules.
@@ -78,7 +78,7 @@ Use clear, descriptive messages. Reference the affected module(s):
 ```
 arr/sonarr: add GetEpisodeFiles method
 
-metadata/movie/tvdb: fix token refresh on 401
+metadata/video/tvdb: fix token refresh on 401
 ```
 
 ## Pull Requests

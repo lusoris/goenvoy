@@ -12,78 +12,20 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
 const (
 	defaultBaseURL   = "https://api.trakt.tv"
-	defaultTimeout   = 30 * time.Second
-	defaultUserAgent = "goenvoy/0.0.1"
 	apiVersion       = "2"
 )
 
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.httpClient = c }
-}
-
-// WithTimeout overrides the default HTTP request timeout.
-func WithTimeout(d time.Duration) Option {
-	return func(cl *Client) { cl.httpClient.Timeout = d }
-}
-
-// WithUserAgent sets the User-Agent header sent with every request.
-func WithUserAgent(ua string) Option {
-	return func(cl *Client) { cl.userAgent = ua }
-}
-
-// WithBaseURL overrides the default Trakt API base URL.
-// The URL must not have a trailing slash.
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.rawBaseURL = u }
-}
-
-// WithClientSecret sets the client secret needed for OAuth2 flows.
-func WithClientSecret(secret string) Option {
-	return func(cl *Client) { cl.clientSecret = secret }
-}
-
-// WithAccessToken sets a pre-existing OAuth2 access token for user-authenticated requests.
-func WithAccessToken(token string) Option {
-	return func(cl *Client) {
-		cl.mu.Lock()
-		cl.accessToken = token
-		cl.mu.Unlock()
-	}
-}
-
-// WithRefreshToken sets a pre-existing OAuth2 refresh token.
-func WithRefreshToken(token string) Option {
-	return func(cl *Client) {
-		cl.mu.Lock()
-		cl.refreshToken = token
-		cl.mu.Unlock()
-	}
-}
-
-// TokenCallback is called whenever a new token pair is obtained (via refresh or exchange).
-// Store the tokens persistently so they survive restarts.
-type TokenCallback func(token Token)
-
-// WithTokenCallback sets a callback invoked whenever tokens are refreshed or exchanged.
-func WithTokenCallback(cb TokenCallback) Option {
-	return func(cl *Client) { cl.onToken = cb }
-}
-
 // Client is a Trakt API v2 client.
 type Client struct {
+	*metadata.BaseClient
 	clientID     string
 	clientSecret string
-	rawBaseURL   string
-	httpClient   *http.Client
-	userAgent    string
 	onToken      TokenCallback
 
 	mu           sync.RWMutex
@@ -91,19 +33,36 @@ type Client struct {
 	refreshToken string
 }
 
-// New creates a Trakt [Client] using the given client ID (API key).
-func New(clientID string, opts ...Option) *Client {
-	c := &Client{
-		clientID:   clientID,
-		rawBaseURL: defaultBaseURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		userAgent:  defaultUserAgent,
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c
+// SetClientSecret sets the client secret needed for OAuth2 flows.
+func (c *Client) SetClientSecret(secret string) { c.clientSecret = secret }
+
+// SetAccessToken sets a pre-existing OAuth2 access token.
+func (c *Client) SetAccessToken(token string) {
+	c.mu.Lock()
+	c.accessToken = token
+	c.mu.Unlock()
 }
+
+// SetRefreshToken sets a pre-existing OAuth2 refresh token.
+func (c *Client) SetRefreshToken(token string) {
+	c.mu.Lock()
+	c.refreshToken = token
+	c.mu.Unlock()
+}
+
+// TokenCallback is called whenever a new token pair is obtained (via refresh or exchange).
+// Store the tokens persistently so they survive restarts.
+type TokenCallback func(token Token)
+
+// SetTokenCallback sets a callback invoked whenever tokens are refreshed or exchanged.
+func (c *Client) SetTokenCallback(cb TokenCallback) { c.onToken = cb }
+
+// New creates a Trakt [Client] using the given client ID (API key).
+func New(clientID string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "trakt", opts...)
+	return &Client{BaseClient: bc, clientID: clientID}
+}
+
 
 // APIError is returned when the API responds with a non-2xx status.
 type APIError struct {
@@ -149,7 +108,7 @@ func parsePaginationHeaders(h http.Header) PaginationHeaders {
 }
 
 func (c *Client) get(ctx context.Context, path string, params url.Values, dst any) (*PaginationHeaders, error) {
-	u, err := url.Parse(c.rawBaseURL + path)
+	u, err := url.Parse(c.BaseURL() + path)
 	if err != nil {
 		return nil, fmt.Errorf("trakt: parse URL: %w", err)
 	}
@@ -166,7 +125,7 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, dst an
 	req.Header.Set("trakt-api-version", apiVersion)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -175,7 +134,7 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, dst an
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("trakt: GET %s: %w", path, err)
 	}
@@ -1933,7 +1892,7 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 		return fmt.Errorf("trakt: marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.rawBaseURL+path, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL()+path, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("trakt: create request: %w", err)
 	}
@@ -1942,7 +1901,7 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("trakt-api-key", c.clientID)
 	req.Header.Set("trakt-api-version", apiVersion)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -1951,7 +1910,7 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("trakt: POST %s: %w", path, err)
 	}
@@ -1979,7 +1938,7 @@ func (c *Client) post(ctx context.Context, path string, body, dst any) error {
 }
 
 func (c *Client) del(ctx context.Context, path string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.rawBaseURL+path, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.BaseURL()+path, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("trakt: create request: %w", err)
 	}
@@ -1987,7 +1946,7 @@ func (c *Client) del(ctx context.Context, path string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("trakt-api-key", c.clientID)
 	req.Header.Set("trakt-api-version", apiVersion)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -1996,7 +1955,7 @@ func (c *Client) del(ctx context.Context, path string) error {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("trakt: DELETE %s: %w", path, err)
 	}
@@ -2023,7 +1982,7 @@ func (c *Client) put(ctx context.Context, path string, body any) error {
 		return fmt.Errorf("trakt: marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.rawBaseURL+path, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.BaseURL()+path, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("trakt: create request: %w", err)
 	}
@@ -2032,7 +1991,7 @@ func (c *Client) put(ctx context.Context, path string, body any) error {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("trakt-api-key", c.clientID)
 	req.Header.Set("trakt-api-version", apiVersion)
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent())
 
 	c.mu.RLock()
 	token := c.accessToken
@@ -2041,7 +2000,7 @@ func (c *Client) put(ctx context.Context, path string, body any) error {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("trakt: PUT %s: %w", path, err)
 	}

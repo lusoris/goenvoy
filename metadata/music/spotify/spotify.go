@@ -9,32 +9,16 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/lusoris/goenvoy/metadata"
 )
 
-const (
-	defaultBaseURL = "https://api.spotify.com/v1"
-	defaultTimeout = 30 * time.Second
-)
+const defaultBaseURL = "https://api.spotify.com/v1"
 
 // Client is a Spotify Web API client.
 type Client struct {
-	baseURL     string
+	*metadata.BaseClient
 	accessToken string
-	http        *http.Client
-}
-
-// Option configures a [Client].
-type Option func(*Client)
-
-// WithHTTPClient sets a custom [http.Client].
-func WithHTTPClient(c *http.Client) Option {
-	return func(cl *Client) { cl.http = c }
-}
-
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(u string) Option {
-	return func(cl *Client) { cl.baseURL = strings.TrimRight(u, "/") }
 }
 
 // APIError is returned when the API responds with a non-2xx status.
@@ -49,20 +33,18 @@ func (e *APIError) Error() string {
 }
 
 // New creates a Spotify [Client] with the given OAuth2 access token.
-func New(accessToken string, opts ...Option) *Client {
-	c := &Client{
-		baseURL:     defaultBaseURL,
-		accessToken: accessToken,
-		http:        &http.Client{Timeout: defaultTimeout},
-	}
-	for _, o := range opts {
-		o(c)
-	}
+func New(accessToken string, opts ...metadata.Option) *Client {
+	bc := metadata.NewBaseClient(defaultBaseURL, "spotify", opts...)
+	c := &Client{BaseClient: bc, accessToken: accessToken}
+	bc.SetAuth(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	})
 	return c
 }
 
+
 func (c *Client) get(ctx context.Context, path string, v any) error {
-	u := c.baseURL + path
+	u := c.BaseURL() + path
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
 	if err != nil {
@@ -71,7 +53,7 @@ func (c *Client) get(ctx context.Context, path string, v any) error {
 
 	req.Header.Set("Authorization", "Bearer "+c.accessToken)
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("spotify: request: %w", err)
 	}
