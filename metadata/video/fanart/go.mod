@@ -2,4 +2,4 @@ module github.com/lusoris/goenvoy/metadata/video/fanart
 
 go 1.26.1
 
-require github.com/lusoris/goenvoy/metadata v0.2.0
+require github.com/lusoris/goenvoy/metadata v1.2.0
