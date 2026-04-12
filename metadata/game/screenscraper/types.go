@@ -2,41 +2,41 @@ package screenscraper
 
 // GameInfoResponse is the top-level response from jeuInfos and jeuRecherche.
 type GameInfoResponse struct {
-	Header  Header   `json:"header"`
+	Header   Header   `json:"header"`
 	Response Response `json:"response"`
 }
 
 // Header contains API response metadata.
 type Header struct {
-	APIVersion  string `json:"APIversion"`
+	APIVersion       string `json:"APIversion"`
 	CommandRequested string `json:"commandRequested"`
-	Success     string `json:"success"`
-	Error       string `json:"error"`
+	Success          string `json:"success"`
+	Error            string `json:"error"`
 }
 
 // Response wraps the game data in the API response.
 type Response struct {
-	Game   GameInfo   `json:"jeu"`
-	Games  []GameInfo `json:"jeux"`
+	Game  GameInfo   `json:"jeu"`
+	Games []GameInfo `json:"jeux"`
 }
 
 // GameInfo represents detailed game information from Screenscraper.
 type GameInfo struct {
-	ID         string         `json:"id"`
-	RomID      string         `json:"romid"`
-	Names      []RegionText   `json:"noms"`
-	SystemID   string         `json:"systemeid"`
-	System     SystemRef      `json:"systeme"`
-	Publisher  Publisher      `json:"editeur"`
-	Developer  Developer      `json:"developpeur"`
-	Players    string         `json:"joueurs"`
-	Note       Rating         `json:"note"`
-	Genres     []GenreRef     `json:"genres"`
-	Synopsis   []LangText     `json:"synopsis"`
-	Dates      []RegionText   `json:"dates"`
-	Medias     []Media        `json:"medias"`
-	ROMs       []ROM          `json:"roms"`
-	Familles   []FamilleRef   `json:"familles"`
+	ID              string              `json:"id"`
+	RomID           string              `json:"romid"`
+	Names           []RegionText        `json:"noms"`
+	SystemID        string              `json:"systemeid"`
+	System          SystemRef           `json:"systeme"`
+	Publisher       Publisher           `json:"editeur"`
+	Developer       Developer           `json:"developpeur"`
+	Players         string              `json:"joueurs"`
+	Note            Rating              `json:"note"`
+	Genres          []GenreRef          `json:"genres"`
+	Synopsis        []LangText          `json:"synopsis"`
+	Dates           []RegionText        `json:"dates"`
+	Medias          []Media             `json:"medias"`
+	ROMs            []ROM               `json:"roms"`
+	Familles        []FamilleRef        `json:"familles"`
 	Classifications []ClassificationRef `json:"classifications"`
 }
 
@@ -108,18 +108,18 @@ type Media struct {
 
 // ROM represents ROM file information.
 type ROM struct {
-	ID       string `json:"id"`
-	RomSize  string `json:"romsize"`
-	RomName  string `json:"romfilename"`
-	RomCRC   string `json:"romcrc"`
-	RomMD5   string `json:"rommd5"`
-	RomSHA1  string `json:"romsha1"`
-	Region   string `json:"romregion"`
+	ID      string `json:"id"`
+	RomSize string `json:"romsize"`
+	RomName string `json:"romfilename"`
+	RomCRC  string `json:"romcrc"`
+	RomMD5  string `json:"rommd5"`
+	RomSHA1 string `json:"romsha1"`
+	Region  string `json:"romregion"`
 }
 
 // SystemsResponse is the top-level response from systemesListe.
 type SystemsResponse struct {
-	Header  Header    `json:"header"`
+	Header   Header        `json:"header"`
 	Response SystemsResult `json:"response"`
 }
 
@@ -140,7 +140,7 @@ type System struct {
 
 // GenresResponse is the top-level response from genresListe.
 type GenresResponse struct {
-	Header  Header       `json:"header"`
+	Header   Header       `json:"header"`
 	Response GenresResult `json:"response"`
 }
 
@@ -157,22 +157,22 @@ type Genre struct {
 
 // UserInfoResponse is the top-level response from ssuserInfos.
 type UserInfoResponse struct {
-	Header  Header   `json:"header"`
+	Header   Header   `json:"header"`
 	Response UserInfo `json:"response"`
 }
 
 // UserInfo represents user account information.
 type UserInfo struct {
-	ID                string `json:"ssid"`
-	NumRequests       string `json:"requeststoday"`
-	MaxRequests       string `json:"maxrequestsperday"`
-	VisitCount        string `json:"visites"`
-	FavoriteRegion    string `json:"favregion"`
+	ID             string `json:"ssid"`
+	NumRequests    string `json:"requeststoday"`
+	MaxRequests    string `json:"maxrequestsperday"`
+	VisitCount     string `json:"visites"`
+	FavoriteRegion string `json:"favregion"`
 }
 
 // InfraInfoResponse is the response from ssinfraInfos.
 type InfraInfoResponse struct {
-	Header  Header    `json:"header"`
+	Header   Header    `json:"header"`
 	Response InfraInfo `json:"response"`
 }
 

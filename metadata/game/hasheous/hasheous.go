@@ -39,7 +39,7 @@ func New(opts ...metadata.Option) *Client {
 
 func (c *Client) get(ctx context.Context, path string, params url.Values, v any) error {
 	u := c.BaseURL() + "/" + path
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		u += "?" + params.Encode()
 	}
 
@@ -66,9 +66,9 @@ func (c *Client) get(ctx context.Context, path string, params url.Values, v any)
 	return json.Unmarshal(data, v)
 }
 
-func (c *Client) post(ctx context.Context, path string, params url.Values, body any, v any) error {
+func (c *Client) post(ctx context.Context, path string, params url.Values, body, v any) error {
 	u := c.BaseURL() + "/" + path
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		u += "?" + params.Encode()
 	}
 

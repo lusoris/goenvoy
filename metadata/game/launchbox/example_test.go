@@ -16,7 +16,7 @@ func Example() {
 	}
 
 	games := c.SearchGames("Mario", "")
-	for _, g := range games {
-		fmt.Printf("%s (%s)\n", g.Name, g.Platform)
+	for i := range games {
+		fmt.Printf("%s (%s)\n", games[i].Name, games[i].Platform)
 	}
 }

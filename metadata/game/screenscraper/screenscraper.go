@@ -16,10 +16,10 @@ const defaultBaseURL = "https://api.screenscraper.fr/api2"
 // Client is a Screenscraper API v2 client.
 type Client struct {
 	*metadata.BaseClient
-	devID       string
-	devPassword string
-	softName    string
-	userID      string
+	devID        string
+	devPassword  string
+	softName     string
+	userID       string
 	userPassword string
 }
 
@@ -85,11 +85,9 @@ func (c *Client) authParams() url.Values {
 
 func (c *Client) get(ctx context.Context, endpoint string, params url.Values, v any) error {
 	auth := c.authParams()
-	if params != nil {
-		for k, vs := range params {
-			for _, val := range vs {
-				auth.Add(k, val)
-			}
+	for k, vs := range params {
+		for _, val := range vs {
+			auth.Add(k, val)
 		}
 	}
 

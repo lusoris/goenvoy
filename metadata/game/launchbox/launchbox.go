@@ -150,7 +150,7 @@ func (c *Client) GetGameByID(id int) *Game {
 
 // SearchGames searches for games by name, optionally filtered by platform.
 // The search is case-insensitive and matches substrings.
-func (c *Client) SearchGames(query string, platform string) []Game {
+func (c *Client) SearchGames(query, platform string) []Game {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -158,14 +158,15 @@ func (c *Client) SearchGames(query string, platform string) []Game {
 	p := strings.ToLower(platform)
 
 	var results []Game
-	for _, g := range c.games {
+	for i := range c.games {
+		g := &c.games[i]
 		if !strings.Contains(strings.ToLower(g.Name), q) {
 			continue
 		}
-		if p != "" && strings.ToLower(g.Platform) != p {
+		if p != "" && !strings.EqualFold(g.Platform, p) {
 			continue
 		}
-		results = append(results, g)
+		results = append(results, *g)
 	}
 	return results
 }

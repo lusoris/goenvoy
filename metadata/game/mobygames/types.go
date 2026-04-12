@@ -50,10 +50,10 @@ type Platform struct {
 
 // SampleCover is a cover image included in game responses.
 type SampleCover struct {
-	Height       int    `json:"height"`
-	Width        int    `json:"width"`
-	Image        string `json:"image"`
-	ThumbnailURL string `json:"thumbnail_image"`
+	Height       int      `json:"height"`
+	Width        int      `json:"width"`
+	Image        string   `json:"image"`
+	ThumbnailURL string   `json:"thumbnail_image"`
 	Platforms    []string `json:"platforms"`
 }
 

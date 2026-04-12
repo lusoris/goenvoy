@@ -10,14 +10,14 @@ type HashLookupRequest struct {
 
 // HashLookup is the response from a hash lookup.
 type HashLookup struct {
-	ID         int64                          `json:"id"`
-	Name       string                         `json:"name"`
-	Platform   *MiniDataObject                `json:"platform"`
-	Publisher  *MiniDataObject                `json:"publisher"`
-	Signature  *SignatureResult                `json:"signature"`
-	Signatures map[string][]SignatureResult    `json:"signatures"`
-	Metadata   []MetadataItem                 `json:"metadata"`
-	Attributes []AttributeItem                `json:"attributes"`
+	ID         int64                        `json:"id"`
+	Name       string                       `json:"name"`
+	Platform   *MiniDataObject              `json:"platform"`
+	Publisher  *MiniDataObject              `json:"publisher"`
+	Signature  *SignatureResult             `json:"signature"`
+	Signatures map[string][]SignatureResult `json:"signatures"`
+	Metadata   []MetadataItem               `json:"metadata"`
+	Attributes []AttributeItem              `json:"attributes"`
 }
 
 // MiniDataObject holds a name and optional metadata.

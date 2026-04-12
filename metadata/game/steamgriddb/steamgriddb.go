@@ -40,7 +40,7 @@ func New(apiKey string, opts ...metadata.Option) *Client {
 
 func (c *Client) get(ctx context.Context, endpoint string, params url.Values, v any) error {
 	u := c.BaseURL() + "/" + endpoint
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		u += "?" + params.Encode()
 	}
 
