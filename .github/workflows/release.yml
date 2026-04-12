@@ -40,7 +40,7 @@ jobs:
           go test -race ./...
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.module.outputs.tag }}
           name: ${{ steps.module.outputs.module_path }} ${{ steps.module.outputs.version }}
