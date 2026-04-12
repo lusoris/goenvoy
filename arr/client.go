@@ -58,7 +58,7 @@ func NewBaseClient(baseURL, apiKey string, opts ...Option) (*BaseClient, error) 
 	c := &BaseClient{
 		baseURL:    u,
 		apiKey:     apiKey,
-		httpClient: &http.Client{Timeout: defaultTimeout},
+		httpClient: &http.Client{Timeout: defaultTimeout, Transport: http.DefaultTransport.(*http.Transport).Clone()},
 		userAgent:  defaultUserAgent,
 	}
 
