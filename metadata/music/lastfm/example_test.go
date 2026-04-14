@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/music/lastfm"
+	"github.com/golusoris/goenvoy/metadata/music/lastfm"
 )
 
 func Example() {

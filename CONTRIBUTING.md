@@ -71,7 +71,7 @@ See `Makefile` for `test-all`, `lint-all`, `vuln-all`, `gosec-all`, `ci-all`, `f
 Use the Claude Code skill **`/add-service-client`** or follow the manual steps:
 
 1. Create `<category>/<service>/` (e.g. `downloadclient/aria2/`).
-2. `go mod init github.com/lusoris/goenvoy/downloadclient/aria2`.
+2. `go mod init github.com/golusoris/goenvoy/downloadclient/aria2`.
 3. Standard files:
    - `doc.go` — package doc comment.
    - `types.go` — request/response types.

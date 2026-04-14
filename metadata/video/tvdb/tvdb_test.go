@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/video/tvdb"
+	"github.com/golusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata/video/tvdb"
 )
 
 // loginHandler handles the /login endpoint in the test server.

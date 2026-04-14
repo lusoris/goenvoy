@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/video/letterboxd"
+	"github.com/golusoris/goenvoy/metadata/video/letterboxd"
 )
 
 func Example() {

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 const (

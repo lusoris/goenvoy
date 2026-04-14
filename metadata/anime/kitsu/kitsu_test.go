@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 // respondResource writes a JSON:API single-resource envelope.

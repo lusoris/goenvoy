@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/music/deezer"
+	"github.com/golusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata/music/deezer"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *deezer.Client {

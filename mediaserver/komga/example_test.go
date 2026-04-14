@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/mediaserver/komga"
+	"github.com/golusoris/goenvoy/mediaserver/komga"
 )
 
 func Example() {

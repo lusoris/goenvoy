@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 const defaultBaseURL = "https://webservice.fanart.tv/v3"

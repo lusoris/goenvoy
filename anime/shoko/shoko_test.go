@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/anime/shoko"
+	"github.com/golusoris/goenvoy/anime/shoko"
 )
 
 func newTestServer(t *testing.T, wantPath, wantAPIKey string, response any) *httptest.Server {

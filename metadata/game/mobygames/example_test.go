@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/game/mobygames"
+	"github.com/golusoris/goenvoy/metadata/game/mobygames"
 )
 
 func Example() {

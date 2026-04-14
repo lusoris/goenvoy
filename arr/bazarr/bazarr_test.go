@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/arr/bazarr"
-	"github.com/lusoris/goenvoy/arr/v2"
+	"github.com/golusoris/goenvoy/arr/bazarr"
+	"github.com/golusoris/goenvoy/arr/v2"
 )
 
 func newTestServer(t *testing.T, wantPath string, body any) *httptest.Server {

@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/downloadclient/qbit
+module github.com/golusoris/goenvoy/downloadclient/qbit
 
 go 1.26.1

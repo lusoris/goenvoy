@@ -22,7 +22,7 @@ Located in `.claude/hooks/`:
 
 - **PreToolUse / Bash** — `guard-bash.sh` blocks `--no-verify`, `--no-gpg-sign`, force-push to main/master, `rm -rf .git`, `rm -rf .workingdir*`.
 - **PreToolUse / Edit|Write** — `guard-go-edit.sh` blocks: non-stdlib imports (pure-stdlib invariant), `InsecureSkipVerify: true` without a justified `//nolint:gosec`, unjustified `//nolint` directives, live-API URLs in `*_test.go`.
-- **PostToolUse / Edit|Write** — `format-go-write.sh` runs `gofumpt -w` + `gci write -s standard -s default -s 'prefix(github.com/lusoris/goenvoy)'`.
+- **PostToolUse / Edit|Write** — `format-go-write.sh` runs `gofumpt -w` + `gci write -s standard -s default -s 'prefix(github.com/golusoris/goenvoy)'`.
 
 ## Tone
 

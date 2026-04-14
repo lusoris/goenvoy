@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 const defaultBaseURL = "https://api.discogs.com"

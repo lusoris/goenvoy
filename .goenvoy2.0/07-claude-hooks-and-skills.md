@@ -180,7 +180,7 @@ file_path=$(printf '%s' "$payload" | jq -r '.tool_input.file_path // ""')
 
 if command -v gofumpt >/dev/null 2>&1; then gofumpt -w "$file_path" 2>/dev/null || true; fi
 if command -v gci >/dev/null 2>&1; then
-  gci write --skip-generated -s standard -s default -s 'prefix(github.com/lusoris/goenvoy)' "$file_path" 2>/dev/null || true
+  gci write --skip-generated -s standard -s default -s 'prefix(github.com/golusoris/goenvoy)' "$file_path" 2>/dev/null || true
 fi
 exit 0
 ```
@@ -224,7 +224,7 @@ The user says "add a client for <service>" and you need to create an entire new 
 
 1. Verify the target directory does not exist.
 2. Create `<category>/<service>/` and inside it:
-   - `go.mod` — `module github.com/lusoris/goenvoy/<category>/<service>` · `go 1.26.1`. No `require` block (pure stdlib).
+   - `go.mod` — `module github.com/golusoris/goenvoy/<category>/<service>` · `go 1.26.1`. No `require` block (pure stdlib).
    - `doc.go` — package-level comment: one sentence, ends with a period.
    - `types.go` — placeholder struct for `<Service>Response` + `APIError`.
    - `<service>.go` — `New(baseURL, apiKey string, opts ...Option) (*Client, error)` + `Option` type + `WithHTTPClient` + `WithTimeout` + `WithHeader` + helper `do(ctx, method, path, body, out) error`.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/mediaserver/stash"
+	"github.com/golusoris/goenvoy/mediaserver/stash"
 )
 
 func Example() {

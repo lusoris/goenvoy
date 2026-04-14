@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/lusoris/goenvoy/arr/v2"
+	"github.com/golusoris/goenvoy/arr/v2"
 )
 
 // Client is a Whisparr v2 (Sonarr-based) API client.

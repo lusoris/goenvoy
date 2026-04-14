@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/downloadclient/sabnzbd"
+	"github.com/golusoris/goenvoy/downloadclient/sabnzbd"
 )
 
 func newServer(t *testing.T, wantMode string, response any) *httptest.Server {

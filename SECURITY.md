@@ -27,7 +27,7 @@ Verify a release archive:
 cosign verify-blob \
   --certificate checksums.txt.pem \
   --signature checksums.txt.sig \
-  --certificate-identity-regexp '^https://github.com/lusoris/goenvoy/' \
+  --certificate-identity-regexp '^https://github.com/golusoris/goenvoy/' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
   checksums.txt
 ```

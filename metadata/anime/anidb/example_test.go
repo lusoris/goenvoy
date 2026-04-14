@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/anime/anidb"
+	"github.com/golusoris/goenvoy/metadata/anime/anidb"
 )
 
 func Example() {

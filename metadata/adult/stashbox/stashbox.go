@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 // GraphQL field fragments.

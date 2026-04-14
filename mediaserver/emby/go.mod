@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/mediaserver/emby/v2
+module github.com/golusoris/goenvoy/mediaserver/emby/v2
 
 go 1.26.1

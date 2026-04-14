@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/downloadclient/qbit"
+	"github.com/golusoris/goenvoy/downloadclient/qbit"
 )
 
 func Example() {

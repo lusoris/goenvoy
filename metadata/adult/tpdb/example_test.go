@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/adult/tpdb"
+	"github.com/golusoris/goenvoy/metadata/adult/tpdb"
 )
 
 func Example() {

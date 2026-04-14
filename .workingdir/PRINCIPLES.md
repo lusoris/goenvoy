@@ -110,7 +110,7 @@ Most of golusoris's §2.6 is server-side. goenvoy's subset:
 |---|---|
 | **EditorConfig** | `.editorconfig` at repo root. |
 | **gofumpt** | Via golangci-lint `formatters:` + Claude PostToolUse hook. |
-| **gci** | Grouped imports: `standard`, `default`, `prefix(github.com/lusoris/goenvoy)`. |
+| **gci** | Grouped imports: `standard`, `default`, `prefix(github.com/golusoris/goenvoy)`. |
 | **golines** | 120-col line cap. Enforced as warning first, then gate after grace period. |
 | **Conventional Commits 1.0** | PR-title check in `ci.yml`. release-please reads history. |
 | **Semantic Versioning 2.0** | Per-module tags `<path>/vX.Y.Z`. |

@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/downloadclient/sabnzbd
+module github.com/golusoris/goenvoy/downloadclient/sabnzbd
 
 go 1.26.1

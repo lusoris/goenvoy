@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/book/googlebooks/v2"
+	"github.com/golusoris/goenvoy/metadata/book/googlebooks/v2"
 )
 
 func Example() {

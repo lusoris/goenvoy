@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/arr/v2"
+	"github.com/golusoris/goenvoy/arr/v2"
 )
 
 func TestNewBaseClient(t *testing.T) {

@@ -212,17 +212,17 @@ formatters:
     - goimports
   settings:
     gofumpt:
-      module-path: github.com/lusoris/goenvoy
+      module-path: github.com/golusoris/goenvoy
       extra-rules: true
     gci:
       sections:
         - standard
         - default
-        - prefix(github.com/lusoris/goenvoy)
+        - prefix(github.com/golusoris/goenvoy)
       custom-order: true
     goimports:
       local-prefixes:
-        - github.com/lusoris/goenvoy
+        - github.com/golusoris/goenvoy
 ```
 
 **Diff vs current**:
@@ -326,7 +326,7 @@ tidy-all: ## go mod tidy, all modules
 
 fmt-all: ## gofumpt + gci, all modules
 	@for mod in $(MODULES); do \
-	  (cd $$mod && gofumpt -w . && gci write --skip-generated -s standard -s default -s 'prefix(github.com/lusoris/goenvoy)' .) || exit 1; \
+	  (cd $$mod && gofumpt -w . && gci write --skip-generated -s standard -s default -s 'prefix(github.com/golusoris/goenvoy)' .) || exit 1; \
 	done
 
 build-all: ## go build, all modules

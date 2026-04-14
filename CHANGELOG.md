@@ -17,7 +17,7 @@ Sister `arr/*` modules now require `arr/v2 v2.0.0` (8 modules: sonarr, radarr, l
 
 | Module | Old path | New path |
 |---|---|---|
-| `arr` | `github.com/lusoris/goenvoy/arr` | `…/arr/v2` |
+| `arr` | `github.com/golusoris/goenvoy/arr` | `…/arr/v2` |
 | `arr/mylar` | `…/arr/mylar` | `…/arr/mylar/v2` |
 | `arr/prowlarr` | `…/arr/prowlarr` | `…/arr/prowlarr/v2` |
 | `mediaserver/emby` | `…/mediaserver/emby` | `…/mediaserver/emby/v2` |

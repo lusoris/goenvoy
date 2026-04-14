@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/mediaserver/tautulli
+module github.com/golusoris/goenvoy/mediaserver/tautulli
 
 go 1.26.1

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lusoris/goenvoy/arr/sonarr"
-	"github.com/lusoris/goenvoy/arr/v2"
+	"github.com/golusoris/goenvoy/arr/sonarr"
+	"github.com/golusoris/goenvoy/arr/v2"
 )
 
 func newTestServer(t *testing.T, method, wantPath string, body any) *httptest.Server {

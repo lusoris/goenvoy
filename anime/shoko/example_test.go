@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/anime/shoko"
+	"github.com/golusoris/goenvoy/anime/shoko"
 )
 
 func Example() {

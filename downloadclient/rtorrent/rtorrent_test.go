@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lusoris/goenvoy/downloadclient/rtorrent"
+	"github.com/golusoris/goenvoy/downloadclient/rtorrent"
 )
 
 type xmlMethodCall struct {

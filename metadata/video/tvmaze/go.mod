@@ -1,5 +1,5 @@
-module github.com/lusoris/goenvoy/metadata/video/tvmaze
+module github.com/golusoris/goenvoy/metadata/video/tvmaze
 
 go 1.26.1
 
-require github.com/lusoris/goenvoy/metadata v1.2.0
+require github.com/golusoris/goenvoy/metadata v1.2.0

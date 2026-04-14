@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/music/listenbrainz"
+	"github.com/golusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata/music/listenbrainz"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *listenbrainz.Client {

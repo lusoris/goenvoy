@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata/game/steam"
+	"github.com/golusoris/goenvoy/metadata/game/steam"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *steam.Client {

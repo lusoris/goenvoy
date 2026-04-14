@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/arr/flaresolverr"
+	"github.com/golusoris/goenvoy/arr/flaresolverr"
 )
 
 func newTestServer(t *testing.T, wantCmd string, response any) *flaresolverr.Client {

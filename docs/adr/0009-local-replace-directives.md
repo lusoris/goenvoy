@@ -6,8 +6,8 @@
 
 ## Context
 
-Eight modules in the `arr/` family commit `replace github.com/lusoris/goenvoy/arr => ../`
-plus `require github.com/lusoris/goenvoy/arr v0.0.0` in their `go.mod` files
+Eight modules in the `arr/` family commit `replace github.com/golusoris/goenvoy/arr => ../`
+plus `require github.com/golusoris/goenvoy/arr v0.0.0` in their `go.mod` files
 (`arr/sonarr`, `arr/radarr`, `arr/lidarr`, `arr/readarr`, `arr/prowlarr`,
 `arr/bazarr`, `arr/whisparr`, `arr/seerr`).
 
@@ -41,7 +41,7 @@ local cross-module development continues to work without the committed
 
 ## Decision
 
-Remove the `replace github.com/lusoris/goenvoy/arr => ../` line from
+Remove the `replace github.com/golusoris/goenvoy/arr => ../` line from
 every `arr/*` child `go.mod`, and replace `require arr v0.0.0` with
 `require arr v1.2.1` (the latest tag). `go.work` carries the local
 linking from now on.

@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/mediaserver/navidrome
+module github.com/golusoris/goenvoy/mediaserver/navidrome
 
 go 1.26.1

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/lusoris/goenvoy/anime"
+	"github.com/golusoris/goenvoy/anime"
 )
 
 func TestSeriesJSON(t *testing.T) {

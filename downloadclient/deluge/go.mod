@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/downloadclient/deluge
+module github.com/golusoris/goenvoy/downloadclient/deluge
 
 go 1.26.1

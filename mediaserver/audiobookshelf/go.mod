@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/mediaserver/audiobookshelf
+module github.com/golusoris/goenvoy/mediaserver/audiobookshelf
 
 go 1.26.1

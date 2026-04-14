@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/downloadclient/deluge"
+	"github.com/golusoris/goenvoy/downloadclient/deluge"
 )
 
 type rpcRequest struct {

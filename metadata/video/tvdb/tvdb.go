@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 const defaultBaseURL = "https://api4.thetvdb.com/v4"

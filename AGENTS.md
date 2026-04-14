@@ -5,7 +5,7 @@
 
 ## What this repo is
 
-`goenvoy` is a **multi-module monorepo** of pure-stdlib Go HTTP-API clients — 69 modules covering 63+ services across arr-stack, metadata, download clients, media servers, and anime. Each service is its own Go module at `github.com/lusoris/goenvoy/<category>/<service>`, independently versioned via `<category>/<service>/vX.Y.Z` tags.
+`goenvoy` is a **multi-module monorepo** of pure-stdlib Go HTTP-API clients — 69 modules covering 63+ services across arr-stack, metadata, download clients, media servers, and anime. Each service is its own Go module at `github.com/golusoris/goenvoy/<category>/<service>`, independently versioned via `<category>/<service>/vX.Y.Z` tags.
 
 ## Hard rules
 

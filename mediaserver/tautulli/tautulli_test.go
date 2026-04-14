@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/mediaserver/tautulli"
+	"github.com/golusoris/goenvoy/mediaserver/tautulli"
 )
 
 type apiResp struct {

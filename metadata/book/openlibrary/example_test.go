@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/book/openlibrary"
+	"github.com/golusoris/goenvoy/metadata/book/openlibrary"
 )
 
 func Example() {

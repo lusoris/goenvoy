@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/book/openlibrary"
+	"github.com/golusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata/book/openlibrary"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *openlibrary.Client {

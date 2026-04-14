@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/mediaserver/jellyfin/v2"
+	"github.com/golusoris/goenvoy/mediaserver/jellyfin/v2"
 )
 
 func Example() {

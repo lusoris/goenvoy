@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/game/screenscraper"
+	"github.com/golusoris/goenvoy/metadata/game/screenscraper"
 )
 
 func Example() {

@@ -3,7 +3,7 @@
 ## What goenvoy is
 
 - A **collection of 63+ HTTP-API client libraries** for media automation, metadata, downloaders, media servers, and anime services.
-- A **multi-module Go monorepo** — each service is an independently-versioned module (e.g. `github.com/lusoris/goenvoy/arr/sonarr`).
+- A **multi-module Go monorepo** — each service is an independently-versioned module (e.g. `github.com/golusoris/goenvoy/arr/sonarr`).
 - **Pure stdlib.** The only imports are `net/http`, `encoding/json`, `context`, `crypto/*`, `net/url`, stdlib test helpers (`net/http/httptest`). No external dependencies, anywhere, ever.
 - **Consumer-facing**, not server-facing. Each module exposes `New(baseURL, apiKey, ...Option) (*Client, error)` and a set of typed methods that take `context.Context`.
 - Already in use by downstream `lusoris/*` apps (revenge, lurkarr, subdo, arca).
@@ -75,7 +75,7 @@ Canonical. Already largely followed. The diff from today's code is mostly doc-co
 
 EditorConfig, gofumpt, gci, golines, Conventional Commits 1.0, SemVer 2.0, Keep-a-Changelog 1.1, Trunk-Based Dev.
 
-One adaptation: `gci` prefix is `github.com/lusoris/goenvoy` (not `github.com/golusoris/golusoris`).
+One adaptation: `gci` prefix is `github.com/golusoris/goenvoy` (not `github.com/golusoris/golusoris`).
 
 ### §2.8 Testing — **Apply.**
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/tracking/simkl"
+	"github.com/golusoris/goenvoy/metadata/tracking/simkl"
 )
 
 func Example() {

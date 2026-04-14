@@ -1,5 +1,5 @@
-module github.com/lusoris/goenvoy/metadata/music/deezer
+module github.com/golusoris/goenvoy/metadata/music/deezer
 
 go 1.26.1
 
-require github.com/lusoris/goenvoy/metadata v1.2.0
+require github.com/golusoris/goenvoy/metadata v1.2.0

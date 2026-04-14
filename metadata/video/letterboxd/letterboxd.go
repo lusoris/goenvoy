@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 const defaultBaseURL = "https://api.letterboxd.com/api/v0"

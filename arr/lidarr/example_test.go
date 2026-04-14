@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/arr/lidarr"
+	"github.com/golusoris/goenvoy/arr/lidarr"
 )
 
 func Example() {

@@ -26,7 +26,7 @@ Every phase's PR title is Conventional Commits — since phase 1 ships the PR-ti
 
 **Checks before merge**:
 - [ ] `AGENTS.md` repository layout tree matches current `find . -name go.mod` output.
-- [ ] `SECURITY.md` cosign verify command uses `lusoris/goenvoy` regex.
+- [ ] `SECURITY.md` cosign verify command uses `golusoris/goenvoy` regex.
 - [ ] Every new doc cross-links are valid (`.workingdir/PRINCIPLES.md` placeholder — see phase 2).
 
 ---
@@ -77,7 +77,7 @@ Every phase's PR title is Conventional Commits — since phase 1 ships the PR-ti
 - [ ] `make ci-all` green locally.
 - [ ] `make tools-install` installs gofumpt / gci / gosec / govulncheck / apidiff.
 - [ ] `gofumpt -l $(find . -name '*.go' -not -path ./.workingdir'*')` empty.
-- [ ] `gci diff --skip-generated -s standard -s default -s 'prefix(github.com/lusoris/goenvoy)' $(...)` empty.
+- [ ] `gci diff --skip-generated -s standard -s default -s 'prefix(github.com/gogolusoris/goenvoy)' $(...)` empty.
 
 ---
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/lusoris/goenvoy/mediaserver"
+	"github.com/golusoris/goenvoy/mediaserver"
 )
 
 func TestServerInfoJSON(t *testing.T) {

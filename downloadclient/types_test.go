@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/lusoris/goenvoy/downloadclient"
+	"github.com/golusoris/goenvoy/downloadclient"
 )
 
 func TestTransferStatusJSON(t *testing.T) {

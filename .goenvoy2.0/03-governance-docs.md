@@ -18,7 +18,7 @@ Purpose: cross-tool agent guide (Claude Code, Cursor, Aider, Codex, Continue). P
 
 ## What this repo is
 
-`goenvoy` is a **multi-module monorepo** of pure-stdlib Go HTTP-API clients — 63+ services across arr-stack, metadata, download clients, media servers, and anime. Each service is its own Go module at `github.com/lusoris/goenvoy/<category>/<service>`, independently versioned via `<category>/<service>/vX.Y.Z` tags.
+`goenvoy` is a **multi-module monorepo** of pure-stdlib Go HTTP-API clients — 63+ services across arr-stack, metadata, download clients, media servers, and anime. Each service is its own Go module at `github.com/golusoris/goenvoy/<category>/<service>`, independently versioned via `<category>/<service>/vX.Y.Z` tags.
 
 ## Hard rules
 
@@ -105,7 +105,7 @@ Located in `.claude/hooks/`:
 
 - **PreToolUse / Bash** — `guard-bash.sh` blocks `--no-verify`, `--no-gpg-sign`, force-push to main/master, `rm -rf .git`, `rm -rf .workingdir*`.
 - **PreToolUse / Edit|Write** — `guard-go-edit.sh` blocks: non-stdlib imports (pure-stdlib invariant), `InsecureSkipVerify: true` without a justified `//nolint:gosec`, unjustified `//nolint` directives, live-API URLs in `*_test.go`.
-- **PostToolUse / Edit|Write** — `format-go-write.sh` runs `gofumpt -w` + `gci write -s standard -s default -s 'prefix(github.com/lusoris/goenvoy)'`.
+- **PostToolUse / Edit|Write** — `format-go-write.sh` runs `gofumpt -w` + `gci write -s standard -s default -s 'prefix(github.com/golusoris/goenvoy)'`.
 
 ## Tone
 
@@ -225,7 +225,7 @@ See `Makefile` for `test-all`, `lint-all`, `vuln-all`, `gosec-all`, `ci-all`, `f
 Use the Claude Code skill **`/add-service-client`** or follow the manual steps:
 
 1. Create `<category>/<service>/` (e.g. `downloadclient/aria2/`).
-2. `go mod init github.com/lusoris/goenvoy/downloadclient/aria2`.
+2. `go mod init github.com/golusoris/goenvoy/downloadclient/aria2`.
 3. Standard files:
    - `doc.go` — package doc comment.
    - `types.go` — request/response types.
@@ -294,7 +294,7 @@ Verify a release archive:
 cosign verify-blob \
   --certificate checksums.txt.pem \
   --signature checksums.txt.sig \
-  --certificate-identity-regexp '^https://github.com/lusoris/goenvoy/' \
+  --certificate-identity-regexp '^https://github.com/golusoris/goenvoy/' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
   checksums.txt
 ```
@@ -378,9 +378,9 @@ tmp/
 
 Append to the top, below the existing title:
 
-- OSSF Scorecard badge: `[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/lusoris/goenvoy/badge)](https://scorecard.dev/viewer/?uri=github.com/lusoris/goenvoy)`
-- Go Reference badge: `[![Go Reference](https://pkg.go.dev/badge/github.com/lusoris/goenvoy.svg)](https://pkg.go.dev/github.com/lusoris/goenvoy)`
-- CodeQL badge: `[![CodeQL](https://github.com/lusoris/goenvoy/actions/workflows/codeql.yml/badge.svg)](https://github.com/lusoris/goenvoy/actions/workflows/codeql.yml)`
+- OSSF Scorecard badge: `[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/golusoris/goenvoy/badge)](https://scorecard.dev/viewer/?uri=github.com/golusoris/goenvoy)`
+- Go Reference badge: `[![Go Reference](https://pkg.go.dev/badge/github.com/golusoris/goenvoy.svg)](https://pkg.go.dev/github.com/golusoris/goenvoy)`
+- CodeQL badge: `[![CodeQL](https://github.com/golusoris/goenvoy/actions/workflows/codeql.yml/badge.svg)](https://github.com/golusoris/goenvoy/actions/workflows/codeql.yml)`
 
 And a short "Standards" section near the end:
 

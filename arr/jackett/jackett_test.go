@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lusoris/goenvoy/arr/jackett"
+	"github.com/golusoris/goenvoy/arr/jackett"
 )
 
 const torznabXML = `<?xml version="1.0" encoding="UTF-8"?>

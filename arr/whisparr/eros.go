@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/lusoris/goenvoy/arr/v2"
+	"github.com/golusoris/goenvoy/arr/v2"
 )
 
 // ClientV3 is a Whisparr v3 (Radarr-based) API client.

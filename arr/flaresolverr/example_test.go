@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/arr/flaresolverr"
+	"github.com/golusoris/goenvoy/arr/flaresolverr"
 )
 
 func Example() {

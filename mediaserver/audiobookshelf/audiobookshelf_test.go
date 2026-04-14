@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/mediaserver/audiobookshelf"
+	"github.com/golusoris/goenvoy/mediaserver/audiobookshelf"
 )
 
 func newTestServer(t *testing.T, wantPath, wantToken string, response any) *httptest.Server {

@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/arr/nzbhydra
+module github.com/golusoris/goenvoy/arr/nzbhydra
 
 go 1.26.1

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/downloadclient/qbit"
+	"github.com/golusoris/goenvoy/downloadclient/qbit"
 )
 
 func newTestServer(t *testing.T, wantPath string, response any) *httptest.Server {

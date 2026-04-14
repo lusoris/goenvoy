@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/video/tmdb"
+	"github.com/golusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata/video/tmdb"
 )
 
 func newTestServer(t *testing.T, wantPath string, response any) *httptest.Server {

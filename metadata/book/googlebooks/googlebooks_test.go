@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/book/googlebooks/v2"
+	"github.com/golusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata/book/googlebooks/v2"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *googlebooks.Client {

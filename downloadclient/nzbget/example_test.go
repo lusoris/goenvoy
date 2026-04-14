@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/downloadclient/nzbget"
+	"github.com/golusoris/goenvoy/downloadclient/nzbget"
 )
 
 func Example() {

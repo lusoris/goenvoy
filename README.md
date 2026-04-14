@@ -1,9 +1,9 @@
 # goenvoy
 
-[![CI](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/lusoris/goenvoy/actions/workflows/codeql.yml/badge.svg)](https://github.com/lusoris/goenvoy/actions/workflows/codeql.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/lusoris/goenvoy/badge)](https://scorecard.dev/viewer/?uri=github.com/lusoris/goenvoy)
-[![Go Reference](https://pkg.go.dev/badge/github.com/lusoris/goenvoy.svg)](https://pkg.go.dev/github.com/lusoris/goenvoy)
+[![CI](https://github.com/golusoris/goenvoy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/golusoris/goenvoy/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/golusoris/goenvoy/actions/workflows/codeql.yml/badge.svg)](https://github.com/golusoris/goenvoy/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/golusoris/goenvoy/badge)](https://scorecard.dev/viewer/?uri=github.com/golusoris/goenvoy)
+[![Go Reference](https://pkg.go.dev/badge/github.com/golusoris/goenvoy.svg)](https://pkg.go.dev/github.com/golusoris/goenvoy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 
@@ -24,24 +24,24 @@ Designed as a **multi-module monorepo** — import only what you need, from a si
 
 | Category | Module | Services |
 |---|---|---|
-| **Arr Stack** | `github.com/lusoris/goenvoy/arr` | Sonarr, Radarr, Lidarr, Readarr, Whisparr (v2+v3), Prowlarr, Bazarr, Seerr, Autobrr, Mylar3, FlareSolverr, Jackett, NZBHydra2 |
-| **Metadata** | `github.com/lusoris/goenvoy/metadata` | TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, Letterboxd, AniList, Kitsu, AniDB, MAL, Trakt, Simkl, MusicBrainz, StashBox, TPDB, OpenSubtitles, Last.fm, Discogs, TheAudioDB, Open Library, Google Books, Spotify, Deezer, ListenBrainz, IGDB, RAWG, Steam, MobyGames, SteamGridDB, RetroAchievements, ScreenScraper, Hasheous, LaunchBox |
-| **Download Clients** | `github.com/lusoris/goenvoy/downloadclient` | qBittorrent, Transmission, Deluge, rTorrent, SABnzbd, NZBGet |
-| **Media Servers** | `github.com/lusoris/goenvoy/mediaserver` | Plex, Jellyfin, Emby, Tautulli, Audiobookshelf, Komga, Navidrome, Kavita, Stash, Tdarr |
-| **Anime** | `github.com/lusoris/goenvoy/anime` | Shoko Server |
+| **Arr Stack** | `github.com/golusoris/goenvoy/arr` | Sonarr, Radarr, Lidarr, Readarr, Whisparr (v2+v3), Prowlarr, Bazarr, Seerr, Autobrr, Mylar3, FlareSolverr, Jackett, NZBHydra2 |
+| **Metadata** | `github.com/golusoris/goenvoy/metadata` | TMDb, TheTVDB, Fanart.tv, OMDb, TVmaze, Letterboxd, AniList, Kitsu, AniDB, MAL, Trakt, Simkl, MusicBrainz, StashBox, TPDB, OpenSubtitles, Last.fm, Discogs, TheAudioDB, Open Library, Google Books, Spotify, Deezer, ListenBrainz, IGDB, RAWG, Steam, MobyGames, SteamGridDB, RetroAchievements, ScreenScraper, Hasheous, LaunchBox |
+| **Download Clients** | `github.com/golusoris/goenvoy/downloadclient` | qBittorrent, Transmission, Deluge, rTorrent, SABnzbd, NZBGet |
+| **Media Servers** | `github.com/golusoris/goenvoy/mediaserver` | Plex, Jellyfin, Emby, Tautulli, Audiobookshelf, Komga, Navidrome, Kavita, Stash, Tdarr |
+| **Anime** | `github.com/golusoris/goenvoy/anime` | Shoko Server |
 
 ## Install
 
 Import a specific service library:
 
 ```go
-go get github.com/lusoris/goenvoy/arr/sonarr
+go get github.com/golusoris/goenvoy/arr/sonarr
 ```
 
 Or import shared category types:
 
 ```go
-go get github.com/lusoris/goenvoy/arr
+go get github.com/golusoris/goenvoy/arr
 ```
 
 ## Usage
@@ -54,7 +54,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/lusoris/goenvoy/arr/sonarr"
+    "github.com/golusoris/goenvoy/arr/sonarr"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 # goenvoy ← golusoris standards alignment
 
 > **Scope of this working directory.** Plans only. No code changes live here.
-> Target repo: [`github.com/lusoris/goenvoy`](https://github.com/lusoris/goenvoy) (local path `/home/kilian/dev/goenvoy`).
+> Target repo: [`github.com/golusoris/goenvoy`](https://github.com/golusoris/goenvoy) (local path `/home/kilian/dev/goenvoy`).
 > Authored: 2026-04-14. Source standards: golusoris `main` at 701d4e4.
 
 ## Problem

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/metadata/music/listenbrainz"
+	"github.com/golusoris/goenvoy/metadata/music/listenbrainz"
 )
 
 func Example() {

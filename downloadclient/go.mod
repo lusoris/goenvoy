@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/downloadclient
+module github.com/golusoris/goenvoy/downloadclient
 
 go 1.26.1

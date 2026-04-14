@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lusoris/goenvoy/metadata"
+	"github.com/golusoris/goenvoy/metadata"
 )
 
 const defaultBaseURL = "https://musicbrainz.org/ws/2"
@@ -22,7 +22,7 @@ type Client struct {
 
 // New creates a MusicBrainz [Client].
 func New(opts ...metadata.Option) *Client {
-	opts = append([]metadata.Option{metadata.WithUserAgent("goenvoy/0.0.1 (https://github.com/lusoris/goenvoy)")}, opts...)
+	opts = append([]metadata.Option{metadata.WithUserAgent("goenvoy/0.0.1 (https://github.com/golusoris/goenvoy)")}, opts...)
 	bc := metadata.NewBaseClient(defaultBaseURL, "musicbrainz", opts...)
 	return &Client{BaseClient: bc}
 }

@@ -1,3 +1,3 @@
-module github.com/lusoris/goenvoy/metadata/game
+module github.com/golusoris/goenvoy/metadata/game
 
 go 1.26.1

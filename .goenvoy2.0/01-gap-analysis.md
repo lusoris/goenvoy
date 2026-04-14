@@ -25,7 +25,7 @@ Legend: ✅ present · 🟡 partial · ❌ missing · ➖ not applicable (pure-l
 |---|---|---|---|---|
 | `.golangci.yml` at root | ✅ good but minimal set (~25 linters, revive-lite) | ✅ 30+ linters in `tools/golangci.yml` (includes `contextcheck`, `fatcontext`, `containedctx`, `exhaustive`, `wrapcheck`, `depguard`, `gomodguard`, `gomoddirectives`, `forbidigo`, `paralleltest`, `tparallel`, `thelper`, `usetesting`, `testifylint`, `sloglint`, `spancheck`, `loggercheck`) | Missing ~15 linters + `depguard`/`gomodguard` for **pure-stdlib enforcement**, missing `forbidigo` for the few API-client-specific bans | Expand — see [04-lint-and-tooling.md](04-lint-and-tooling.md). |
 | `gofumpt` | ❌ (plain `gofmt -s -w`) | ✅ | missing | Add via golangci-lint `formatters:` + hook. |
-| `gci` (import grouping) | 🟡 (goimports-local-prefixes) | ✅ gci with 3-group prefix | partial | Upgrade — gci with `prefix(github.com/lusoris/goenvoy)`. |
+| `gci` (import grouping) | 🟡 (goimports-local-prefixes) | ✅ gci with 3-group prefix | partial | Upgrade — gci with `prefix(github.com/golusoris/goenvoy)`. |
 | `golines` (line-length) | ❌ | ✅ 120-col cap | missing | Optional — add as lint-only warning first. |
 | `Makefile` | ✅ `test-all`, `lint-all`, `tidy-all`, `vet-all`, `fmt-all`, `build-all` | ✅ plus `vuln`, `gosec`, `ci`, `cover`, `gen`, `spec-lint` (framework scope) | Missing `vuln-all`, `gosec-all`, `ci-all`, `cover-all` | Extend — see [04](04-lint-and-tooling.md). |
 | `tools/` directory | ❌ | ✅ `Makefile.shared`, `golangci.yml`, `mockery.yaml`, … | N/A for a lib | Create only `tools/` iff we want to split Makefile; otherwise keep root Makefile. |
@@ -53,7 +53,7 @@ Legend: ✅ present · 🟡 partial · ❌ missing · ➖ not applicable (pure-l
 | `.claude/settings.json` | ❌ | ✅ PreToolUse (Bash + Edit/Write) + PostToolUse (Edit/Write) | missing | Add — see [07-claude-hooks-and-skills.md](07-claude-hooks-and-skills.md). |
 | `.claude/hooks/guard-bash.sh` | ❌ | ✅ blocks `--no-verify`, force-push-to-main, `rm -rf .git`/`.workingdir` | missing | Copy verbatim; add `.workingdir2` path; add `--no-verify` block. |
 | `.claude/hooks/guard-go-edit.sh` | ❌ | ✅ bans `time.Now()` outside `clock/`, `fmt.Print*`, unjustified `//nolint` | missing | **Adapt** — drop `time.Now()`/`fmt.Print*` bans (not relevant); add: no non-stdlib imports (pure-stdlib invariant), no TLS `InsecureSkipVerify` without `//nolint:gosec // justification`, keep `//nolint` rule. |
-| `.claude/hooks/format-go-write.sh` | ❌ | ✅ gofumpt + gci on save | missing | Copy, swap gci prefix to `github.com/lusoris/goenvoy`. |
+| `.claude/hooks/format-go-write.sh` | ❌ | ✅ gofumpt + gci on save | missing | Copy, swap gci prefix to `github.com/golusoris/goenvoy`. |
 | `.claude/skills/*.md` | ❌ | ✅ 5 skills | missing | Write **new** goenvoy-specific skills: `/add-service-client`, `/add-service-method`, `/bump-module`, `/release-module`, `/audit-service-docs`. |
 | Pinned upstream docs (`docs/upstream/`) | ❌ | ✅ | ➖ different model — goenvoy services have public OpenAPI specs of varying quality | Add lightweight `docs/upstream/<service>.md` with pinned API-docs URL + version + last-checked date. Not auto-loaded in hooks (for now). |
 
