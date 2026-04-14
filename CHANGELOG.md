@@ -11,15 +11,30 @@ Each module is versioned independently following [Semantic Versioning](https://s
 - **Repository**: Adopted golangci-lint v2 with 30+ linters as the standards baseline (goenvoy 2.0). The pure-stdlib gate is now enforced by `depguard`. Per-module `replace` directives have been removed in favour of versioned `arr` requires (ADR-0009).
 - **Tooling**: Bulk-applied `t.Parallel()` to every test function and subtest; wrapped third-party errors with module-prefixed `fmt.Errorf("%s: %s: %w", ...)`; canonicalised HTTP header literals.
 
-### Breaking
-- **arr** (`arr`): `DevelopmentConfigResource.ApiKey` → `APIKey`. JSON wire tag (`apiKey`) unchanged.
-- **arr/mylar** (`arr/mylar`): All DTO fields renamed to Go-idiomatic acronyms — `Comic.Id` → `ID`, `Issue.Id`/`Issue.ComicId` → `ID`/`ComicID` (and similarly for `Upcoming`, `WantedIssue`, `HistoryEntry`, `SearchResult`, `StoryArc`, `ReadList`, `Provider`). JSON wire tags unchanged.
-- **arr/prowlarr** (`arr/prowlarr`): `DevelopmentConfigResource.LogSql` → `LogSQL`. JSON wire tag (`logSql`) unchanged.
-- **mediaserver/emby** (`mediaserver/emby`): `ServerId` → `ServerID` on `SystemInfo`, `SessionInfo`, `User`. JSON wire tags unchanged.
-- **mediaserver/jellyfin** (`mediaserver/jellyfin`): `ServerId` → `ServerID` on the same three types. JSON wire tags unchanged.
-- **mediaserver/tdarr** (`mediaserver/tdarr`): `Node.Id`/`Worker.Id`/`DBFile.Id` → `ID`; `DBFile.LibraryId`/`ScanFilesData.LibraryId` → `LibraryID`. Method parameter renames `libraryId`/`nodeId`/`workerId` → `libraryID`/`nodeID`/`workerID` on `GetResStats`, `GetDBStatuses`, `ScanFiles`, `CancelWorkerItem`, `KillWorker` (call-site compatible). JSON wire tags unchanged.
-- **metadata/book/googlebooks** (`metadata/book/googlebooks`): `Volume.Id` → `ID`. JSON wire tag (`id`) unchanged.
-- **metadata/music/audiodb** (`metadata/music/audiodb`): `IdAlbum`/`IdArtist`/`IdTrack` → `IDAlbum`/`IDArtist`/`IDTrack` across `Artist`, `Album`, `Track`, `MusicVideo`. JSON wire tags unchanged.
+### Breaking — module path migration to `/v2`
+The 8 modules below ship a major bump and require a new import path (`…/v2`).
+Sister `arr/*` modules now require `arr/v2 v2.0.0` (8 modules: sonarr, radarr, lidarr, readarr, prowlarr, bazarr, whisparr, seerr).
+
+| Module | Old path | New path |
+|---|---|---|
+| `arr` | `github.com/lusoris/goenvoy/arr` | `…/arr/v2` |
+| `arr/mylar` | `…/arr/mylar` | `…/arr/mylar/v2` |
+| `arr/prowlarr` | `…/arr/prowlarr` | `…/arr/prowlarr/v2` |
+| `mediaserver/emby` | `…/mediaserver/emby` | `…/mediaserver/emby/v2` |
+| `mediaserver/jellyfin` | `…/mediaserver/jellyfin` | `…/mediaserver/jellyfin/v2` |
+| `mediaserver/tdarr` | `…/mediaserver/tdarr` | `…/mediaserver/tdarr/v2` |
+| `metadata/book/googlebooks` | `…/metadata/book/googlebooks` | `…/metadata/book/googlebooks/v2` |
+| `metadata/music/audiodb` | `…/metadata/music/audiodb` | `…/metadata/music/audiodb/v2` |
+
+API breaks bundled with the v2 cut:
+- **arr** (`arr/v2`): `DevelopmentConfigResource.ApiKey` → `APIKey`. JSON wire tag (`apiKey`) unchanged.
+- **arr/mylar** (`arr/mylar/v2`): All DTO fields renamed to Go-idiomatic acronyms — `Comic.Id` → `ID`, `Issue.Id`/`Issue.ComicId` → `ID`/`ComicID` (and similarly for `Upcoming`, `WantedIssue`, `HistoryEntry`, `SearchResult`, `StoryArc`, `ReadList`, `Provider`). JSON wire tags unchanged.
+- **arr/prowlarr** (`arr/prowlarr/v2`): `DevelopmentConfigResource.LogSql` → `LogSQL`. JSON wire tag (`logSql`) unchanged.
+- **mediaserver/emby** (`mediaserver/emby/v2`): `ServerId` → `ServerID` on `SystemInfo`, `SessionInfo`, `User`. JSON wire tags unchanged.
+- **mediaserver/jellyfin** (`mediaserver/jellyfin/v2`): `ServerId` → `ServerID` on the same three types. JSON wire tags unchanged.
+- **mediaserver/tdarr** (`mediaserver/tdarr/v2`): `Node.Id`/`Worker.Id`/`DBFile.Id` → `ID`; `DBFile.LibraryId`/`ScanFilesData.LibraryId` → `LibraryID`. Method parameter renames `libraryId`/`nodeId`/`workerId` → `libraryID`/`nodeID`/`workerID` on `GetResStats`, `GetDBStatuses`, `ScanFiles`, `CancelWorkerItem`, `KillWorker` (call-site compatible). JSON wire tags unchanged.
+- **metadata/book/googlebooks** (`metadata/book/googlebooks/v2`): `Volume.Id` → `ID`. JSON wire tag (`id`) unchanged.
+- **metadata/music/audiodb** (`metadata/music/audiodb/v2`): `IdAlbum`/`IdArtist`/`IdTrack` → `IDAlbum`/`IDArtist`/`IDTrack` across `Artist`, `Album`, `Track`, `MusicVideo`. JSON wire tags unchanged.
 
 ## [v1.3.0] - 2026-04-12
 

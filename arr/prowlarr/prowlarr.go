@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lusoris/goenvoy/arr"
+	"github.com/lusoris/goenvoy/arr/v2"
 )
 
 // Client is a Prowlarr API client.
