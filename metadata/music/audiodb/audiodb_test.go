@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/music/audiodb"
+	"github.com/lusoris/goenvoy/metadata/music/audiodb/v2"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *audiodb.Client {

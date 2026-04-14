@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lusoris/goenvoy/mediaserver/emby"
+	"github.com/lusoris/goenvoy/mediaserver/emby/v2"
 )
 
 func Example() {

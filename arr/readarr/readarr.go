@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/lusoris/goenvoy/arr"
+	"github.com/lusoris/goenvoy/arr/v2"
 )
 
 // Client is a Readarr API client.

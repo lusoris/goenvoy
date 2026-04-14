@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/lusoris/goenvoy/mediaserver/tdarr"
+	"github.com/lusoris/goenvoy/mediaserver/tdarr/v2"
 )
 
 func newGetServer(t *testing.T, wantPath string, resp any) *httptest.Server {

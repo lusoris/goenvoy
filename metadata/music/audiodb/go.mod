@@ -1,4 +1,4 @@
-module github.com/lusoris/goenvoy/metadata/music/audiodb
+module github.com/lusoris/goenvoy/metadata/music/audiodb/v2
 
 go 1.26.1
 
