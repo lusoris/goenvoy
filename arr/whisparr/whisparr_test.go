@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lusoris/goenvoy/arr"
+	"github.com/lusoris/goenvoy/arr/v2"
 	"github.com/lusoris/goenvoy/arr/whisparr"
 )
 

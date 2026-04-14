@@ -1,4 +1,4 @@
-module github.com/lusoris/goenvoy/metadata/book/googlebooks
+module github.com/lusoris/goenvoy/metadata/book/googlebooks/v2
 
 go 1.26.1
 

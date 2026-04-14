@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/lusoris/goenvoy/metadata"
-	"github.com/lusoris/goenvoy/metadata/book/googlebooks"
+	"github.com/lusoris/goenvoy/metadata/book/googlebooks/v2"
 )
 
 func setup(t *testing.T, handler http.HandlerFunc) *googlebooks.Client {

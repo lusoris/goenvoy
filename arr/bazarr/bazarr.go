@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/lusoris/goenvoy/arr"
+	"github.com/lusoris/goenvoy/arr/v2"
 )
 
 // Client is a Bazarr API client.
