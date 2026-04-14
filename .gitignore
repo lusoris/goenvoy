@@ -27,8 +27,10 @@ go.work.sum
 .DS_Store
 Thumbs.db
 
-# Working directory (planning docs, not published)
-.workingdir/
+# Working directory (planning docs, not published) — except checked-in session state
+.workingdir/*
+!.workingdir/PRINCIPLES.md
+!.workingdir/STATE.md
 
 # Build output
 dist/
