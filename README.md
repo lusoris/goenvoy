@@ -1,6 +1,9 @@
 # goenvoy
 
 [![CI](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lusoris/goenvoy/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/lusoris/goenvoy/actions/workflows/codeql.yml/badge.svg)](https://github.com/lusoris/goenvoy/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/lusoris/goenvoy/badge)](https://scorecard.dev/viewer/?uri=github.com/lusoris/goenvoy)
+[![Go Reference](https://pkg.go.dev/badge/github.com/lusoris/goenvoy.svg)](https://pkg.go.dev/github.com/lusoris/goenvoy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 
@@ -150,6 +153,17 @@ make tidy-all
 # Format all modules
 make fmt-all
 ```
+
+## Standards
+
+- Pure stdlib (ADR-0001). `depguard` in CI enforces.
+- Per-module independent semver (ADR-0002). Tags: `<path>/vX.Y.Z`.
+- Every release: cosign-signed checksums + SPDX SBOM + SLSA-L3 provenance.
+- Every merged commit: 0 lint / 0 gosec / 0 govulncheck / race-green across all modules.
+- [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) for agent-assisted development conventions.
+- `docs/adr/` for all architectural decisions (Nygard format).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 ## License
 

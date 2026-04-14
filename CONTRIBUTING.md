@@ -1,93 +1,103 @@
-# Contributing to goenvoy
+# Contributing
 
-Thank you for considering a contribution! Here's how to get started.
+## Conventional commits
 
-## Development Setup
+All commits and PR titles MUST follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-1. **Clone the repo**
+```text
+<type>(<scope>): <subject>
 
-   ```bash
-   git clone https://github.com/lusoris/goenvoy.git
-   cd goenvoy
-   ```
+[optional body]
 
-2. **Use Go 1.26+** — all modules target `go 1.26.1`.
-
-3. **Workspace mode** — the `go.work` file links all 62 modules for local development:
-
-   ```bash
-   go work sync
-   ```
-
-4. **Run tests**
-
-   ```bash
-   make test-all
-   ```
-
-5. **Lint**
-
-   ```bash
-   make lint-all
-   ```
-
-## Project Structure
-
-This is a multi-module monorepo. Each service lives in its own Go module under a category directory:
-
-```
-arr/sonarr/         → github.com/lusoris/goenvoy/arr/sonarr
-metadata/video/tmdb → github.com/lusoris/goenvoy/metadata/video/tmdb
+[optional footer(s)]
 ```
 
-Parent packages (`arr/`, `metadata/`, etc.) contain shared types used by their child modules.
+**Types**: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `revert`.
 
-## Adding a New Service
+**Scopes** are module paths: `feat(arr/sonarr):`, `fix(metadata/video/tmdb):`, `chore(tools):`.
 
-1. Create a directory under the appropriate category (e.g. `downloadclient/aria2/`).
-2. Run `go mod init github.com/lusoris/goenvoy/downloadclient/aria2`.
-3. Create the standard files:
-   - `doc.go` — package documentation
-   - `types.go` — request/response types
-   - `aria2.go` — client implementation
-   - `aria2_test.go` — tests (use `httptest.NewServer`)
-   - `example_test.go` — runnable examples for godoc
-   - `go.mod` — module definition
+## Breaking changes
+
+Append `!` to type and add a `BREAKING CHANGE:` footer plus a `Migration:` block with before/after Go snippets:
+
+```text
+feat(arr/sonarr)!: rename GetSeries to ListSeries
+
+BREAKING CHANGE: GetSeries is now ListSeries to match upstream terminology.
+
+Migration:
+  // before
+  series, err := client.GetSeries(ctx)
+  // after
+  series, err := client.ListSeries(ctx)
+```
+
+The `Migration:` block is **required** for breaking changes. CI (`apidiff`) fails without it.
+
+## CI gates (per module)
+
+Every PR runs per module in a matrix:
+
+- `golangci-lint run` — 30+ linters (see `.golangci.yml`)
+- `gosec` — SARIF to code-scanning
+- `govulncheck`
+- `go test -race -count=1` — ≥70% coverage per module
+- `apidiff` vs the previous `<module>/vX.Y.Z` tag
+
+And repo-wide:
+
+- Conventional-Commits PR title
+- CodeQL (`security-extended,security-and-quality`)
+- OSSF Scorecard
+
+## Local development
+
+```bash
+# Set up workspace (links all 69 modules)
+go work init && find . -name 'go.mod' -not -path './.workingdir/*' -exec dirname {} \; | xargs go work use
+
+# Full local CI (all modules)
+make ci-all
+
+# One module
+cd arr/sonarr
+make -f ../../Makefile ci
+```
+
+See `Makefile` for `test-all`, `lint-all`, `vuln-all`, `gosec-all`, `ci-all`, `fmt-all`, `tidy-all`.
+
+## Adding a new service
+
+Use the Claude Code skill **`/add-service-client`** or follow the manual steps:
+
+1. Create `<category>/<service>/` (e.g. `downloadclient/aria2/`).
+2. `go mod init github.com/lusoris/goenvoy/downloadclient/aria2`.
+3. Standard files:
+   - `doc.go` — package doc comment.
+   - `types.go` — request/response types.
+   - `<service>.go` — `New` + methods.
+   - `<service>_test.go` — `httptest`-based table-driven tests.
+   - `example_test.go` — runnable godoc example.
+   - `AGENTS.md` — auth model, pagination style, pinned doc URL.
 4. Add the module to `go.work`.
-5. Verify:
-   ```bash
-   cd downloadclient/aria2
-   go test -race ./...
-   golangci-lint run ./...
-   ```
+5. `cd <category>/<service> && make -f ../../Makefile ci`.
 
-## Code Style
+## Code style
 
-- **Pure stdlib** — no external dependencies. All HTTP is `net/http`, all JSON is `encoding/json`.
-- **Functional options** — use `Option` type and `With*` constructors.
-- **Context propagation** — every method that does I/O takes `context.Context` as the first argument.
-- **Error types** — each module defines an `APIError` struct implementing `error`.
-- **Test with httptest** — mock real API responses, don't hit live servers.
-- **Lint clean** — `golangci-lint run ./...` must pass with the repo's `.golangci.yml`.
-- **Godoc comments** — all exported types and functions must have doc comments ending with a period.
+- **Pure stdlib.** `depguard` in `.golangci.yml` blocks external imports. See ADR-0001.
+- **Functional options.** `Option` type + `With*` constructors.
+- **Context propagation.** Every I/O method takes `context.Context` first.
+- **Error types.** Each module defines an `APIError` implementing `error`.
+- **Tests.** `httptest.NewServer` only — never hit live APIs.
+- **Godoc.** All exported identifiers carry a doc comment ending in a period.
 
-## Commit Messages
+## Pre-commit hooks
 
-Use clear, descriptive messages. Reference the affected module(s):
-
-```
-arr/sonarr: add GetEpisodeFiles method
-
-metadata/video/tvdb: fix token refresh on 401
+```bash
+pre-commit install
 ```
 
-## Pull Requests
-
-- One feature/fix per PR.
-- All tests must pass (`make test-all`).
-- Lint must be clean (`make lint-all`).
-- Include tests for new functionality.
-- Update `example_test.go` if the public API changes.
+Hooks: `gofumpt`, `golangci-lint`, `gitleaks`, conventional-commit check.
 
 ## License
 

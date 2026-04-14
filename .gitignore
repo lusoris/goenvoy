@@ -32,3 +32,16 @@ Thumbs.db
 
 # Build output
 dist/
+
+# Claude Code runtime state (personal, machine-local).
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Coverage artefacts per module
+**/coverage.out
+**/coverage.html
+
+# Tooling caches
+.golangci-lint-cache/
+tmp/
+.tmp/
