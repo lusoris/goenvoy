@@ -9,7 +9,28 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  pr-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if ! echo "$PR_TITLE" | grep -qE '^(feat|fix|docs|chore|refactor|test|perf|ci|build|revert|style)(\(.+\))?(!)?: .+'; then
+            echo "::error::PR title does not follow Conventional Commits."
+            echo "::error::Got: $PR_TITLE"
+            echo "::error::Expected: <type>(<scope>): <description>"
+            exit 1
+          fi
+          echo "OK: $PR_TITLE"
+
   discover:
     name: Discover modules
     runs-on: ubuntu-latest
@@ -17,40 +38,11 @@ jobs:
       modules: ${{ steps.find.outputs.modules }}
     steps:
       - uses: actions/checkout@v6
-
       - id: find
         name: Find all Go modules
         run: |
           modules=$(find . -name 'go.mod' -not -path './.workingdir/*' -exec dirname {} \; | sort | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "modules=$modules" >> "$GITHUB_OUTPUT"
-
-  test:
-    name: Test ${{ matrix.module }}
-    needs: discover
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        module: ${{ fromJSON(needs.discover.outputs.modules) }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version: stable
-          cache-dependency-path: ${{ matrix.module }}/go.mod
-
-      - name: Run tests
-        working-directory: ${{ matrix.module }}
-        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
-
-      - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-${{ hashFiles(format('{0}/go.mod', matrix.module)) }}
-          path: ${{ matrix.module }}/coverage.out
-          retention-days: 7
 
   lint:
     name: Lint ${{ matrix.module }}
@@ -62,31 +54,169 @@ jobs:
         module: ${{ fromJSON(needs.discover.outputs.modules) }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-go@v6
         with:
           go-version: stable
           cache-dependency-path: ${{ matrix.module }}/go.mod
-
       - name: Run go vet
         working-directory: ${{ matrix.module }}
         run: go vet ./...
-
       - uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           working-directory: ${{ matrix.module }}
+          args: --config=${{ github.workspace }}/.golangci.yml --timeout=5m
+
+  gosec:
+    name: Security (gosec)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - name: Run gosec per module
+        run: |
+          set +e
+          modules=$(find . -name 'go.mod' -not -path './.workingdir/*' -exec dirname {} \;)
+          failed=0
+          for mod in $modules; do
+            echo "::group::gosec $mod"
+            (cd "$mod" && gosec -exclude-generated ./...) || failed=1
+            echo "::endgroup::"
+          done
+          exit $failed
+
+  vuln:
+    name: Vulnerabilities ${{ matrix.module }}
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.discover.outputs.modules) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: ${{ matrix.module }}/go.mod
+      - name: govulncheck
+        working-directory: ${{ matrix.module }}
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  test:
+    name: Test ${{ matrix.module }}
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.discover.outputs.modules) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: ${{ matrix.module }}/go.mod
+      - name: Run tests
+        working-directory: ${{ matrix.module }}
+        run: go test -race -count=1 -timeout=5m -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ hashFiles(format('{0}/go.mod', matrix.module)) }}
+          path: ${{ matrix.module }}/coverage.out
+          retention-days: 7
+
+  build:
+    name: Build ${{ matrix.module }}
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.discover.outputs.modules) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: ${{ matrix.module }}/go.mod
+      - working-directory: ${{ matrix.module }}
+        run: go build ./...
+
+  apidiff:
+    name: apidiff ${{ matrix.module }}
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.discover.outputs.modules) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: ${{ matrix.module }}/go.mod
+      - name: Install apidiff
+        run: go install golang.org/x/exp/cmd/apidiff@latest
+      - name: Run apidiff for ${{ matrix.module }}
+        env:
+          MODULE_DIR: ${{ matrix.module }}
+        run: |
+          MOD_PATH=${MODULE_DIR#./}
+          TAG_PREFIX="${MOD_PATH}/v"
+          PREV_TAG=$(git tag --list --sort=-v:refname "${TAG_PREFIX}*" | head -1 || true)
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous ${TAG_PREFIX}* tag — skipping (first release)."
+            exit 0
+          fi
+          echo "Comparing $MOD_PATH against $PREV_TAG"
+          cd "$MOD_PATH"
+          MOD_IMPORT=$(go list -m)
+          apidiff -m "$MOD_IMPORT" . > /tmp/current.txt 2>/dev/null || true
+          SAVED=$(git rev-parse HEAD)
+          git stash --include-untracked --quiet || true
+          git checkout --quiet "$PREV_TAG"
+          apidiff -m "$MOD_IMPORT" . > /tmp/prev.txt 2>/dev/null || true
+          git checkout --quiet "$SAVED"
+          git stash pop --quiet || true
+          if ! apidiff /tmp/prev.txt /tmp/current.txt; then
+            echo "::error::Breaking API change in $MOD_PATH vs $PREV_TAG — add a 'BREAKING CHANGE:' + 'Migration:' footer or bump major."
+            exit 1
+          fi
+          echo "API backwards-compatible with $PREV_TAG."
 
   status:
     name: CI Status
     if: always()
-    needs: [test, lint]
+    needs: [lint, gosec, vuln, test, build, apidiff]
     runs-on: ubuntu-latest
     steps:
       - name: Check results
         run: |
-          if [[ "${{ needs.test.result }}" != "success" || "${{ needs.lint.result }}" != "success" ]]; then
-            echo "CI failed: test=${{ needs.test.result }}, lint=${{ needs.lint.result }}"
-            exit 1
-          fi
+          for j in lint gosec vuln test build apidiff; do
+            case "$(eval echo \$${j}_result)" in ""|success|skipped) ;; *)
+              echo "job $j: $(eval echo \$${j}_result)"; exit 1 ;;
+            esac
+          done
           echo "All checks passed."
+        env:
+          lint_result: ${{ needs.lint.result }}
+          gosec_result: ${{ needs.gosec.result }}
+          vuln_result: ${{ needs.vuln.result }}
+          test_result: ${{ needs.test.result }}
+          build_result: ${{ needs.build.result }}
+          apidiff_result: ${{ needs.apidiff.result }}

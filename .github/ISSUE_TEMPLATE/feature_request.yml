@@ -1,0 +1,41 @@
+name: Feature Request
+description: Suggest a new feature or API endpoint
+title: "[FEATURE] "
+labels: [enhancement]
+body:
+  - type: input
+    id: module
+    attributes:
+      label: Module
+      description: Which module? (e.g. `arr/sonarr`, or "new module" for a new service)
+      placeholder: arr/sonarr
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What feature or API endpoint would you like added?
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Why do you need this? What problem does it solve?
+    validations:
+      required: true
+
+  - type: input
+    id: api-reference
+    attributes:
+      label: API Reference
+      description: Link to the upstream API documentation for the endpoint(s), if applicable.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context or examples.
