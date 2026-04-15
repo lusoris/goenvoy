@@ -1,14 +1,22 @@
 name: Release All Modules
 
+# Fan-out workflow: validates every module, then pushes one tag per module
+# at the requested version. Each tag push fires .github/workflows/release.yml,
+# which does the heavy lifting (cosign keyless, syft SBOM, SLSA-L3 provenance,
+# GH Release with signed artefacts).
+#
+# Use this when bumping every module to the same version in lockstep.
+# For single-module releases, tag manually (or via /release-module skill).
+
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Semver version to release (e.g. v1.1.0)'
+        description: 'Semver version to release across all modules (e.g. v2.1.0)'
         required: true
         type: string
       dry-run:
-        description: 'Dry run — validate only, skip tag and release creation'
+        description: 'Validate only, do not create or push tags'
         required: false
         type: boolean
         default: false
@@ -17,8 +25,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Release all modules
+  fan-out:
+    name: Validate + tag every module
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -29,75 +37,68 @@ jobs:
         with:
           go-version: stable
 
+      - name: Validate version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! echo "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
+            echo "::error::Invalid version: $VERSION (expected vX.Y.Z[-pre])"
+            exit 1
+          fi
+
       - name: Discover modules
         id: discover
         run: |
-          modules=$(find . -name 'go.mod' -not -path './.workingdir/*' -exec dirname {} \; | sed 's|^\./||' | sort)
+          modules=$(find . -name 'go.mod' -not -path './.workingdir*/*' -exec dirname {} \; | sed 's|^\./||' | sort)
           count=$(echo "$modules" | wc -l)
           echo "Found $count modules"
-          echo "$modules"
-          echo "modules<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$modules" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          {
+            echo "modules<<EOF"
+            echo "$modules"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Validate all modules
+      - name: Validate every module (build + vet + test)
         run: |
           failed=0
-          while IFS= read -r module; do
-            echo "::group::Validating $module"
-            if ! (cd "$module" && go build ./... && go vet ./...); then
-              echo "::error::Validation failed for $module"
+          while IFS= read -r mod; do
+            [ -z "$mod" ] && continue
+            echo "::group::Validating $mod"
+            if ! (cd "$mod" && go build ./... && go vet ./... && go test -race -count=1 -timeout=5m ./...); then
+              echo "::error::Validation failed for $mod"
               failed=1
             fi
             echo "::endgroup::"
           done <<< "${{ steps.discover.outputs.modules }}"
-          if [ "$failed" -ne 0 ]; then
-            echo "::error::One or more modules failed validation"
-            exit 1
-          fi
+          [ "$failed" -ne 0 ] && exit 1
+          echo "All modules validated."
 
-      - name: Create tags and releases
+      - name: Push tags (fans out to release.yml)
         if: ${{ !inputs.dry-run }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
         run: |
-          version="${{ inputs.version }}"
-
-          # Validate version format
-          if ! echo "$version" | grep -qP '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Invalid version format: $version (expected vX.Y.Z)"
-            exit 1
-          fi
-
           created=0
           skipped=0
-
-          while IFS= read -r module; do
-            tag="${module}/${version}"
-
-            # Create tag if it doesn't exist
+          while IFS= read -r mod; do
+            [ -z "$mod" ] && continue
+            tag="${mod}/${VERSION}"
             if git rev-parse "refs/tags/$tag" >/dev/null 2>&1; then
-              echo "Tag $tag already exists"
-            else
-              git tag "$tag"
-              git push origin "$tag"
-              echo "Created tag $tag"
-            fi
-
-            # Create release if it doesn't exist
-            if gh release view "$tag" >/dev/null 2>&1; then
-              echo "Release $tag already exists — skipped"
+              echo "tag $tag already exists — skipped"
               skipped=$((skipped + 1))
-            else
-              gh release create "$tag" \
-                --title "$module $version" \
-                --generate-notes
-              echo "Created release $tag"
-              created=$((created + 1))
+              continue
             fi
+            git tag "$tag"
+            git push origin "$tag"
+            echo "pushed $tag"
+            created=$((created + 1))
           done <<< "${{ steps.discover.outputs.modules }}"
-
-          echo "### Release Summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Version:** $version" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Created:** $created" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Skipped (already existed):** $skipped" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Fan-out summary"
+            echo "- **Version:** $VERSION"
+            echo "- **Tags pushed:** $created"
+            echo "- **Skipped (already existed):** $skipped"
+            echo
+            echo "Each pushed tag triggers \`.github/workflows/release.yml\` —"
+            echo "watch the Actions tab for cosign + SBOM + SLSA-attested releases."
+          } >> "$GITHUB_STEP_SUMMARY"

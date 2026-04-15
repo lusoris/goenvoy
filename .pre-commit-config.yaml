@@ -1,0 +1,20 @@
+# Optional, opt-in. CI is the ground truth — this catches issues earlier.
+# Install: `pip install pre-commit && pre-commit install --install-hooks`
+repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+      - id: golangci-lint
+        args: [--config=.golangci.yml]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.20.0
+    hooks:
+      - id: gitleaks
