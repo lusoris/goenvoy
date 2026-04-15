@@ -119,6 +119,16 @@ jobs:
             echo "no 'total' line in coverage.out (module has no testable code) — skipping threshold check"
             exit 0
           fi
+          # When a module has only type/const declarations (no executable
+          # statements), go tool cover reports 0.0% and coverage.out has
+          # just the mode header — nothing to measure. Skip the gate.
+          if [ "$COV" = "0.0" ]; then
+            cov_lines=$(grep -cv '^mode:' "${MODULE}/coverage.out" || true)
+            if [ "$cov_lines" -eq 0 ]; then
+              echo "coverage.out has only the mode header (no executable statements in module) — skipping threshold check"
+              exit 0
+            fi
+          fi
           echo "Coverage for ${MOD_KEY}: ${COV}% (threshold ${THRESHOLD}%)"
           if awk -v c="$COV" -v t="$THRESHOLD" 'BEGIN { exit !(c+0 < t+0) }'; then
             echo "::error::${MOD_KEY} coverage ${COV}% < ${THRESHOLD}% — add tests or raise the override (only when intentional)"
@@ -203,6 +213,17 @@ jobs:
           PREV_WT=$(mktemp -d)
           git worktree add --detach --quiet "$PREV_WT" "$PREV_TAG"
           trap 'git worktree remove --force "$PREV_WT" >/dev/null 2>&1 || true' EXIT
+
+          # If the module path has been renamed between PREV_TAG and HEAD
+          # (lusoris → golusoris, or a /vN major-version path bump), apidiff
+          # can't load the old fingerprint under the new name. A rename is
+          # a breaking change by definition, so it's on the release author
+          # to cut a new baseline tag — we skip the gate until one exists.
+          PREV_MOD_IMPORT=$(cd "$PREV_WT/$MOD_PATH" && go list -m)
+          if [ "$PREV_MOD_IMPORT" != "$MOD_IMPORT" ]; then
+            echo "Module path changed ($PREV_MOD_IMPORT → $MOD_IMPORT) — tag a fresh baseline on the new path before apidiff can resume. Skipping."
+            exit 0
+          fi
 
           apidiff -m "$MOD_IMPORT" "$PREV_WT/$MOD_PATH" > /tmp/prev.txt
           apidiff -m "$MOD_IMPORT" "$MOD_PATH"          > /tmp/current.txt
