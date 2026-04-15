@@ -5,6 +5,12 @@ on:
     tags:
       - '**/v[0-9]*.[0-9]*.[0-9]*'
       - '**/v[0-9]*.[0-9]*.[0-9]*-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to (re)release, e.g. anime/v1.3.0. Needed because release-please creates tags with GITHUB_TOKEN, which does not fire the push-tag trigger.'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,11 +27,18 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Parse tag
         id: tag
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
+          if [ -n "$DISPATCH_TAG" ]; then
+            TAG="$DISPATCH_TAG"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
           MOD_PATH="${TAG%/v*}"
           VERSION="v${TAG##*/v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -93,7 +106,7 @@ jobs:
             dist/${{ steps.pkg.outputs.basename }}.checksums.txt
             dist/${{ steps.pkg.outputs.basename }}.sbom.spdx.json
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
@@ -101,11 +114,26 @@ jobs:
           VER: ${{ steps.tag.outputs.version }}
           BASENAME: ${{ steps.pkg.outputs.basename }}
         run: |
-          gh release create "$TAG" \
-            --title "$MOD $VER" \
-            --generate-notes \
-            "dist/${BASENAME}.tar.gz" \
-            "dist/${BASENAME}.checksums.txt" \
-            "dist/${BASENAME}.checksums.txt.sig" \
-            "dist/${BASENAME}.checksums.txt.pem" \
-            "dist/${BASENAME}.sbom.spdx.json"
+          # Release-please may have already created a bare release (notes
+          # only, no artefacts) when it cut the tag — upload the signed
+          # artefacts to that existing release instead of failing. The
+          # push-tag trigger path still lands in the create branch since
+          # no release exists yet at that point.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" \
+              "dist/${BASENAME}.tar.gz" \
+              "dist/${BASENAME}.checksums.txt" \
+              "dist/${BASENAME}.checksums.txt.sig" \
+              "dist/${BASENAME}.checksums.txt.pem" \
+              "dist/${BASENAME}.sbom.spdx.json" \
+              --clobber
+          else
+            gh release create "$TAG" \
+              --title "$MOD $VER" \
+              --generate-notes \
+              "dist/${BASENAME}.tar.gz" \
+              "dist/${BASENAME}.checksums.txt" \
+              "dist/${BASENAME}.checksums.txt.sig" \
+              "dist/${BASENAME}.checksums.txt.pem" \
+              "dist/${BASENAME}.sbom.spdx.json"
+          fi
