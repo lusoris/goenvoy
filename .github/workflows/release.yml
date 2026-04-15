@@ -49,7 +49,12 @@ jobs:
         uses: sigstore/cosign-installer@v3
 
       - name: Install syft
-        uses: anchore/sbom-action/download-syft@v0
+        env:
+          SYFT_VERSION: v1.14.0
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sh -s -- -b /usr/local/bin "${SYFT_VERSION}"
+          syft version
 
       - name: Package source tarball
         id: pkg
@@ -88,14 +93,18 @@ jobs:
             dist/${{ steps.pkg.outputs.basename }}.sbom.spdx.json
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: ${{ steps.tag.outputs.module }} ${{ steps.tag.outputs.version }}
-          generate_release_notes: true
-          files: |
-            dist/${{ steps.pkg.outputs.basename }}.tar.gz
-            dist/${{ steps.pkg.outputs.basename }}.checksums.txt
-            dist/${{ steps.pkg.outputs.basename }}.checksums.txt.sig
-            dist/${{ steps.pkg.outputs.basename }}.checksums.txt.pem
-            dist/${{ steps.pkg.outputs.basename }}.sbom.spdx.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          MOD: ${{ steps.tag.outputs.module }}
+          VER: ${{ steps.tag.outputs.version }}
+          BASENAME: ${{ steps.pkg.outputs.basename }}
+        run: |
+          gh release create "$TAG" \
+            --title "$MOD $VER" \
+            --generate-notes \
+            "dist/${BASENAME}.tar.gz" \
+            "dist/${BASENAME}.checksums.txt" \
+            "dist/${BASENAME}.checksums.txt.sig" \
+            "dist/${BASENAME}.checksums.txt.pem" \
+            "dist/${BASENAME}.sbom.spdx.json"
