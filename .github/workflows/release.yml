@@ -89,14 +89,21 @@ jobs:
         run: |
           syft packages dir:${{ steps.tag.outputs.dir }} -o spdx-json > dist/${{ steps.pkg.outputs.basename }}.sbom.spdx.json
 
-      - name: Sign checksums (cosign keyless)
+      - name: Sign release artefacts (cosign keyless)
         env:
           COSIGN_EXPERIMENTAL: "1"
+          BASENAME: ${{ steps.pkg.outputs.basename }}
         run: |
-          cosign sign-blob --yes \
-            --output-signature dist/${{ steps.pkg.outputs.basename }}.checksums.txt.sig \
-            --output-certificate dist/${{ steps.pkg.outputs.basename }}.checksums.txt.pem \
-            dist/${{ steps.pkg.outputs.basename }}.checksums.txt
+          # Sign every consumer-facing artefact, not just the checksum
+          # file. Scorecard's Signed-Releases check counts one .sig file
+          # per release and caps below 10 when sibling artefacts
+          # (tarball, SBOM) are unsigned.
+          for f in "${BASENAME}.tar.gz" "${BASENAME}.checksums.txt" "${BASENAME}.sbom.spdx.json"; do
+            cosign sign-blob --yes \
+              --output-signature "dist/${f}.sig" \
+              --output-certificate "dist/${f}.pem" \
+              "dist/${f}"
+          done
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
@@ -119,21 +126,22 @@ jobs:
           # artefacts to that existing release instead of failing. The
           # push-tag trigger path still lands in the create branch since
           # no release exists yet at that point.
+          ASSETS=(
+            "dist/${BASENAME}.tar.gz"
+            "dist/${BASENAME}.tar.gz.sig"
+            "dist/${BASENAME}.tar.gz.pem"
+            "dist/${BASENAME}.checksums.txt"
+            "dist/${BASENAME}.checksums.txt.sig"
+            "dist/${BASENAME}.checksums.txt.pem"
+            "dist/${BASENAME}.sbom.spdx.json"
+            "dist/${BASENAME}.sbom.spdx.json.sig"
+            "dist/${BASENAME}.sbom.spdx.json.pem"
+          )
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" \
-              "dist/${BASENAME}.tar.gz" \
-              "dist/${BASENAME}.checksums.txt" \
-              "dist/${BASENAME}.checksums.txt.sig" \
-              "dist/${BASENAME}.checksums.txt.pem" \
-              "dist/${BASENAME}.sbom.spdx.json" \
-              --clobber
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
           else
             gh release create "$TAG" \
               --title "$MOD $VER" \
               --generate-notes \
-              "dist/${BASENAME}.tar.gz" \
-              "dist/${BASENAME}.checksums.txt" \
-              "dist/${BASENAME}.checksums.txt.sig" \
-              "dist/${BASENAME}.checksums.txt.pem" \
-              "dist/${BASENAME}.sbom.spdx.json"
+              "${ASSETS[@]}"
           fi
